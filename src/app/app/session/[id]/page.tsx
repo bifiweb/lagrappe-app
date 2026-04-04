@@ -142,7 +142,29 @@ export default function SessionPage() {
       voted_for: myVote,
     })
 
-    if (!error) setHasVoted(true)
+    if (!error) {
+      setHasVoted(true)
+
+      // Vérification immédiate après le vote
+      const { count } = await supabase
+        .from('votes').select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId)
+      const newCount = count ?? 0
+      setVotesIn(newCount)
+
+      const { data: pl } = await supabase
+        .from('session_players').select('*').eq('session_id', sessionId)
+      const currentPlayers = pl ?? []
+      setPlayers(currentPlayers)
+
+      console.log('After vote check:', newCount, '/', currentPlayers.length)
+
+      if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
+        console.log('All votes in immediately! Determining chef...')
+        setDeterminingChef(true)
+        await determineChef(currentPlayers)
+      }
+    }
   }
 
   async function determineChef(currentPlayers: SessionPlayer[]) {
