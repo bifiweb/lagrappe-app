@@ -81,14 +81,14 @@ export default function ProjectPage() {
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                   <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                    🧍
+                    🍷
                   </div>
                   <div>
                     <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '3px' }}>
-                      Session solo
+                      Une bouteille
                     </div>
                     <div style={{ fontSize: '13px', color: '#888' }}>
-                      Je déguste seul ou à deux, une bouteille à la fois
+                      Dégustation d'une bouteille, solo ou en groupe
                     </div>
                   </div>
                 </div>
@@ -107,7 +107,7 @@ export default function ProjectPage() {
                       Soirée continue
                     </div>
                     <div style={{ fontSize: '13px', color: '#888' }}>
-                      On joue en groupe, plusieurs vins le même soir
+                      Plusieurs vins le même soir, solo ou en groupe
                     </div>
                   </div>
                 </div>
