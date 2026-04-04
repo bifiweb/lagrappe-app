@@ -1,0 +1,16 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'La Grappe — Dégustation à l\'aveugle',
+  description: 'Swiss Wine Challenge — Déguste et découvre les vins suisses',
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="fr">
+      <body style={{ margin: 0, padding: 0 }}>
+        {children}
+      </body>
+    </html>
+  )
+}
