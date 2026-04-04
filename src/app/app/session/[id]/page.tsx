@@ -37,7 +37,8 @@ export default function SessionPage() {
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
-      // Restaurer la phase selon le statut en base
+      console.log('Session status on load:', sess?.status)
+
       if (sess?.status === 'voting') setPhase('voting')
       if (sess?.status === 'revealed') {
         router.push(`/app/session/${sessionId}/reveal`)
@@ -61,9 +62,10 @@ export default function SessionPage() {
     load()
   }, [])
 
-  // Polling joueurs en lobby
+  // Polling lobby
   useEffect(() => {
     if (!sessionId || phase !== 'lobby') return
+    console.log('Starting lobby polling')
     const interval = setInterval(async () => {
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
@@ -71,7 +73,9 @@ export default function SessionPage() {
 
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
+      console.log('Lobby polling - session status:', sess?.status)
       if (sess?.status === 'voting') {
+        console.log('Switching to voting phase!')
         setPhase('voting')
         clearInterval(interval)
       }
@@ -79,9 +83,10 @@ export default function SessionPage() {
     return () => clearInterval(interval)
   }, [sessionId, phase])
 
-  // Polling votes en phase voting
+  // Polling votes
   useEffect(() => {
     if (!sessionId || phase !== 'voting' || determiningChef) return
+    console.log('Starting vote polling')
     const interval = setInterval(async () => {
       const { count } = await supabase
         .from('votes').select('*', { count: 'exact', head: true })
@@ -94,7 +99,10 @@ export default function SessionPage() {
       const currentPlayers = pl ?? []
       setPlayers(currentPlayers)
 
+      console.log('Vote polling:', newCount, '/', currentPlayers.length)
+
       if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
+        console.log('All votes in! Determining chef...')
         clearInterval(interval)
         setDeterminingChef(true)
         await determineChef(currentPlayers)
