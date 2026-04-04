@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import { useSessionRealtime } from '@/hooks/useRealtime'
 import { resolveTiebreak } from '@/lib/scoring'
 import type { Profile, Session, SessionPlayer } from '@/types'
 
@@ -11,7 +10,7 @@ export default function SessionPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<SessionPlayer[]>([])
-  const [phase, setPhase] = useState<'lobby' | 'voting' | 'countdown' | 'tasting'>('lobby')
+  const [phase, setPhase] = useState<'lobby' | 'voting' | 'countdown'>('lobby')
   const [myVote, setMyVote] = useState<string | null>(null)
   const [votesIn, setVotesIn] = useState(0)
   const [hasVoted, setHasVoted] = useState(false)
@@ -38,6 +37,13 @@ export default function SessionPage() {
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
+      // Restaurer la phase selon le statut en base
+      if (sess?.status === 'voting') setPhase('voting')
+      if (sess?.status === 'revealed') {
+        router.push(`/app/session/${sessionId}/reveal`)
+        return
+      }
+
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
@@ -55,10 +61,27 @@ export default function SessionPage() {
     load()
   }, [])
 
-  // Polling votes toutes les 2 secondes pendant la phase de vote
+  // Polling joueurs en lobby
+  useEffect(() => {
+    if (!sessionId || phase !== 'lobby') return
+    const interval = setInterval(async () => {
+      const { data: pl } = await supabase
+        .from('session_players').select('*').eq('session_id', sessionId)
+      setPlayers(pl ?? [])
+
+      const { data: sess } = await supabase
+        .from('sessions').select('*').eq('id', sessionId).single()
+      if (sess?.status === 'voting') {
+        setPhase('voting')
+        clearInterval(interval)
+      }
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [sessionId, phase])
+
+  // Polling votes en phase voting
   useEffect(() => {
     if (!sessionId || phase !== 'voting' || determiningChef) return
-
     const interval = setInterval(async () => {
       const { count } = await supabase
         .from('votes').select('*', { count: 'exact', head: true })
@@ -77,17 +100,15 @@ export default function SessionPage() {
         await determineChef(currentPlayers)
       }
     }, 2000)
-
     return () => clearInterval(interval)
   }, [sessionId, phase, determiningChef])
 
-  useSessionRealtime(sessionId, {
-    onSessionUpdate: (s) => {
-      if (s.status) setSession(prev => prev ? { ...prev, ...s } : null)
-    },
-    onPlayerJoin: (p) => setPlayers(prev => [...prev.filter(x => x.id !== p.id), p]),
-    onPlayerUpdate: (p) => setPlayers(prev => prev.map(x => x.id === p.id ? { ...x, ...p } : x)),
-  })
+  async function launchVote() {
+    await supabase.from('sessions')
+      .update({ status: 'voting' })
+      .eq('id', sessionId)
+    setPhase('voting')
+  }
 
   async function submitVote() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -113,9 +134,7 @@ export default function SessionPage() {
       voted_for: myVote,
     })
 
-    if (!error) {
-      setHasVoted(true)
-    }
+    if (!error) setHasVoted(true)
   }
 
   async function determineChef(currentPlayers: SessionPlayer[]) {
@@ -128,7 +147,8 @@ export default function SessionPage() {
     votes.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
 
     const maxVotes = Math.max(...Object.values(tally))
-    const winners = Object.entries(tally).filter(([, v]) => v === maxVotes).map(([id]) => id)
+    const winners = Object.entries(tally)
+      .filter(([, v]) => v === maxVotes).map(([id]) => id)
 
     let chefId = winners[0]
 
@@ -145,7 +165,9 @@ export default function SessionPage() {
     setChef(chefPlayer ?? null)
 
     await supabase.from('session_players')
-      .update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', chefId)
+      .update({ is_chef: true })
+      .eq('session_id', sessionId)
+      .eq('user_id', chefId)
 
     setPhase('countdown')
     startCountdown()
@@ -215,7 +237,7 @@ export default function SessionPage() {
               </div>
             </div>
 
-            <button onClick={() => setPhase('voting')}
+            <button onClick={launchVote}
               style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
               Lancer le vote du chef →
             </button>
