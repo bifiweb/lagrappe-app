@@ -9,6 +9,19 @@ interface WineWithNotes extends Wine {
   grappiste_notes: GrappisteNotes | null
 }
 
+const PRICE_RANGES = [
+  { label: '< 20 CHF', min: 0, max: 19.99 },
+  { label: '20 – 25 CHF', min: 20, max: 25 },
+  { label: '26 – 30 CHF', min: 26, max: 30 },
+  { label: '31 – 40 CHF', min: 31, max: 40 },
+  { label: '> 40 CHF', min: 40.01, max: Infinity },
+]
+
+function getPriceRange(prix: number): string {
+  const range = PRICE_RANGES.find(r => prix >= r.min && prix <= r.max)
+  return range?.label ?? '—'
+}
+
 export default function AdminWinesPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [wines, setWines] = useState<WineWithNotes[]>([])
@@ -28,7 +41,9 @@ export default function AdminWinesPage() {
   const [cepage, setCepage] = useState('')
   const [region, setRegion] = useState('')
   const [millesime, setMillesime] = useState('')
-  const [prix, setPrix] = useState('')
+  const [prixExact, setPrixExact] = useState('')
+  const [cave, setCave] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
   const [shopifyUrl, setShopifyUrl] = useState('')
 
   useEffect(() => {
@@ -68,7 +83,9 @@ export default function AdminWinesPage() {
     setCepage(n?.cepage ?? '')
     setRegion(n?.region ?? '')
     setMillesime(n?.millesime?.toString() ?? '')
-    setPrix(n?.prix_chf ?? '')
+    setPrixExact(n?.prix_exact?.toString() ?? '')
+    setCave(n?.cave ?? '')
+    setImageUrl(n?.image_url ?? '')
     setShopifyUrl(wine.shopify_url ?? '')
     setSuccess(false)
   }
@@ -77,13 +94,13 @@ export default function AdminWinesPage() {
     if (!editingWine) return
     setSaving(true)
 
-    // Mettre à jour le lien Shopify
     await supabase.from('wines')
       .update({ shopify_url: shopifyUrl })
       .eq('id', editingWine.id)
 
-    // Upsert les notes grappistes
     const aromesArray = aromesText.split(',').map(a => a.trim()).filter(Boolean)
+    const prixNum = parseFloat(prixExact)
+
     await supabase.from('grappiste_notes').upsert({
       wine_id: editingWine.id,
       note: parseFloat(note),
@@ -94,10 +111,12 @@ export default function AdminWinesPage() {
       cepage,
       region,
       millesime: millesime ? parseInt(millesime) : null,
-      prix_chf: prix,
+      prix_chf: isNaN(prixNum) ? null : getPriceRange(prixNum),
+      prix_exact: isNaN(prixNum) ? null : prixNum,
+      cave,
+      image_url: imageUrl,
     })
 
-    // Recharger
     const { data: w } = await supabase
       .from('wines')
       .select('*, grappiste_notes(*)')
@@ -124,7 +143,6 @@ export default function AdminWinesPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* Header */}
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
         <div style={{ maxWidth: '700px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <button onClick={() => router.push('/app/dashboard')}
@@ -151,20 +169,28 @@ export default function AdminWinesPage() {
                   borderRadius: '12px', padding: '12px 14px',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px'
                 }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : '#f5f3e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '500', fontSize: '16px', color: '#8d323b', flexShrink: 0 }}>
-                  {wine.bottle_number}
-                </div>
+                {wine.grappiste_notes?.image_url ? (
+                  <img src={wine.grappiste_notes.image_url} alt={`Bouteille ${wine.bottle_number}`}
+                    style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : '#f5f3e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '500', fontSize: '16px', color: '#8d323b', flexShrink: 0 }}>
+                    {wine.bottle_number}
+                  </div>
+                )}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
-                    {wine.grappiste_notes ? `${wine.grappiste_notes.cepage} ${wine.grappiste_notes.millesime}` : `Bouteille #${wine.bottle_number}`}
+                    {wine.grappiste_notes?.cepage ? `${wine.grappiste_notes.cepage} ${wine.grappiste_notes.millesime ?? ''}` : `Bouteille #${wine.bottle_number}`}
                   </div>
                   <div style={{ fontSize: '12px', color: '#888' }}>
-                    {wine.type} {wine.grappiste_notes ? `· ${wine.grappiste_notes.region}` : '· Non configuré'}
+                    {wine.type}
+                    {wine.grappiste_notes?.cave ? ` · ${wine.grappiste_notes.cave}` : ''}
+                    {wine.grappiste_notes?.region ? ` · ${wine.grappiste_notes.region}` : ''}
+                    {wine.grappiste_notes?.prix_exact ? ` · ${getPriceRange(wine.grappiste_notes.prix_exact)} CHF` : ''}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   {wine.grappiste_notes && (
-                    <span style={{ fontSize: '10px', background: '#e8f0e8', color: '#27500A', padding: '2px 7px', borderRadius: '6px' }}>✓ Notes</span>
+                    <span style={{ fontSize: '10px', background: '#e8f0e8', color: '#27500A', padding: '2px 7px', borderRadius: '6px' }}>✓</span>
                   )}
                   <span
                     onClick={e => { e.stopPropagation(); toggleReveal(wine) }}
@@ -190,14 +216,30 @@ export default function AdminWinesPage() {
               </div>
             )}
 
+            {/* Prix exact + fourchette calculée */}
+            <div style={{ marginBottom: '10px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>
+                Prix exact CHF
+              </label>
+              <input value={prixExact} onChange={e => setPrixExact(e.target.value)}
+                placeholder="ex: 28.50" type="number" step="0.5"
+                style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+              {prixExact && !isNaN(parseFloat(prixExact)) && (
+                <div style={{ fontSize: '11px', color: '#8d323b', marginTop: '4px' }}>
+                  → Fourchette : {getPriceRange(parseFloat(prixExact))}
+                </div>
+              )}
+            </div>
+
             {[
+              { label: 'Cave / Domaine', value: cave, set: setCave, placeholder: 'ex: Domaine de la Cure' },
               { label: 'Cépage', value: cepage, set: setCepage, placeholder: 'ex: Cornalin' },
               { label: 'Région', value: region, set: setRegion, placeholder: 'ex: Valais' },
               { label: 'Millésime', value: millesime, set: setMillesime, placeholder: 'ex: 2021' },
               { label: 'Note /10', value: note, set: setNote, placeholder: 'ex: 9.1' },
               { label: 'Robe', value: robe, set: setRobe, placeholder: 'ex: Rouge dense' },
               { label: 'Bouche', value: bouche, set: setBouche, placeholder: 'ex: Puissant, corsé' },
-              { label: 'Prix CHF', value: prix, set: setPrix, placeholder: 'ex: 20–35 CHF' },
+              { label: 'Image URL (Shopify)', value: imageUrl, set: setImageUrl, placeholder: 'https://cdn.shopify.com/...' },
               { label: 'Lien Shopify', value: shopifyUrl, set: setShopifyUrl, placeholder: 'https://lagrappe.ch/...' },
             ].map(({ label, value, set, placeholder }) => (
               <div key={label} style={{ marginBottom: '10px' }}>
@@ -206,6 +248,14 @@ export default function AdminWinesPage() {
                   style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
               </div>
             ))}
+
+            {/* Aperçu image */}
+            {imageUrl && (
+              <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                <img src={imageUrl} alt="Aperçu"
+                  style={{ maxHeight: '120px', borderRadius: '8px', objectFit: 'contain' }} />
+              </div>
+            )}
 
             <div style={{ marginBottom: '10px' }}>
               <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>
