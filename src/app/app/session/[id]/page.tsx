@@ -181,7 +181,7 @@ export default function SessionPage() {
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>Partage ce lien à tes amis</div>
               <div style={{ fontSize: '12px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                {typeof window !== 'undefined' ? window.location.href : ''}
+                {typeof window !== 'undefined' ? `${window.location.origin}/app/session/${sessionId}/join` : ''}
               </div>
             </div>
 
