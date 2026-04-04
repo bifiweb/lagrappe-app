@@ -60,6 +60,9 @@ export interface GrappisteNotes {
   region: string | null
   millesime: number | null
   prix_chf: string | null
+  prix_exact: number | null
+  cave: string | null
+  image_url: string | null
   created_at: string
 }
 
@@ -69,7 +72,7 @@ export interface Evening {
   project_id: string
   chef_id: string | null
   mode: EveningMode
-  bottle_order: number[]   // ex: [4, 2, 1, 6, 3, 5]
+  bottle_order: number[]
   status: EveningStatus
   created_at: string
   // Jointures
@@ -122,7 +125,7 @@ export interface Tasting {
   robe: string | null
   // Nez
   nez_intensite: number | null
-  aromes: string[]           // max 5
+  aromes: string[]
   // Bouche
   bouche: string | null
   accords: string[]
@@ -224,7 +227,21 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
   },
 }
 
-export const PRIX_OPTIONS = ['< 10 CHF', '10–20 CHF', '20–35 CHF', '35–50 CHF', '> 50 CHF']
+export const PRIX_OPTIONS = [
+  '< 20 CHF',
+  '20 – 25 CHF',
+  '26 – 30 CHF',
+  '31 – 40 CHF',
+  '> 40 CHF',
+]
+
+export const PRICE_RANGES = [
+  { label: '< 20 CHF', min: 0, max: 19.99 },
+  { label: '20 – 25 CHF', min: 20, max: 25 },
+  { label: '26 – 30 CHF', min: 26, max: 30 },
+  { label: '31 – 40 CHF', min: 31, max: 40 },
+  { label: '> 40 CHF', min: 40.01, max: Infinity },
+]
 
 export const MAX_AROMES = 5
 
@@ -232,7 +249,7 @@ export const MAX_AROMES = 5
 export const SCORING = {
   ROBE_CORRECT: 300,
   ROBE_WRONG: 100,
-  AROME_PER_PLAYER: 100,  // × nb joueurs ayant mis le même
+  AROME_PER_PLAYER: 100,
   AROME_GRAPPISTE_BONUS: 50,
   BOUCHE_CORRECT: 300,
   BOUCHE_WRONG: 100,
