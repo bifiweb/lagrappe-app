@@ -14,6 +14,7 @@ export default function SessionPage() {
   const [phase, setPhase] = useState<'lobby' | 'voting' | 'countdown' | 'tasting'>('lobby')
   const [myVote, setMyVote] = useState<string | null>(null)
   const [votesIn, setVotesIn] = useState(0)
+  const [hasVoted, setHasVoted] = useState(false)
   const [chef, setChef] = useState<SessionPlayer | null>(null)
   const [countdown, setCountdown] = useState(5)
   const [tiebreakMsg, setTiebreakMsg] = useState<string | null>(null)
@@ -39,10 +40,48 @@ export default function SessionPage() {
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
+
+      // Vérifier si déjà voté
+      const { data: existingVote } = await supabase
+        .from('votes').select('*').eq('session_id', sessionId).eq('voter_id', user.id).single()
+      if (existingVote) setHasVoted(true)
+
+      // Compter les votes existants
+      const { count } = await supabase
+        .from('votes').select('*', { count: 'exact', head: true }).eq('session_id', sessionId)
+      setVotesIn(count ?? 0)
+
       setLoading(false)
     }
     load()
   }, [])
+
+  // Surveiller les votes en temps réel
+  useEffect(() => {
+    if (!sessionId) return
+    const channel = supabase
+      .channel(`votes-watch:${sessionId}`)
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'votes', filter: `session_id=eq.${sessionId}` },
+        async () => {
+          const { count } = await supabase
+            .from('votes').select('*', { count: 'exact', head: true }).eq('session_id', sessionId)
+          const newCount = count ?? 0
+          setVotesIn(newCount)
+
+          const { data: pl } = await supabase
+            .from('session_players').select('*').eq('session_id', sessionId)
+          const currentPlayers = pl ?? []
+          setPlayers(currentPlayers)
+
+          if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
+            await determineChef(currentPlayers)
+          }
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [sessionId])
 
   useSessionRealtime(sessionId, {
     onSessionUpdate: (s) => {
@@ -54,9 +93,8 @@ export default function SessionPage() {
 
   async function submitVote() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user || hasVoted) return
 
-    // Cas solo : le joueur est chef automatiquement
     if (players.length === 1) {
       const soloPlayer = players[0]
       setChef(soloPlayer)
@@ -71,28 +109,25 @@ export default function SessionPage() {
 
     if (!myVote) return
 
-    await supabase.from('votes').insert({
+    const { error } = await supabase.from('votes').insert({
       session_id: sessionId,
       voter_id: user.id,
       voted_for: myVote,
     })
 
-    const { count } = await supabase
-      .from('votes').select('*', { count: 'exact', head: true })
-      .eq('session_id', sessionId)
-    setVotesIn(count ?? 0)
-
-    if ((count ?? 0) >= players.length) {
-      await determineChef()
+    if (!error) {
+      setHasVoted(true)
     }
   }
 
-  async function determineChef() {
+  async function determineChef(currentPlayers: SessionPlayer[]) {
     const { data: votes } = await supabase
       .from('votes').select('voted_for').eq('session_id', sessionId)
 
+    if (!votes || votes.length === 0) return
+
     const tally: Record<string, number> = {}
-    votes?.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
+    votes.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
 
     const maxVotes = Math.max(...Object.values(tally))
     const winners = Object.entries(tally).filter(([, v]) => v === maxVotes).map(([id]) => id)
@@ -100,7 +135,7 @@ export default function SessionPage() {
     let chefId = winners[0]
 
     if (winners.length > 1) {
-      const winnerPlayers = players.filter(p => winners.includes(p.user_id))
+      const winnerPlayers = currentPlayers.filter(p => winners.includes(p.user_id))
       const names = winnerPlayers.map(p => p.pseudo)
       const result = resolveTiebreak(names)
       const winnerPlayer = winnerPlayers.find(p => p.pseudo === result.winner)
@@ -108,7 +143,7 @@ export default function SessionPage() {
       setTiebreakMsg(result.reason)
     }
 
-    const chefPlayer = players.find(p => p.user_id === chefId)
+    const chefPlayer = currentPlayers.find(p => p.user_id === chefId)
     setChef(chefPlayer ?? null)
 
     await supabase.from('session_players')
@@ -130,9 +165,6 @@ export default function SessionPage() {
       }
     }, 1000)
   }
-
-  const myPlayer = players.find(p => p.user_id === profile?.id)
-  const isChef = myPlayer?.is_chef ?? false
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -200,24 +232,30 @@ export default function SessionPage() {
               <div style={{ fontSize: '13px', color: '#888' }}>Le chef lancera la révélation du vin mystère</div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.5rem' }}>
-              {players.filter(p => p.user_id !== profile?.id).map(p => (
-                <div key={p.id}
-                  onClick={() => setMyVote(p.user_id)}
-                  style={{
-                    background: '#fff',
-                    border: myVote === p.user_id ? '2px solid #8d323b' : '0.5px solid #e0e0e0',
-                    borderRadius: '12px', padding: '1rem',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                  }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '500', color: '#8d323b' }}>
-                    {p.pseudo[0].toUpperCase()}
+            {hasVoted ? (
+              <div style={{ background: '#e8f0e8', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center', fontSize: '14px', color: '#27500A' }}>
+                ✓ Vote enregistré — en attente des autres joueurs...
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.5rem' }}>
+                {players.filter(p => p.user_id !== profile?.id).map(p => (
+                  <div key={p.id}
+                    onClick={() => setMyVote(p.user_id)}
+                    style={{
+                      background: '#fff',
+                      border: myVote === p.user_id ? '2px solid #8d323b' : '0.5px solid #e0e0e0',
+                      borderRadius: '12px', padding: '1rem',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
+                    }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '500', color: '#8d323b' }}>
+                      {p.pseudo[0].toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{p.pseudo}</div>
+                    {myVote === p.user_id && <div style={{ color: '#8d323b', fontSize: '18px' }}>✓</div>}
                   </div>
-                  <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{p.pseudo}</div>
-                  {myVote === p.user_id && <div style={{ color: '#8d323b', fontSize: '18px' }}>✓</div>}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {tiebreakMsg && (
               <div style={{ background: '#faeeda', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#633806', fontStyle: 'italic' }}>
@@ -225,17 +263,19 @@ export default function SessionPage() {
               </div>
             )}
 
-            <button onClick={submitVote}
-              disabled={!myVote && players.length > 1}
-              style={{
-                width: '100%', padding: '14px',
-                background: (!myVote && players.length > 1) ? '#c0a0a0' : '#8d323b',
-                color: '#fff', border: 'none', borderRadius: '12px',
-                fontSize: '15px', fontWeight: '500',
-                cursor: (!myVote && players.length > 1) ? 'default' : 'pointer'
-              }}>
-              {players.length === 1 ? 'Je suis le chef, on commence ! →' : 'Confirmer mon vote'}
-            </button>
+            {!hasVoted && (
+              <button onClick={submitVote}
+                disabled={!myVote && players.length > 1}
+                style={{
+                  width: '100%', padding: '14px',
+                  background: (!myVote && players.length > 1) ? '#c0a0a0' : '#8d323b',
+                  color: '#fff', border: 'none', borderRadius: '12px',
+                  fontSize: '15px', fontWeight: '500',
+                  cursor: (!myVote && players.length > 1) ? 'default' : 'pointer'
+                }}>
+                {players.length === 1 ? 'Je suis le chef, on commence ! →' : 'Confirmer mon vote'}
+              </button>
+            )}
 
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1rem' }}>
               {votesIn} / {players.length} votes
