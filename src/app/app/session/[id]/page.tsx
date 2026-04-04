@@ -37,8 +37,6 @@ export default function SessionPage() {
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
-      console.log('Session status on load:', sess?.status)
-
       if (sess?.status === 'voting') setPhase('voting')
       if (sess?.status === 'revealed') {
         router.push(`/app/session/${sessionId}/reveal`)
@@ -65,7 +63,6 @@ export default function SessionPage() {
   // Polling lobby
   useEffect(() => {
     if (!sessionId || phase !== 'lobby') return
-    console.log('Starting lobby polling')
     const interval = setInterval(async () => {
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
@@ -73,9 +70,7 @@ export default function SessionPage() {
 
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
-      console.log('Lobby polling - session status:', sess?.status)
       if (sess?.status === 'voting') {
-        console.log('Switching to voting phase!')
         setPhase('voting')
         clearInterval(interval)
       }
@@ -86,7 +81,6 @@ export default function SessionPage() {
   // Polling votes
   useEffect(() => {
     if (!sessionId || phase !== 'voting' || determiningChef) return
-    console.log('Starting vote polling')
     const interval = setInterval(async () => {
       const { count } = await supabase
         .from('votes').select('*', { count: 'exact', head: true })
@@ -99,10 +93,7 @@ export default function SessionPage() {
       const currentPlayers = pl ?? []
       setPlayers(currentPlayers)
 
-      console.log('Vote polling:', newCount, '/', currentPlayers.length)
-
       if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
-        console.log('All votes in! Determining chef...')
         clearInterval(interval)
         setDeterminingChef(true)
         await determineChef(currentPlayers)
@@ -145,25 +136,22 @@ export default function SessionPage() {
     if (!error) {
       setHasVoted(true)
 
-      // Vérification immédiate après le vote
-      const { count } = await supabase
-        .from('votes').select('*', { count: 'exact', head: true })
-        .eq('session_id', sessionId)
-      const newCount = count ?? 0
-      setVotesIn(newCount)
+      setTimeout(async () => {
+        const { count } = await supabase
+          .from('votes').select('*', { count: 'exact', head: true })
+          .eq('session_id', sessionId)
+        const newCount = count ?? 0
+        setVotesIn(newCount)
 
-      const { data: pl } = await supabase
-        .from('session_players').select('*').eq('session_id', sessionId)
-      const currentPlayers = pl ?? []
-      setPlayers(currentPlayers)
+        const { data: pl } = await supabase
+          .from('session_players').select('*').eq('session_id', sessionId)
+        const currentPlayers = pl ?? []
 
-      console.log('After vote check:', newCount, '/', currentPlayers.length)
-
-      if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
-        console.log('All votes in immediately! Determining chef...')
-        setDeterminingChef(true)
-        await determineChef(currentPlayers)
-      }
+        if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
+          setDeterminingChef(true)
+          await determineChef(currentPlayers)
+        }
+      }, 1000)
     }
   }
 
@@ -335,14 +323,26 @@ export default function SessionPage() {
 
         {/* COUNTDOWN */}
         {phase === 'countdown' && (
-          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-            <div style={{ fontSize: '14px', color: '#888', marginBottom: '1rem' }}>
-              {chef?.pseudo} lance la dégustation !
+          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '.5rem' }}>
+              Chef désigné
             </div>
-            <div style={{ fontSize: '80px', fontWeight: '500', color: '#8d323b', lineHeight: 1 }}>
+            <div style={{ fontSize: '24px', fontWeight: '500', color: '#1a1a1a', marginBottom: '.5rem' }}>
+              👑 {chef?.pseudo}
+            </div>
+            {tiebreakMsg ? (
+              <div style={{ background: '#faeeda', borderRadius: '12px', padding: '1rem', margin: '1rem 0', fontSize: '13px', color: '#633806', fontStyle: 'italic' }}>
+                🎲 Égalité départagée ! {tiebreakMsg}
+              </div>
+            ) : (
+              <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
+                élu chef par le groupe
+              </div>
+            )}
+            <div style={{ fontSize: '80px', fontWeight: '500', color: '#8d323b', lineHeight: 1, margin: '1rem 0' }}>
               {countdown <= 0 ? '🍷' : countdown}
             </div>
-            <div style={{ fontSize: '14px', color: '#888', marginTop: '1rem' }}>
+            <div style={{ fontSize: '14px', color: '#888' }}>
               La dégustation commence...
             </div>
           </div>
