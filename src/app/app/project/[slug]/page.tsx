@@ -34,7 +34,7 @@ export default function ProjectPage() {
           .from('wines').select('*').eq('project_id', proj.id).order('bottle_number')
         setWines(w ?? [])
 
-        // Étape 1 — sessions du joueur
+        // Étape 1 — sessions où CE joueur a participé
         const { data: myPlayers } = await supabase
           .from('session_players')
           .select('session_id')
@@ -42,7 +42,7 @@ export default function ProjectPage() {
 
         const mySessionIds = (myPlayers ?? []).map((p: { session_id: string }) => p.session_id)
 
-        // Étape 2 — sessions révélées parmi les siennes
+        // Étape 2 — parmi ces sessions, lesquelles sont révélées
         if (mySessionIds.length > 0) {
           const { data: sessions } = await supabase
             .from('sessions')
@@ -72,7 +72,6 @@ export default function ProjectPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
-      {/* Header */}
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <button onClick={() => router.push('/app/dashboard')}
@@ -177,24 +176,23 @@ export default function ProjectPage() {
                   const isRevealed = revealedWineIds.has(wine.id)
                   return (
                     <div key={wine.id}
-                      onClick={() => !isRevealed && router.push(`/app/session/new?wine=${wine.id}&project=${project?.id}`)}
+                      onClick={() => router.push(`/app/session/new?wine=${wine.id}&project=${project?.id}`)}
                       style={{
-                        background: '#fff', border: '0.5px solid #e0e0e0',
+                        background: '#fff',
+                        border: isRevealed ? '0.5px solid #c8e6c9' : '0.5px solid #e0e0e0',
                         borderRadius: '16px', padding: '1.25rem',
-                        cursor: isRevealed ? 'default' : 'pointer',
-                        textAlign: 'center',
-                        opacity: isRevealed ? 0.5 : 1,
+                        cursor: 'pointer', textAlign: 'center',
                       }}
-                      onMouseEnter={e => { if (!isRevealed) e.currentTarget.style.borderColor = '#8d323b' }}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = '#8d323b')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = isRevealed ? '#c8e6c9' : '#e0e0e0')}>
                       <div style={{ fontSize: '32px', marginBottom: '8px' }}>
                         {isRevealed ? '✓' : '🍾'}
                       </div>
                       <div style={{ fontWeight: '500', fontSize: '22px', color: '#8d323b', marginBottom: '4px' }}>
                         {wine.bottle_number}
                       </div>
-                      <div style={{ fontSize: '11px', color: '#888' }}>
-                        {isRevealed ? 'Dégusté' : wine.type}
+                      <div style={{ fontSize: '11px', color: isRevealed ? '#4CAF50' : '#888' }}>
+                        {isRevealed ? 'Dégusté ↺' : wine.type}
                       </div>
                     </div>
                   )
