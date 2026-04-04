@@ -34,25 +34,30 @@ export default function ProjectPage() {
           .from('wines').select('*').eq('project_id', proj.id).order('bottle_number')
         setWines(w ?? [])
 
-        // Charger les sessions révélées du joueur connecté
-        const { data: sessions } = await supabase
-          .from('sessions')
-          .select('wine_id')
-          .eq('project_id', proj.id)
-          .eq('status', 'revealed')
-          .in('id',
-            supabase
-              .from('session_players')
-              .select('session_id')
-              .eq('user_id', user.id)
-          )
+        // Étape 1 — sessions du joueur
+        const { data: myPlayers } = await supabase
+          .from('session_players')
+          .select('session_id')
+          .eq('user_id', user.id)
 
-        // Construire le set des wine_id révélés pour CE joueur
-        const revealed = new Set<string>(
-          (sessions ?? []).map((s: { wine_id: string }) => s.wine_id)
-        )
-        setRevealedWineIds(revealed)
+        const mySessionIds = (myPlayers ?? []).map((p: { session_id: string }) => p.session_id)
+
+        // Étape 2 — sessions révélées parmi les siennes
+        if (mySessionIds.length > 0) {
+          const { data: sessions } = await supabase
+            .from('sessions')
+            .select('wine_id')
+            .eq('project_id', proj.id)
+            .eq('status', 'revealed')
+            .in('id', mySessionIds)
+
+          const revealed = new Set<string>(
+            (sessions ?? []).map((s: { wine_id: string }) => s.wine_id)
+          )
+          setRevealedWineIds(revealed)
+        }
       }
+
       setLoading(false)
     }
     load()
