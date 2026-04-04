@@ -24,7 +24,6 @@ export default function RevealPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
-      // Calculer les scores
       await supabase.rpc('calculate_session_scores', { p_session_id: sessionId })
 
       const { data: sess } = await supabase
@@ -77,6 +76,12 @@ export default function RevealPage() {
   const aromeCounts = getAromeCounts()
   const maxArome = aromeCounts[0]?.[1] ?? 1
 
+  const prixAffiche = notes?.prix_exact
+    ? `CHF ${notes.prix_exact.toFixed(2)}`
+    : notes?.prix_chf
+    ? `CHF ${notes.prix_chf}`
+    : '—'
+
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif', paddingBottom: '2rem' }}>
 
@@ -96,21 +101,37 @@ export default function RevealPage() {
 
         {/* Vin révélé */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-          <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+          <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Vin mystère révélé
           </div>
-          <div style={{ fontSize: '48px', marginBottom: '8px' }}>🍾</div>
-          <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
+
+          {/* Photo bouteille ou emoji fallback */}
+          {notes?.image_url ? (
+            <img
+              src={notes.image_url}
+              alt={`${notes.cepage} ${notes.millesime}`}
+              style={{ height: '140px', objectFit: 'contain', marginBottom: '12px', borderRadius: '8px' }}
+            />
+          ) : (
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍾</div>
+          )}
+
+          <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '2px' }}>
             {notes?.cepage} {notes?.millesime}
           </div>
-          <div style={{ fontSize: '14px', color: '#888', marginBottom: '12px' }}>
+          {notes?.cave && (
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>
+              {notes.cave}
+            </div>
+          )}
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>
             {notes?.region}
           </div>
           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {notes?.region && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.region}</span>}
             {notes?.cepage && <span style={{ background: '#edeaf8', color: '#3C3489', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.cepage}</span>}
             {notes?.millesime && <span style={{ background: '#e8f0e8', color: '#27500A', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.millesime}</span>}
-            {notes?.prix_chf && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>CHF {notes.prix_chf}</span>}
+            {notes?.prix_exact && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>CHF {notes.prix_exact.toFixed(2)}</span>}
           </div>
         </div>
 
@@ -141,7 +162,7 @@ export default function RevealPage() {
         <div style={{ display: 'flex', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1rem' }}>
           {(['groupe', 'aromes', 'vin'] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)}
-              style={{ flex: 1, padding: '9px', background: activeTab === t ? accent : 'transparent', color: activeTab === t ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500', textTransform: 'capitalize' }}>
+              style={{ flex: 1, padding: '9px', background: activeTab === t ? accent : 'transparent', color: activeTab === t ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
               {t === 'groupe' ? 'Groupe' : t === 'aromes' ? 'Arômes' : 'Le vin'}
             </button>
           ))}
@@ -220,7 +241,7 @@ export default function RevealPage() {
               <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Prix & commande</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <div>
-                  <div style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a' }}>CHF {notes.prix_chf}</div>
+                  <div style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a' }}>{prixAffiche}</div>
                   <div style={{ fontSize: '12px', color: '#888' }}>Bouteille 75cl</div>
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', textAlign: 'right' }}>
