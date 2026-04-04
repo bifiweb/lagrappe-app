@@ -115,7 +115,7 @@ export default function AdminWinesPage() {
       prix_exact: isNaN(prixNum) ? null : prixNum,
       cave,
       image_url: imageUrl,
-    }), { onConflict: 'wine_id' })
+    }, { onConflict: 'wine_id' })
 
     const { data: w } = await supabase
       .from('wines')
