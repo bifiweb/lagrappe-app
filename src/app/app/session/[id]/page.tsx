@@ -49,7 +49,7 @@ export default function SessionPage() {
       setPlayers(pl ?? [])
 
       const { data: existingVote } = await supabase
-        .from('votes').select('*').eq('session_id', sessionId).eq('voter_id', user.id).single()
+        .from('votes').select('*').eq('session_id', sessionId).eq('voter_id', user.id).maybeSingle()
       if (existingVote) setHasVoted(true)
 
       const { count } = await supabase
