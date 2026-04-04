@@ -19,6 +19,7 @@ export default function SessionPage() {
   const [countdown, setCountdown] = useState(5)
   const [tiebreakMsg, setTiebreakMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [determiningChef, setDeterminingChef] = useState(false)
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -41,12 +42,10 @@ export default function SessionPage() {
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
 
-      // Vérifier si déjà voté
       const { data: existingVote } = await supabase
         .from('votes').select('*').eq('session_id', sessionId).eq('voter_id', user.id).single()
       if (existingVote) setHasVoted(true)
 
-      // Compter les votes existants
       const { count } = await supabase
         .from('votes').select('*', { count: 'exact', head: true }).eq('session_id', sessionId)
       setVotesIn(count ?? 0)
@@ -56,32 +55,31 @@ export default function SessionPage() {
     load()
   }, [])
 
-  // Surveiller les votes en temps réel
+  // Polling votes toutes les 2 secondes pendant la phase de vote
   useEffect(() => {
-    if (!sessionId) return
-    const channel = supabase
-      .channel(`votes-watch:${sessionId}`)
-      .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'votes', filter: `session_id=eq.${sessionId}` },
-        async () => {
-          const { count } = await supabase
-            .from('votes').select('*', { count: 'exact', head: true }).eq('session_id', sessionId)
-          const newCount = count ?? 0
-          setVotesIn(newCount)
+    if (!sessionId || phase !== 'voting' || determiningChef) return
 
-          const { data: pl } = await supabase
-            .from('session_players').select('*').eq('session_id', sessionId)
-          const currentPlayers = pl ?? []
-          setPlayers(currentPlayers)
+    const interval = setInterval(async () => {
+      const { count } = await supabase
+        .from('votes').select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId)
+      const newCount = count ?? 0
+      setVotesIn(newCount)
 
-          if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
-            await determineChef(currentPlayers)
-          }
-        }
-      )
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [sessionId])
+      const { data: pl } = await supabase
+        .from('session_players').select('*').eq('session_id', sessionId)
+      const currentPlayers = pl ?? []
+      setPlayers(currentPlayers)
+
+      if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
+        clearInterval(interval)
+        setDeterminingChef(true)
+        await determineChef(currentPlayers)
+      }
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [sessionId, phase, determiningChef])
 
   useSessionRealtime(sessionId, {
     onSessionUpdate: (s) => {
