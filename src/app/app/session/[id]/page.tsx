@@ -15,7 +15,7 @@ export default function SessionPage() {
   const [votesIn, setVotesIn] = useState(0)
   const [hasVoted, setHasVoted] = useState(false)
   const [chef, setChef] = useState<SessionPlayer | null>(null)
-  const [countdown, setCountdown] = useState(5)
+  const [countdown, setCountdown] = useState(10)
   const [tiebreakMsg, setTiebreakMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [determiningChef, setDeterminingChef] = useState(false)
@@ -192,8 +192,8 @@ export default function SessionPage() {
   }
 
   function startCountdown() {
-    let n = 5
-    setCountdown(5)
+    let n = 10
+    setCountdown(10)
     const interval = setInterval(() => {
       n--
       setCountdown(n)
@@ -324,22 +324,23 @@ export default function SessionPage() {
         {/* COUNTDOWN */}
         {phase === 'countdown' && (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '.5rem' }}>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>
               Chef désigné
             </div>
-            <div style={{ fontSize: '24px', fontWeight: '500', color: '#1a1a1a', marginBottom: '.5rem' }}>
-              👑 {chef?.pseudo}
+            <div style={{ fontSize: '48px', marginBottom: '.25rem' }}>👑</div>
+            <div style={{ fontSize: '36px', fontWeight: '500', color: '#8d323b', marginBottom: '.5rem' }}>
+              {chef?.pseudo}
             </div>
             {tiebreakMsg ? (
-              <div style={{ background: '#faeeda', borderRadius: '12px', padding: '1rem', margin: '1rem 0', fontSize: '13px', color: '#633806', fontStyle: 'italic' }}>
-                🎲 Égalité départagée ! {tiebreakMsg}
+              <div style={{ background: '#faeeda', borderRadius: '12px', padding: '1rem', margin: '1rem auto', maxWidth: '320px', fontSize: '13px', color: '#633806', fontStyle: 'italic' }}>
+                🎲 {tiebreakMsg}
               </div>
             ) : (
               <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
                 élu chef par le groupe
               </div>
             )}
-            <div style={{ fontSize: '80px', fontWeight: '500', color: '#8d323b', lineHeight: 1, margin: '1rem 0' }}>
+            <div style={{ fontSize: '72px', fontWeight: '500', color: '#8d323b', lineHeight: 1, margin: '1.5rem 0' }}>
               {countdown <= 0 ? '🍷' : countdown}
             </div>
             <div style={{ fontSize: '14px', color: '#888' }}>
