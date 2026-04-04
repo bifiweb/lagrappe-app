@@ -9,6 +9,7 @@ export default function ProjectPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [project, setProject] = useState<Project | null>(null)
   const [wines, setWines] = useState<Wine[]>([])
+  const [revealedWineIds, setRevealedWineIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'solo' | 'soiree' | null>(null)
   const router = useRouter()
@@ -32,6 +33,25 @@ export default function ProjectPage() {
         const { data: w } = await supabase
           .from('wines').select('*').eq('project_id', proj.id).order('bottle_number')
         setWines(w ?? [])
+
+        // Charger les sessions révélées du joueur connecté
+        const { data: sessions } = await supabase
+          .from('sessions')
+          .select('wine_id')
+          .eq('project_id', proj.id)
+          .eq('status', 'revealed')
+          .in('id',
+            supabase
+              .from('session_players')
+              .select('session_id')
+              .eq('user_id', user.id)
+          )
+
+        // Construire le set des wine_id révélés pour CE joueur
+        const revealed = new Set<string>(
+          (sessions ?? []).map((s: { wine_id: string }) => s.wine_id)
+        )
+        setRevealedWineIds(revealed)
       }
       setLoading(false)
     }
@@ -67,7 +87,7 @@ export default function ProjectPage() {
           <>
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', margin: '0 0 6px' }}>
-                Comment veux-tu jouer ?
+                Comment veux-tu déguster ?
               </h2>
               <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
                 Choisis ton mode de dégustation
@@ -88,7 +108,7 @@ export default function ProjectPage() {
                       Une bouteille
                     </div>
                     <div style={{ fontSize: '13px', color: '#888' }}>
-                      Dégustation d'une bouteille, solo ou en groupe
+                      Une bouteille à la fois, solo ou en groupe
                     </div>
                   </div>
                 </div>
@@ -148,28 +168,32 @@ export default function ProjectPage() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                {wines.map(wine => (
-                  <div key={wine.id}
-                    onClick={() => router.push(`/app/session/new?wine=${wine.id}&project=${project?.id}`)}
-                    style={{
-                      background: '#fff', border: '0.5px solid #e0e0e0',
-                      borderRadius: '16px', padding: '1.25rem',
-                      cursor: 'pointer', textAlign: 'center',
-                      opacity: wine.revealed ? 0.5 : 1,
-                    }}
-                    onMouseEnter={e => { if (!wine.revealed) e.currentTarget.style.borderColor = '#8d323b' }}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
-                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>
-                      {wine.revealed ? '✓' : '🍾'}
+                {wines.map(wine => {
+                  const isRevealed = revealedWineIds.has(wine.id)
+                  return (
+                    <div key={wine.id}
+                      onClick={() => !isRevealed && router.push(`/app/session/new?wine=${wine.id}&project=${project?.id}`)}
+                      style={{
+                        background: '#fff', border: '0.5px solid #e0e0e0',
+                        borderRadius: '16px', padding: '1.25rem',
+                        cursor: isRevealed ? 'default' : 'pointer',
+                        textAlign: 'center',
+                        opacity: isRevealed ? 0.5 : 1,
+                      }}
+                      onMouseEnter={e => { if (!isRevealed) e.currentTarget.style.borderColor = '#8d323b' }}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>
+                        {isRevealed ? '✓' : '🍾'}
+                      </div>
+                      <div style={{ fontWeight: '500', fontSize: '22px', color: '#8d323b', marginBottom: '4px' }}>
+                        {wine.bottle_number}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#888' }}>
+                        {isRevealed ? 'Dégusté' : wine.type}
+                      </div>
                     </div>
-                    <div style={{ fontWeight: '500', fontSize: '22px', color: '#8d323b', marginBottom: '4px' }}>
-                      {wine.bottle_number}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#888' }}>
-                      {wine.revealed ? 'Révélé' : wine.type}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </>
