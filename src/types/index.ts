@@ -194,7 +194,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
     bouche: ['Léger, facile', 'Souple, équilibré', 'Puissant, corsé'],
     accords: ['Salade', 'Charcuterie', 'Raclette', 'Poulet au four', 'Burger', 'Côte de boeuf', 'Civet de cerf', 'Fondant au chocolat'],
     cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah', 'Cabernet', 'Diolinoir', 'Garanoir', 'Cornalin', 'Humagne Rouge', 'Je sais pas'],
-    regions: ['Valais', 'Genève', 'Vaud', 'Neuchâtel', 'Tessin', 'Zurich', 'Grisons', 'Je sais pas'],
+    regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs', 'Je sais pas'],
   },
   blanc: {
     robes: ['Jaune pâle', 'Or / Paille', 'Ambrée', 'Rosée'],
@@ -207,7 +207,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
     bouche: ['Acidité vive', 'Équilibre gras/acidité', 'Gras, onctueux'],
     accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
     cepages: ['Chasselas', 'Chardonnay', 'Pinot Gris', 'Riesling', 'Sauvignon', 'Gewurztraminer', 'Viognier', 'Petite Arvine', 'Heida', 'Je sais pas'],
-    regions: ['Valais', 'Genève', 'Vaud', 'Neuchâtel', 'Tessin', 'Zurich', 'Grisons', 'Je sais pas'],
+    regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs', 'Je sais pas'],
   },
   rose: {
     robes: ['Rose pâle', 'Rose saumon', 'Rose vif', 'Rose orangé'],
