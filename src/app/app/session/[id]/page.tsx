@@ -275,8 +275,8 @@ export default function SessionPage() {
 
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '16px' }}>🍷</span>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="https://cdn.shopify.com/s/files/1/0383/1660/5571/files/La-grappe-logo-fond-blanc.png?v=1718613636" alt="La Grappe" style={{ width: '24px', height: '24px', objectFit: 'contain', borderRadius: '4px' }} />
           </div>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
             Bouteille #{session?.bottle_number}
