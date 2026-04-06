@@ -3,17 +3,20 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { Profile, Tasting, Wine, GrappisteNotes } from '@/types'
+import type { Profile, Tasting, Wine, GrappisteNotes, SessionPlayer } from '@/types'
 
 interface CaveEntry {
   tasting: Tasting
   wine: Wine
   notes: GrappisteNotes | null
+  players: SessionPlayer[]
+  sessionId: string
 }
 
 export default function CavePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<CaveEntry[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
@@ -47,11 +50,15 @@ export default function CavePage() {
       const { data: allNotes } = await supabase
         .from('grappiste_notes').select('*').in('wine_id', wineIds)
 
+      const { data: allPlayers } = await supabase
+        .from('session_players').select('*').in('session_id', sessionIds)
+
       const result: CaveEntry[] = tastings.map(t => {
         const session = sessions?.find(s => s.id === t.session_id)
         const wine = wines?.find(w => w.id === session?.wine_id)
         const notes = allNotes?.find(n => n.wine_id === wine?.id) ?? null
-        return { tasting: t, wine: wine!, notes }
+        const players = allPlayers?.filter(p => p.session_id === t.session_id) ?? []
+        return { tasting: t, wine: wine!, notes, players, sessionId: t.session_id }
       }).filter(e => e.wine)
 
       setEntries(result)
@@ -70,6 +77,8 @@ export default function CavePage() {
       <div style={{ color: '#888', fontSize: '14px' }}>Chargement de ta cave...</div>
     </div>
   )
+
+  const accent = '#8d323b'
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -114,72 +123,170 @@ export default function CavePage() {
               Déguste ton premier vin pour commencer ton historique
             </div>
             <button onClick={() => router.push('/app/dashboard')}
-              style={{ padding: '10px 20px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+              style={{ padding: '10px 20px', background: accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
               Commencer à déguster →
             </button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {entries.map(({ tasting, wine, notes }) => (
-              <div key={tasting.id} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem' }}>
-                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+            {entries.map(({ tasting, wine, notes, players, sessionId }) => {
+              const isOpen = expanded === tasting.id
 
-                  {/* Icône bouteille */}
-                  <div style={{ width: '48px', height: '80px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : '#f5f3e0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', padding: '6px', flexShrink: 0 }}>
-                    <div style={{ width: '16px', borderRadius: '3px 3px 8px 8px', background: wine.type === 'rouge' ? '#8d323b' : '#7a6a1a', height: `${Math.round((tasting.score_perso ?? 5) / 10 * 50)}px`, transition: 'height .6s' }} />
-                  </div>
+              return (
+                <div key={tasting.id} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', overflow: 'hidden' }}>
 
-                  <div style={{ flex: 1 }}>
-                    {/* Nom du vin */}
-                    <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '2px' }}>
-                      {notes ? `${notes.cepage} ${notes.millesime}` : `Bouteille #${wine.bottle_number}`}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
-                      {notes?.region ?? wine.type}
-                    </div>
+                  {/* En-tête de la carte — toujours visible */}
+                  <div
+                    onClick={() => setExpanded(isOpen ? null : tasting.id)}
+                    style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
 
-                    {/* Badges */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '8px' }}>
-                      {tasting.cepage_guess && (
-                        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '8px', background: tasting.cepage_guess === notes?.cepage ? '#e8f0e8' : '#f5f5f5', color: tasting.cepage_guess === notes?.cepage ? '#27500A' : '#888' }}>
-                          {tasting.cepage_guess === notes?.cepage ? '✓' : '✗'} {tasting.cepage_guess}
-                        </span>
-                      )}
-                      {tasting.region_guess && (
-                        <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '8px', background: tasting.region_guess === notes?.region ? '#e8f0e8' : '#f5f5f5', color: tasting.region_guess === notes?.region ? '#27500A' : '#888' }}>
-                          {tasting.region_guess === notes?.region ? '✓' : '✗'} {tasting.region_guess}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Score */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ fontSize: '12px', color: '#888' }}>
-                        Note perso : <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{tasting.score_perso ?? '—'}/10</span>
-                      </div>
-                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#8d323b' }}>
-                        {tasting.total_points.toLocaleString()} pts
-                      </div>
-                    </div>
-
-                    {/* Notes libres */}
-                    {tasting.notes_libres && (
-                      <div style={{ marginTop: '8px', fontSize: '12px', color: '#666', fontStyle: 'italic', borderTop: '0.5px solid #f0f0f0', paddingTop: '8px' }}>
-                        "{tasting.notes_libres}"
+                    {/* Photo ou icône */}
+                    {notes?.image_url ? (
+                      <img src={notes.image_url} alt=""
+                        style={{ width: '48px', height: '72px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: '48px', height: '72px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : '#f5f3e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                        🍾
                       </div>
                     )}
 
-                    {/* Lien Shopify */}
-                    {wine.shopify_url && (
-                      <a href={wine.shopify_url} target="_blank" rel="noreferrer"
-                        style={{ display: 'inline-block', marginTop: '10px', fontSize: '12px', color: '#8d323b', textDecoration: 'none', fontWeight: '500' }}>
-                        Racheter ce vin →
-                      </a>
-                    )}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '2px' }}>
+                        {notes ? `${notes.cepage} ${notes.millesime}` : `Bouteille #${wine.bottle_number}`}
+                      </div>
+                      {notes?.cave && (
+                        <div style={{ fontSize: '12px', color: '#888', marginBottom: '2px' }}>{notes.cave}</div>
+                      )}
+                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
+                        {notes?.region ?? wine.type}
+                      </div>
+
+                      {/* Joueurs */}
+                      {players.length > 0 && (
+                        <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                          {players.map(p => (
+                            <span key={p.id} style={{ fontSize: '11px', background: '#f5f5f5', color: '#666', padding: '2px 8px', borderRadius: '8px' }}>
+                              {p.pseudo}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '12px', color: '#888' }}>
+                          Note perso : <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{tasting.score_perso ?? '—'}/10</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>
+                            {tasting.total_points.toLocaleString()} pts
+                          </div>
+                          <div style={{ fontSize: '16px', color: '#888' }}>{isOpen ? '▲' : '▼'}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Détails — visible si ouvert */}
+                  {isOpen && (
+                    <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '1rem 1.25rem', background: '#fdf8f5' }}>
+
+                      {/* Scores détaillés */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Détail des points</div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                          {[
+                            { l: 'Robe', v: tasting.pts_robe },
+                            { l: 'Arômes', v: tasting.pts_aromes },
+                            { l: 'Bouche', v: tasting.pts_bouche },
+                            { l: 'Prix', v: tasting.pts_prix },
+                            { l: 'Millésime', v: tasting.pts_millesime },
+                            { l: 'Cépage', v: tasting.pts_cepage },
+                            { l: 'Région', v: tasting.pts_region },
+                          ].map(({ l, v }) => (
+                            <div key={l} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
+                              <div style={{ fontSize: '13px', fontWeight: '500', color: accent }}>{v}</div>
+                              <div style={{ fontSize: '10px', color: '#888' }}>{l}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Dégustation */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Ta dégustation</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {tasting.robe && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                              <span style={{ color: '#888' }}>Robe</span>
+                              <span style={{ color: '#1a1a1a', fontWeight: '500' }}>{tasting.robe} {tasting.robe === notes?.robe ? '✅' : notes?.robe ? '❌' : ''}</span>
+                            </div>
+                          )}
+                          {tasting.bouche && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                              <span style={{ color: '#888' }}>Bouche</span>
+                              <span style={{ color: '#1a1a1a', fontWeight: '500' }}>{tasting.bouche} {tasting.bouche === notes?.bouche ? '✅' : notes?.bouche ? '❌' : ''}</span>
+                            </div>
+                          )}
+                          {tasting.aromes?.length > 0 && (
+                            <div style={{ fontSize: '13px' }}>
+                              <span style={{ color: '#888' }}>Arômes : </span>
+                              <span style={{ color: '#1a1a1a' }}>
+                                {tasting.aromes.map(a => {
+                                  const isOk = notes?.aromes_officiels?.includes(a)
+                                  return `${a}${isOk ? ' ✓' : ''}`
+                                }).join(', ')}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Devinettes */}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Tes devinettes</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {[
+                            { l: 'Cépage', mine: tasting.cepage_guess, official: notes?.cepage },
+                            { l: 'Région', mine: tasting.region_guess, official: notes?.region },
+                            { l: 'Millésime', mine: tasting.millesime_estime?.toString(), official: notes?.millesime?.toString() },
+                            { l: 'Prix', mine: tasting.prix_estime, official: notes?.prix_chf },
+                          ].map(({ l, mine, official }) => mine ? (
+                            <div key={l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                              <span style={{ color: '#888' }}>{l}</span>
+                              <span style={{ color: '#1a1a1a', fontWeight: '500' }}>
+                                {mine} {mine === official ? '✅' : official ? '❌' : ''}
+                              </span>
+                            </div>
+                          ) : null)}
+                        </div>
+                      </div>
+
+                      {/* Notes libres */}
+                      {tasting.notes_libres && (
+                        <div style={{ marginBottom: '1rem', fontSize: '13px', color: '#666', fontStyle: 'italic', background: '#fff', borderRadius: '8px', padding: '10px 12px' }}>
+                          "{tasting.notes_libres}"
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => router.push(`/app/session/${sessionId}/reveal`)}
+                          style={{ flex: 1, padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
+                          Voir le reveal →
+                        </button>
+                        {wine.shopify_url && (
+                          <a href={wine.shopify_url} target="_blank" rel="noreferrer"
+                            style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', background: accent, color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: '500', textAlign: 'center', textDecoration: 'none' }}>
+                            Racheter →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
