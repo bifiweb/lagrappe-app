@@ -18,7 +18,7 @@ export default function TastingPage() {
   const [nezIntensite, setNezIntensite] = useState(3)
   const [aromes, setAromes] = useState<string[]>([])
   const [bouche, setBouche] = useState<string | null>(null)
-  const [accords, setAccords] = useState<string[]>([])
+  const [accord, setAccord] = useState<string | null>(null)
   const [prix, setPrix] = useState<string | null>(null)
   const [millesime, setMillesime] = useState('')
   const [cepage, setCepage] = useState<string | null>(null)
@@ -60,11 +60,6 @@ export default function TastingPage() {
     }
   }
 
-  function toggleAccord(a: string) {
-    if (accords.includes(a)) setAccords(accords.filter(x => x !== a))
-    else setAccords([...accords, a])
-  }
-
   async function submitTasting() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
@@ -77,7 +72,7 @@ export default function TastingPage() {
       nez_intensite: nezIntensite,
       aromes,
       bouche,
-      accords,
+      accords: accord ? [accord] : [],
       prix_estime: prix,
       millesime_estime: millesime ? parseInt(millesime) : null,
       cepage_guess: cepage,
@@ -230,11 +225,18 @@ export default function TastingPage() {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Accord idéal</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>
+                Accord idéal <span style={{ fontWeight: '400', color: '#888' }}>(1 seul choix)</span>
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {content.accords.map(a => (
-                  <button key={a} onClick={() => toggleAccord(a)}
-                    style={{ padding: '6px 12px', borderRadius: '16px', fontSize: '12px', cursor: 'pointer', border: accords.includes(a) ? 'none' : '0.5px solid #e0e0e0', background: accords.includes(a) ? accent : '#fff', color: accords.includes(a) ? '#fff' : '#666' }}>
+                  <button key={a} onClick={() => setAccord(accord === a ? null : a)}
+                    style={{
+                      padding: '6px 12px', borderRadius: '16px', fontSize: '12px', cursor: 'pointer',
+                      border: accord === a ? 'none' : '0.5px solid #e0e0e0',
+                      background: accord === a ? accent : '#fff',
+                      color: accord === a ? '#fff' : '#666',
+                    }}>
                     {a}
                   </button>
                 ))}
@@ -264,17 +266,6 @@ export default function TastingPage() {
                 ))}
               </div>
             </div>
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Idée du prix</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {PRIX_OPTIONS.map(p => (
-                  <button key={p} onClick={() => setPrix(p)}
-                    style={{ padding: '8px 14px', borderRadius: '20px', border: prix === p ? 'none' : '0.5px solid #e0e0e0', background: prix === p ? accent : '#fff', color: prix === p ? '#fff' : '#666', fontSize: '13px', cursor: 'pointer' }}>
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>Notes libres</div>
               <textarea value={notes} onChange={e => setNotes(e.target.value)}
@@ -297,6 +288,7 @@ export default function TastingPage() {
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666' }}>
               💡 Pas de panique — c'est une intuition, pas un examen. Même les pros se plantent !
             </div>
+
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Cépage ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -308,6 +300,7 @@ export default function TastingPage() {
                 ))}
               </div>
             </div>
+
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Région ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -319,11 +312,24 @@ export default function TastingPage() {
                 ))}
               </div>
             </div>
+
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Millésime ?</div>
               <input type="number" value={millesime} onChange={e => setMillesime(e.target.value)}
                 placeholder="Ex: 2021" min={2000} max={2025}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Prix estimé ?</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {PRIX_OPTIONS.map(p => (
+                  <button key={p} onClick={() => setPrix(p)}
+                    style={{ padding: '8px 14px', borderRadius: '20px', border: prix === p ? 'none' : '0.5px solid #e0e0e0', background: prix === p ? accent : '#fff', color: prix === p ? '#fff' : '#666', fontSize: '13px', cursor: 'pointer' }}>
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
           </>
         )}
