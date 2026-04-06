@@ -12,7 +12,7 @@ export default function RevealPage() {
   const [tastings, setTastings] = useState<Tasting[]>([])
   const [players, setPlayers] = useState<SessionPlayer[]>([])
   const [myTasting, setMyTasting] = useState<Tasting | null>(null)
-  const [activeTab, setActiveTab] = useState<'groupe' | 'aromes' | 'vin'>('groupe')
+  const [activeTab, setActiveTab] = useState<'groupe' | 'aromes' | 'moi' | 'vin'>('groupe')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const params = useParams()
@@ -82,6 +82,23 @@ export default function RevealPage() {
     ? `CHF ${notes.prix_chf}`
     : '—'
 
+  function CompareRow({ label, mine, official, correct }: { label: string, mine: string | null, official: string | null, correct: boolean }) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
+        <div style={{ fontSize: '12px', color: '#888', minWidth: '70px' }}>{label}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{mine ?? '—'}</div>
+          {!correct && official && (
+            <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+              Réponse : <span style={{ color: accent, fontWeight: '500' }}>{official}</span>
+            </div>
+          )}
+        </div>
+        <div style={{ fontSize: '18px' }}>{mine ? (correct ? '✅' : '❌') : '—'}</div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif', paddingBottom: '2rem' }}>
 
@@ -104,29 +121,19 @@ export default function RevealPage() {
           <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.05em' }}>
             Vin mystère révélé
           </div>
-
-          {/* Photo bouteille ou emoji fallback */}
           {notes?.image_url ? (
-            <img
-              src={notes.image_url}
-              alt={`${notes.cepage} ${notes.millesime}`}
-              style={{ height: '140px', objectFit: 'contain', marginBottom: '12px', borderRadius: '8px' }}
-            />
+            <img src={notes.image_url} alt={`${notes.cepage} ${notes.millesime}`}
+              style={{ height: '140px', objectFit: 'contain', marginBottom: '12px', borderRadius: '8px' }} />
           ) : (
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍾</div>
           )}
-
           <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '2px' }}>
             {notes?.cepage} {notes?.millesime}
           </div>
           {notes?.cave && (
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>
-              {notes.cave}
-            </div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>{notes.cave}</div>
           )}
-          <div style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>
-            {notes?.region}
-          </div>
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{notes?.region}</div>
           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {notes?.region && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.region}</span>}
             {notes?.cepage && <span style={{ background: '#edeaf8', color: '#3C3489', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.cepage}</span>}
@@ -160,10 +167,10 @@ export default function RevealPage() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1rem' }}>
-          {(['groupe', 'aromes', 'vin'] as const).map(t => (
+          {(['groupe', 'aromes', 'moi', 'vin'] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)}
-              style={{ flex: 1, padding: '9px', background: activeTab === t ? accent : 'transparent', color: activeTab === t ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
-              {t === 'groupe' ? 'Groupe' : t === 'aromes' ? 'Arômes' : 'Le vin'}
+              style={{ flex: 1, padding: '9px', background: activeTab === t ? accent : 'transparent', color: activeTab === t ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>
+              {t === 'groupe' ? 'Groupe' : t === 'aromes' ? 'Arômes' : t === 'moi' ? 'Moi' : 'Le vin'}
             </button>
           ))}
         </div>
@@ -217,6 +224,106 @@ export default function RevealPage() {
             <div style={{ marginTop: '1rem', fontSize: '12px', color: '#888' }}>
               ✓ = dans la liste officielle des grappistes
             </div>
+          </div>
+        )}
+
+        {/* TAB MOI */}
+        {activeTab === 'moi' && myTasting && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+            {/* Dégustation */}
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Ta dégustation</div>
+
+              <CompareRow
+                label="Robe"
+                mine={myTasting.robe}
+                official={notes?.robe ?? null}
+                correct={myTasting.robe === notes?.robe}
+              />
+              <CompareRow
+                label="Bouche"
+                mine={myTasting.bouche}
+                official={notes?.bouche ?? null}
+                correct={myTasting.bouche === notes?.bouche}
+              />
+
+              {/* Arômes */}
+              <div style={{ padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>Arômes</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {myTasting.aromes.map(a => {
+                    const isOfficial = notes?.aromes_officiels?.includes(a)
+                    return (
+                      <span key={a} style={{
+                        fontSize: '12px', padding: '4px 10px', borderRadius: '12px',
+                        background: isOfficial ? '#e8f0e8' : '#f5f5f5',
+                        color: isOfficial ? '#27500A' : '#666',
+                        fontWeight: isOfficial ? '500' : '400',
+                      }}>
+                        {a} {isOfficial ? '✓' : ''}
+                      </span>
+                    )
+                  })}
+                </div>
+                {notes?.aromes_officiels && (
+                  <div style={{ fontSize: '11px', color: '#888', marginTop: '6px' }}>
+                    ✓ = dans la liste officielle
+                  </div>
+                )}
+              </div>
+
+              {myTasting.score_perso !== null && (
+                <div style={{ padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Ton appréciation</div>
+                  <div style={{ fontSize: '20px', fontWeight: '500', color: accent }}>{myTasting.score_perso}/10</div>
+                </div>
+              )}
+
+              {myTasting.notes_libres && (
+                <div style={{ padding: '10px 0' }}>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Notes libres</div>
+                  <div style={{ fontSize: '13px', color: '#444', fontStyle: 'italic' }}>"{myTasting.notes_libres}"</div>
+                </div>
+              )}
+            </div>
+
+            {/* Devinettes */}
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Tes devinettes</div>
+
+              <CompareRow
+                label="Cépage"
+                mine={myTasting.cepage_guess}
+                official={notes?.cepage ?? null}
+                correct={myTasting.cepage_guess === notes?.cepage}
+              />
+              <CompareRow
+                label="Région"
+                mine={myTasting.region_guess}
+                official={notes?.region ?? null}
+                correct={myTasting.region_guess === notes?.region}
+              />
+              <CompareRow
+                label="Millésime"
+                mine={myTasting.millesime_estime?.toString() ?? null}
+                official={notes?.millesime?.toString() ?? null}
+                correct={myTasting.millesime_estime === notes?.millesime}
+              />
+              <CompareRow
+                label="Prix"
+                mine={myTasting.prix_estime}
+                official={notes?.prix_chf ?? null}
+                correct={myTasting.prix_estime === notes?.prix_chf}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* TAB MOI — pas de dégustation */}
+        {activeTab === 'moi' && !myTasting && (
+          <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '13px', color: '#888' }}>Tu n'as pas soumis de dégustation pour cette session.</div>
           </div>
         )}
 
