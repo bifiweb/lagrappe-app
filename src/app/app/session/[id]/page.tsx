@@ -19,6 +19,7 @@ export default function SessionPage() {
   const [tiebreakMsg, setTiebreakMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [determiningChef, setDeterminingChef] = useState(false)
+  const [copied, setCopied] = useState(false)
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -97,7 +98,6 @@ export default function SessionPage() {
       const currentPlayers = pl ?? []
       setPlayers(currentPlayers)
 
-      // Vérifier si le chef a déjà été désigné par un autre joueur
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
       if (sess?.status === 'countdown') {
@@ -127,6 +127,31 @@ export default function SessionPage() {
     setPhase('voting')
   }
 
+  function getShareUrl() {
+    if (typeof window === 'undefined') return ''
+    return `${window.location.origin}/app/session/${sessionId}/join`
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(getShareUrl())
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  function shareLink() {
+    const url = getShareUrl()
+    if (navigator.share) {
+      navigator.share({
+        title: 'La Grappe — Dégustation à l\'aveugle',
+        text: 'Rejoins ma session de dégustation !',
+        url,
+      })
+    } else {
+      // Fallback WhatsApp
+      window.open(`https://wa.me/?text=${encodeURIComponent(`Rejoins ma session de dégustation La Grappe ! ${url}`)}`, '_blank')
+    }
+  }
+
   async function submitVote() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || hasVoted) return
@@ -134,11 +159,9 @@ export default function SessionPage() {
     if (players.length === 1) {
       const soloPlayer = players[0]
       setChef(soloPlayer)
-      // Remettre tous les is_chef à false d'abord
       await supabase.from('session_players')
         .update({ is_chef: false })
         .eq('session_id', sessionId)
-      // Puis mettre le vrai chef
       await supabase.from('session_players')
         .update({ is_chef: true })
         .eq('session_id', sessionId)
@@ -208,18 +231,15 @@ export default function SessionPage() {
     const chefPlayer = currentPlayers.find(p => p.user_id === chefId)
     setChef(chefPlayer ?? null)
 
-    // Remettre tous les is_chef à false d'abord
     await supabase.from('session_players')
       .update({ is_chef: false })
       .eq('session_id', sessionId)
 
-    // Puis mettre le vrai chef
     await supabase.from('session_players')
       .update({ is_chef: true })
       .eq('session_id', sessionId)
       .eq('user_id', chefId)
 
-    // Mettre à jour le statut de la session pour synchroniser tous les joueurs
     await supabase.from('sessions')
       .update({ status: 'countdown' })
       .eq('id', sessionId)
@@ -236,7 +256,6 @@ export default function SessionPage() {
       setCountdown(n)
       if (n <= 0) {
         clearInterval(interval)
-        // Mettre à jour le statut pour rediriger tous les joueurs
         supabase.from('sessions')
           .update({ status: 'tasting' })
           .eq('id', sessionId)
@@ -289,10 +308,31 @@ export default function SessionPage() {
               ))}
             </div>
 
+            {/* Lien de partage */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>Partage ce lien à tes amis</div>
-              <div style={{ fontSize: '12px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                {typeof window !== 'undefined' ? `${window.location.origin}/app/session/${sessionId}/join` : ''}
+              <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>Invite tes amis à rejoindre</div>
+              <div style={{ fontSize: '11px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '10px' }}>
+                {getShareUrl()}
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={copyLink}
+                  style={{
+                    flex: 1, padding: '9px', border: '0.5px solid #e0e0e0',
+                    borderRadius: '8px', background: copied ? '#e8f0e8' : '#fff',
+                    color: copied ? '#27500A' : '#1a1a1a', fontSize: '13px',
+                    cursor: 'pointer', fontWeight: '500',
+                  }}>
+                  {copied ? '✓ Copié !' : '📋 Copier le lien'}
+                </button>
+                <button onClick={shareLink}
+                  style={{
+                    flex: 1, padding: '9px', border: 'none',
+                    borderRadius: '8px', background: '#8d323b',
+                    color: '#fff', fontSize: '13px',
+                    cursor: 'pointer', fontWeight: '500',
+                  }}>
+                  💬 Partager
+                </button>
               </div>
             </div>
 
