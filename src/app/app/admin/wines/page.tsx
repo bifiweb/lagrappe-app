@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { WINE_CONTENT } from '@/types'
-import type { Wine, GrappisteNotes, Project } from '@/types'
+import type { Wine, GrappisteNotes, Project, WineType } from '@/types'
 
 interface WineWithNotes extends Wine {
   grappiste_notes: GrappisteNotes | null
@@ -67,6 +67,13 @@ function MultiButtons({ options, values, onChange, accent = '#8d323b' }: {
   )
 }
 
+const WINE_TYPE_LABELS: Record<WineType, string> = {
+  rouge: '🔴 Rouge',
+  blanc: '⚪ Blanc',
+  rose: '🌸 Rosé',
+  petillant: '🫧 Pétillant',
+}
+
 export default function AdminWinesPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [wines, setWines] = useState<WineWithNotes[]>([])
@@ -78,6 +85,7 @@ export default function AdminWinesPage() {
   const supabase = createClient()
 
   // Form state
+  const [wineType, setWineType] = useState<WineType>('rouge')
   const [note, setNote] = useState('')
   const [description, setDescription] = useState('')
   const [robe, setRobe] = useState('')
@@ -120,6 +128,7 @@ export default function AdminWinesPage() {
   function openEdit(wine: WineWithNotes) {
     setEditingWine(wine)
     const n = wine.grappiste_notes
+    setWineType(wine.type)
     setNote(n?.note?.toString() ?? '')
     setDescription(n?.description ?? '')
     setRobe(n?.robe ?? '')
@@ -135,12 +144,22 @@ export default function AdminWinesPage() {
     setSuccess(false)
   }
 
+  // Quand le type change, reset les champs dépendants
+  function handleTypeChange(newType: WineType) {
+    setWineType(newType)
+    setRobe('')
+    setBouche('')
+    setCepage('')
+    setAromes([])
+  }
+
   async function saveWine() {
     if (!editingWine) return
     setSaving(true)
 
+    // Mettre à jour le type du vin
     await supabase.from('wines')
-      .update({ shopify_url: shopifyUrl })
+      .update({ shopify_url: shopifyUrl, type: wineType })
       .eq('id', editingWine.id)
 
     const prixNum = parseFloat(prixExact)
@@ -184,7 +203,6 @@ export default function AdminWinesPage() {
     </div>
   )
 
-  const wineType = editingWine?.type ?? 'rouge'
   const content = WINE_CONTENT[wineType]
   const accent = '#8d323b'
 
@@ -221,7 +239,7 @@ export default function AdminWinesPage() {
                   <img src={wine.grappiste_notes.image_url} alt=""
                     style={{ width: '36px', height: '48px', borderRadius: '6px', objectFit: 'contain', flexShrink: 0 }} />
                 ) : (
-                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : '#f5f3e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '500', fontSize: '16px', color: '#8d323b', flexShrink: 0 }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : wine.type === 'blanc' ? '#f5f3e0' : wine.type === 'rose' ? '#fce8f0' : '#e8f0fc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '500', fontSize: '16px', color: '#8d323b', flexShrink: 0 }}>
                     {wine.bottle_number}
                   </div>
                 )}
@@ -230,7 +248,7 @@ export default function AdminWinesPage() {
                     {wine.grappiste_notes?.cepage ? `${wine.grappiste_notes.cepage} ${wine.grappiste_notes.millesime ?? ''}` : `Bouteille #${wine.bottle_number}`}
                   </div>
                   <div style={{ fontSize: '12px', color: '#888' }}>
-                    {wine.type}
+                    {WINE_TYPE_LABELS[wine.type]}
                     {wine.grappiste_notes?.cave ? ` · ${wine.grappiste_notes.cave}` : ''}
                     {wine.grappiste_notes?.region ? ` · ${wine.grappiste_notes.region}` : ''}
                   </div>
@@ -253,7 +271,7 @@ export default function AdminWinesPage() {
         {editingWine && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', overflowY: 'auto', maxHeight: 'calc(100vh - 100px)' }}>
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '1rem' }}>
-              Bouteille #{editingWine.bottle_number} — {editingWine.type}
+              Bouteille #{editingWine.bottle_number}
             </div>
 
             {success && (
@@ -261,6 +279,25 @@ export default function AdminWinesPage() {
                 ✓ Sauvegardé !
               </div>
             )}
+
+            {/* Type de vin */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Type de vin</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {(Object.entries(WINE_TYPE_LABELS) as [WineType, string][]).map(([type, label]) => (
+                  <button key={type} onClick={() => handleTypeChange(type)}
+                    style={{
+                      padding: '6px 12px', borderRadius: '16px', fontSize: '13px', cursor: 'pointer',
+                      border: wineType === type ? 'none' : '0.5px solid #e0e0e0',
+                      background: wineType === type ? accent : '#fff',
+                      color: wineType === type ? '#fff' : '#666',
+                      fontWeight: wineType === type ? '500' : '400',
+                    }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Cave */}
             <div style={{ marginBottom: '12px' }}>
@@ -272,7 +309,7 @@ export default function AdminWinesPage() {
             {/* Cépage */}
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Cépage</label>
-              <SelectButtons options={content.cepages} value={cepage} onChange={setCepage} accent={accent} />
+              <SelectButtons options={content.cepages.filter(c => c !== 'Je sais pas')} value={cepage} onChange={setCepage} accent={accent} />
             </div>
 
             {/* Région */}
