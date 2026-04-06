@@ -326,9 +326,9 @@ export default function SessionPage() {
                 </button>
                 <button onClick={shareLink}
                   style={{
-                    flex: 1, padding: '9px', border: 'none',
-                    borderRadius: '8px', background: '#8d323b',
-                    color: '#fff', fontSize: '13px',
+                    flex: 1, padding: '9px', border: '0.5px solid #e0e0e0',
+                    borderRadius: '8px', background: '#fff',
+                    color: '#1a1a1a', fontSize: '13px',
                     cursor: 'pointer', fontWeight: '500',
                   }}>
                   💬 Partager
