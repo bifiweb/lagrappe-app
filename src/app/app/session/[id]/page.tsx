@@ -38,6 +38,10 @@ export default function SessionPage() {
       setSession(sess)
 
       if (sess?.status === 'voting') setPhase('voting')
+      if (sess?.status === 'tasting') {
+        router.push(`/app/tasting/${sessionId}`)
+        return
+      }
       if (sess?.status === 'revealed') {
         router.push(`/app/session/${sessionId}/reveal`)
         return
@@ -93,6 +97,20 @@ export default function SessionPage() {
       const currentPlayers = pl ?? []
       setPlayers(currentPlayers)
 
+      // Vérifier si le chef a déjà été désigné par un autre joueur
+      const { data: sess } = await supabase
+        .from('sessions').select('*').eq('id', sessionId).single()
+      if (sess?.status === 'countdown') {
+        const chefPlayer = currentPlayers.find(p => p.is_chef)
+        if (chefPlayer) {
+          setChef(chefPlayer)
+          setPhase('countdown')
+          clearInterval(interval)
+          startCountdown()
+        }
+        return
+      }
+
       if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
         clearInterval(interval)
         setDeterminingChef(true)
@@ -116,10 +134,18 @@ export default function SessionPage() {
     if (players.length === 1) {
       const soloPlayer = players[0]
       setChef(soloPlayer)
+      // Remettre tous les is_chef à false d'abord
+      await supabase.from('session_players')
+        .update({ is_chef: false })
+        .eq('session_id', sessionId)
+      // Puis mettre le vrai chef
       await supabase.from('session_players')
         .update({ is_chef: true })
         .eq('session_id', sessionId)
         .eq('user_id', user.id)
+      await supabase.from('sessions')
+        .update({ status: 'countdown' })
+        .eq('id', sessionId)
       setPhase('countdown')
       startCountdown()
       return
@@ -182,10 +208,21 @@ export default function SessionPage() {
     const chefPlayer = currentPlayers.find(p => p.user_id === chefId)
     setChef(chefPlayer ?? null)
 
+    // Remettre tous les is_chef à false d'abord
+    await supabase.from('session_players')
+      .update({ is_chef: false })
+      .eq('session_id', sessionId)
+
+    // Puis mettre le vrai chef
     await supabase.from('session_players')
       .update({ is_chef: true })
       .eq('session_id', sessionId)
       .eq('user_id', chefId)
+
+    // Mettre à jour le statut de la session pour synchroniser tous les joueurs
+    await supabase.from('sessions')
+      .update({ status: 'countdown' })
+      .eq('id', sessionId)
 
     setPhase('countdown')
     startCountdown()
@@ -199,7 +236,11 @@ export default function SessionPage() {
       setCountdown(n)
       if (n <= 0) {
         clearInterval(interval)
-        router.push(`/app/tasting/${sessionId}`)
+        // Mettre à jour le statut pour rediriger tous les joueurs
+        supabase.from('sessions')
+          .update({ status: 'tasting' })
+          .eq('id', sessionId)
+          .then(() => router.push(`/app/tasting/${sessionId}`))
       }
     }, 1000)
   }
