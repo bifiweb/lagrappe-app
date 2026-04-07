@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 type Mode = 'login' | 'signup' | 'forgot'
 
@@ -13,8 +13,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [redirect, setRedirect] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  useEffect(() => {
+    const r = searchParams.get('redirect')
+    if (r) setRedirect(r)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -23,14 +30,24 @@ export default function LoginPage() {
     setSuccess(null)
 
     if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirect
+            ? `${window.location.origin}/auth/confirm?redirect=${encodeURIComponent(redirect)}`
+            : `${window.location.origin}/app/dashboard`,
+        }
+      })
       if (error) setError(error.message)
-      else setSuccess('Compte créé ! Vérifie ton email pour confirmer.')
+      else setSuccess(redirect
+        ? 'Compte créé ! Vérifie ton email pour confirmer et rejoindre directement la session.'
+        : 'Compte créé ! Vérifie ton email pour confirmer.')
 
     } else if (mode === 'login') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError('Email ou mot de passe incorrect.')
-      else router.push('/app/dashboard')
+      else router.push(redirect ?? '/app/dashboard')
 
     } else if (mode === 'forgot') {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -68,13 +85,24 @@ export default function LoginPage() {
             La Grappe
           </h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-            Dégustation à l'aveugle
+            {redirect ? 'Connecte-toi pour rejoindre la session 🍷' : 'Dégustation à l\'aveugle'}
           </p>
         </div>
 
+        {/* Bannière session si redirect */}
+        {redirect && redirect.includes('/session/') && (
+          <div style={{ background: '#edeaf8', border: '0.5px solid #afa9ec', borderRadius: '12px', padding: '12px 16px', marginBottom: '1.5rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '13px', color: '#3C3489', fontWeight: '500' }}>
+              🍾 Tu as été invité à une dégustation !
+            </div>
+            <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '3px' }}>
+              Connecte-toi ou crée un compte pour rejoindre
+            </div>
+          </div>
+        )}
+
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem' }}>
 
-          {/* Tabs login / signup — cachés si mode forgot */}
           {mode !== 'forgot' && (
             <div style={{
               display: 'flex', border: '0.5px solid #e0e0e0',
@@ -95,7 +123,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Titre mode forgot */}
           {mode === 'forgot' && (
             <div style={{ marginBottom: '1.5rem' }}>
               <button onClick={() => { setMode('login'); setError(null); setSuccess(null) }}
@@ -116,42 +143,24 @@ export default function LoginPage() {
               <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
                 Email
               </label>
-              <input
-                type="email" required value={email}
+              <input type="email" required value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="ton@email.com"
-                style={{
-                  width: '100%', padding: '10px 12px',
-                  border: '0.5px solid #e0e0e0', borderRadius: '8px',
-                  fontSize: '14px', color: '#1a1a1a',
-                  background: '#fff', outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
+                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', background: '#fff', outline: 'none', boxSizing: 'border-box' }} />
             </div>
 
-            {/* Champ mot de passe — caché en mode forgot */}
             {mode !== 'forgot' && (
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
                   Mot de passe
                 </label>
-                <input
-                  type="password" required value={password}
+                <input type="password" required value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  style={{
-                    width: '100%', padding: '10px 12px',
-                    border: '0.5px solid #e0e0e0', borderRadius: '8px',
-                    fontSize: '14px', color: '#1a1a1a',
-                    background: '#fff', outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
+                  style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', background: '#fff', outline: 'none', boxSizing: 'border-box' }} />
               </div>
             )}
 
-            {/* Lien mot de passe oublié — visible seulement en mode login */}
             {mode === 'login' && (
               <div style={{ textAlign: 'right', marginBottom: '1.5rem', marginTop: '-4px' }}>
                 <button type="button"
@@ -165,26 +174,22 @@ export default function LoginPage() {
             {mode !== 'login' && <div style={{ marginBottom: '1.5rem' }} />}
 
             {error && (
-              <div style={{
-                background: '#fceae8', color: '#8d2020',
-                borderRadius: '8px', padding: '10px 12px',
-                fontSize: '13px', marginBottom: '1rem',
-              }}>{error}</div>
+              <div style={{ background: '#fceae8', color: '#8d2020', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginBottom: '1rem' }}>
+                {error}
+              </div>
             )}
             {success && (
-              <div style={{
-                background: '#e8f5e8', color: '#1a6b1a',
-                borderRadius: '8px', padding: '10px 12px',
-                fontSize: '13px', marginBottom: '1rem',
-              }}>{success}</div>
+              <div style={{ background: '#e8f5e8', color: '#1a6b1a', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginBottom: '1rem' }}>
+                {success}
+              </div>
             )}
 
             <button type="submit" disabled={loading} style={{
               width: '100%', padding: '13px',
               background: loading ? '#c0a0a0' : '#8d323b',
-              color: '#fff', border: 'none',
-              borderRadius: '8px', fontSize: '14px',
-              fontWeight: '500', cursor: loading ? 'default' : 'pointer',
+              color: '#fff', border: 'none', borderRadius: '8px',
+              fontSize: '14px', fontWeight: '500',
+              cursor: loading ? 'default' : 'pointer',
             }}>
               {loading ? 'Chargement...' :
                 mode === 'login' ? 'Se connecter' :
