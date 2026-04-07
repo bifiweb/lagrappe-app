@@ -21,39 +21,16 @@ export default function DashboardPage() {
         .from('profiles').select('*').eq('id', user.id).single()
       setProfile(prof)
 
-      // Admin voit tous les projets actifs
       if (prof?.role === 'admin') {
+        // Admin voit tous les projets actifs
         const { data: proj } = await supabase
           .from('projects').select('*').eq('active', true).order('created_at')
         setProjects(proj ?? [])
       } else {
-        // Récupérer les projets publics (sans membres) + projets où l'utilisateur est membre
-        const { data: allProjects } = await supabase
-          .from('projects').select('*').eq('active', true).order('created_at')
-
-        if (allProjects?.length) {
-          const projectIds = allProjects.map(p => p.id)
-
-          // Projets qui ont des membres restreints
-          const { data: allMembers } = await supabase
-            .from('project_members').select('project_id, user_id').in('project_id', projectIds)
-
-          // Projets où l'utilisateur est membre
-          const myProjectIds = new Set(
-            allMembers?.filter(m => m.user_id === user.id).map(m => m.project_id) ?? []
-          )
-
-          // Projets qui ont au moins 1 membre (donc restreints)
-          const restrictedProjectIds = new Set(
-            allMembers?.map(m => m.project_id) ?? []
-          )
-
-          const visibleProjects = allProjects.filter(p =>
-            // Public (pas de membres définis) OU l'utilisateur est membre
-            !restrictedProjectIds.has(p.id) || myProjectIds.has(p.id)
-          )
-          setProjects(visibleProjects)
-        }
+        // Utilise la fonction SQL qui gère la visibilité
+        const { data: proj } = await supabase
+          .rpc('get_visible_projects', { p_user_id: user.id })
+        setProjects(proj ?? [])
       }
 
       setLoading(false)
