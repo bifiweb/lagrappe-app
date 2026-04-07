@@ -21,9 +21,9 @@ export default function JoinProjectPage() {
       }
 
       // Trouver le projet par token
-      const { data: project } = await supabase
+      const { data: projectRows } = await supabase
         .rpc('get_project_by_invite_token', { p_token: token })
-      const project = projects?.[0] ?? null
+      const project = projectRows?.[0] ?? null
 
       if (!project) {
         setStatus('error')
