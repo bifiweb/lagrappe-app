@@ -343,7 +343,7 @@ export default function AdminProjectsPage() {
                         Nombre de bouteilles
                       </label>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {[3, 4, 5, 6, 7, 8, 9, 10, 12].map(n => (
+                        {[1, 2, 3, 4, 5, 6, 9, 12].map(n => (
                           <button key={n} onClick={() => setBottleCount(n)}
                             style={{
                               width: '44px', height: '44px', borderRadius: '8px', fontSize: '15px', fontWeight: '500', cursor: 'pointer',
