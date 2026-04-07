@@ -21,9 +21,41 @@ export default function DashboardPage() {
         .from('profiles').select('*').eq('id', user.id).single()
       setProfile(prof)
 
-      const { data: proj } = await supabase
-        .from('projects').select('*').eq('active', true).order('created_at')
-      setProjects(proj ?? [])
+      // Admin voit tous les projets actifs
+      if (prof?.role === 'admin') {
+        const { data: proj } = await supabase
+          .from('projects').select('*').eq('active', true).order('created_at')
+        setProjects(proj ?? [])
+      } else {
+        // Récupérer les projets publics (sans membres) + projets où l'utilisateur est membre
+        const { data: allProjects } = await supabase
+          .from('projects').select('*').eq('active', true).order('created_at')
+
+        if (allProjects?.length) {
+          const projectIds = allProjects.map(p => p.id)
+
+          // Projets qui ont des membres restreints
+          const { data: allMembers } = await supabase
+            .from('project_members').select('project_id, user_id').in('project_id', projectIds)
+
+          // Projets où l'utilisateur est membre
+          const myProjectIds = new Set(
+            allMembers?.filter(m => m.user_id === user.id).map(m => m.project_id) ?? []
+          )
+
+          // Projets qui ont au moins 1 membre (donc restreints)
+          const restrictedProjectIds = new Set(
+            allMembers?.map(m => m.project_id) ?? []
+          )
+
+          const visibleProjects = allProjects.filter(p =>
+            // Public (pas de membres définis) OU l'utilisateur est membre
+            !restrictedProjectIds.has(p.id) || myProjectIds.has(p.id)
+          )
+          setProjects(visibleProjects)
+        }
+      }
+
       setLoading(false)
     }
     load()
@@ -47,8 +79,12 @@ export default function DashboardPage() {
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '56px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: '16px' }}>🍷</span>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', border: '0.5px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img
+                src="https://cdn.shopify.com/s/files/1/0383/1660/5571/files/La-grappe-logo-fond-blanc.png?v=1718613636"
+                alt="La Grappe"
+                style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+              />
             </div>
             <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>La Grappe</span>
           </div>
@@ -67,7 +103,7 @@ export default function DashboardPage() {
 
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
-        {/* Salutation + accès rapide */}
+        {/* Salutation */}
         <div style={{ marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: '0 0 4px' }}>
             Bonjour {profile?.display_name ?? profile?.email?.split('@')[0]} 👋
@@ -75,7 +111,6 @@ export default function DashboardPage() {
           <p style={{ fontSize: '14px', color: '#888', margin: '0 0 12px' }}>
             Choisis un projet pour commencer à déguster
           </p>
-          {/* Accès rapide cave + quiz */}
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => router.push('/app/cave')}
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
@@ -88,14 +123,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Projets */}
         {projects.length === 0 ? (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '32px', marginBottom: '1rem' }}>🍾</div>
             <p style={{ color: '#888', fontSize: '14px', margin: '0 0 1rem' }}>
               Aucun projet disponible pour l'instant.
             </p>
             {profile?.role === 'admin' && (
-              <button
-                onClick={() => router.push('/app/admin')}
+              <button onClick={() => router.push('/app/admin/projects')}
                 style={{ padding: '10px 20px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
                 Créer un projet →
               </button>
@@ -108,8 +144,7 @@ export default function DashboardPage() {
                 onClick={() => router.push(`/app/project/${project.slug}`)}
                 style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#8d323b')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}
-              >
+                onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                   <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
                     🍾
@@ -138,7 +173,7 @@ export default function DashboardPage() {
               Administration
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button onClick={() => router.push('/app/admin')}
+              <button onClick={() => router.push('/app/admin/projects')}
                 style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
                 Gérer les projets
               </button>
