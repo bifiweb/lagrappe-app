@@ -79,8 +79,8 @@ export default function RevealPage() {
   const prixAffiche = notes?.prix_exact
     ? `CHF ${notes.prix_exact.toFixed(2)}`
     : notes?.prix_chf
-    ? `CHF ${notes.prix_chf}`
-    : '—'
+      ? `CHF ${notes.prix_chf}`
+      : '—'
 
   function CompareRow({ label, mine, official, correct }: { label: string, mine: string | null, official: string | null, correct: boolean }) {
     return (
@@ -206,23 +206,56 @@ export default function RevealPage() {
 
         {/* TAB ARÔMES */}
         {activeTab === 'aromes' && (
-          <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Arômes les plus cités</div>
-            {aromeCounts.map(([arome, count]) => {
-              const isOfficial = notes?.aromes_officiels?.includes(arome)
-              return (
-                <div key={arome} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '12px', color: '#444', minWidth: '100px' }}>{arome}</div>
-                  <div style={{ flex: 1, height: '5px', background: '#f0f0f0', borderRadius: '3px' }}>
-                    <div style={{ height: '5px', borderRadius: '3px', background: isOfficial ? '#7a6a1a' : accent, width: `${Math.round(count / maxArome * 100)}%`, transition: 'width .6s' }} />
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#888', minWidth: '28px' }}>{count}/{players.length}</div>
-                  {isOfficial && <span style={{ fontSize: '10px', background: '#faeeda', color: '#633806', padding: '2px 6px', borderRadius: '6px' }}>✓</span>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+            {/* Mes arômes */}
+            {myTasting && myTasting.aromes.length > 0 && (
+              <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
+                <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Mes arômes</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {myTasting.aromes.map(a => {
+                    const isOfficial = notes?.aromes_officiels?.includes(a)
+                    return (
+                      <span key={a} style={{
+                        fontSize: '12px', padding: '4px 12px', borderRadius: '12px',
+                        background: isOfficial ? '#e8f0e8' : '#f5ede8',
+                        color: isOfficial ? '#27500A' : '#8d323b',
+                        fontWeight: '500',
+                        border: isOfficial ? '0.5px solid #c8e6c9' : '0.5px solid #f5c6c6',
+                      }}>
+                        {a} {isOfficial ? '✓' : ''}
+                      </span>
+                    )
+                  })}
                 </div>
-              )
-            })}
-            <div style={{ marginTop: '1rem', fontSize: '12px', color: '#888' }}>
-              ✓ = dans la liste officielle des grappistes
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>
+                  ✓ = dans la liste officielle des grappistes
+                </div>
+              </div>
+            )}
+
+            {/* Arômes du groupe */}
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Arômes du groupe</div>
+              {aromeCounts.map(([arome, count]) => {
+                const isOfficial = notes?.aromes_officiels?.includes(arome)
+                const isMine = myTasting?.aromes?.includes(arome)
+                return (
+                  <div key={arome} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '12px', color: isMine ? accent : '#444', minWidth: '100px', fontWeight: isMine ? '500' : '400' }}>
+                      {arome} {isMine ? '👤' : ''}
+                    </div>
+                    <div style={{ flex: 1, height: '5px', background: '#f0f0f0', borderRadius: '3px' }}>
+                      <div style={{ height: '5px', borderRadius: '3px', background: isOfficial ? '#7a6a1a' : accent, width: `${Math.round(count / maxArome * 100)}%`, transition: 'width .6s' }} />
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#888', minWidth: '28px' }}>{count}/{players.length}</div>
+                    {isOfficial && <span style={{ fontSize: '10px', background: '#faeeda', color: '#633806', padding: '2px 6px', borderRadius: '6px' }}>✓</span>}
+                  </div>
+                )
+              })}
+              <div style={{ marginTop: '1rem', fontSize: '12px', color: '#888' }}>
+                👤 = ton arôme · ✓ = liste officielle
+              </div>
             </div>
           </div>
         )}
