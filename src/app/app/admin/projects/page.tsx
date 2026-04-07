@@ -359,52 +359,70 @@ export default function AdminProjectsPage() {
 
             {/* Section Accès */}
             {activeSection === 'acces' && (
-              <div>
+            <div>
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Visibilité</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Visibilité</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div onClick={() => setAccessMode('all')}
-                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'all' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'all' ? '#fdf5f5' : '#fff' }}>
-                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🌍 Public</div>
-                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Tous les utilisateurs voient ce projet</div>
+                    style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'all' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'all' ? '#fdf5f5' : '#fff' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🌍 Public</div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Tous les utilisateurs voient ce projet</div>
                     </div>
                     <div onClick={() => setAccessMode('restricted')}
-                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'restricted' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'restricted' ? '#fdf5f5' : '#fff' }}>
-                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🔒 Restreint</div>
-                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Uniquement les utilisateurs sélectionnés</div>
+                    style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'restricted' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'restricted' ? '#fdf5f5' : '#fff' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🔒 Restreint</div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Uniquement les utilisateurs sélectionnés</div>
                     </div>
-                  </div>
+                </div>
                 </div>
 
                 {accessMode === 'restricted' && (
-                  <div>
+                <div>
                     <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>
-                      Utilisateurs autorisés <span style={{ fontWeight: '400', color: '#aaa' }}>({memberIds.length} sélectionnés)</span>
+                    Utilisateurs autorisés <span style={{ fontWeight: '400', color: '#aaa' }}>({memberIds.length} sélectionnés)</span>
                     </label>
-                    <div style={{ maxHeight: '250px', overflowY: 'auto', border: '0.5px solid #e0e0e0', borderRadius: '8px' }}>
-                      {users.filter(u => u.role !== 'admin').map(user => (
+                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '0.5px solid #e0e0e0', borderRadius: '8px', marginBottom: '12px' }}>
+                    {users.filter(u => u.role !== 'admin').map(user => (
                         <div key={user.id}
-                          onClick={() => toggleMember(user.id)}
-                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderBottom: '0.5px solid #f0f0f0', cursor: 'pointer', background: memberIds.includes(user.id) ? '#fdf5f5' : '#fff' }}>
-                          <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '500', color: accent, flexShrink: 0 }}>
+                        onClick={() => toggleMember(user.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderBottom: '0.5px solid #f0f0f0', cursor: 'pointer', background: memberIds.includes(user.id) ? '#fdf5f5' : '#fff' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '500', color: accent, flexShrink: 0 }}>
                             {(user.display_name ?? user.email)[0].toUpperCase()}
-                          </div>
-                          <div style={{ flex: 1 }}>
+                        </div>
+                        <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
-                              {user.display_name ?? '—'}
+                            {user.display_name ?? '—'}
                             </div>
                             <div style={{ fontSize: '11px', color: '#888' }}>{user.email}</div>
-                          </div>
-                          <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: memberIds.includes(user.id) ? 'none' : '1.5px solid #ddd', background: memberIds.includes(user.id) ? accent : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            {memberIds.includes(user.id) && <span style={{ color: '#fff', fontSize: '11px' }}>✓</span>}
-                          </div>
                         </div>
-                      ))}
+                        <div style={{ width: '18px', height: '18px', borderRadius: '4px', border: memberIds.includes(user.id) ? 'none' : '1.5px solid #ddd', background: memberIds.includes(user.id) ? accent : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {memberIds.includes(user.id) && <span style={{ color: '#fff', fontSize: '11px' }}>✓</span>}
+                        </div>
+                        </div>
+                    ))}
                     </div>
-                  </div>
+
+            {/* Lien d'invitation */}
+            {editingProject && (
+            <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '10px 12px' }}>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>
+                🔗 Lien d'invitation
+                </div>
+                <div style={{ fontSize: '11px', color: accent, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '8px' }}>
+                {typeof window !== 'undefined' ? `${window.location.origin}/app/join/${(editingProject as any).invite_token}` : ''}
+                </div>
+                <button onClick={() => navigator.clipboard.writeText(
+                `${window.location.origin}/app/join/${(editingProject as any).invite_token}`
                 )}
-              </div>
+                style={{ fontSize: '12px', padding: '5px 10px', border: '0.5px solid #e0e0e0', borderRadius: '6px', background: '#fff', cursor: 'pointer', color: '#444' }}>
+                📋 Copier le lien
+                </button>
+            </div>
             )}
+        </div>
+        )}
+    </div>
+    )}
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
               <button onClick={() => { setCreating(false); setEditingProject(null) }}
