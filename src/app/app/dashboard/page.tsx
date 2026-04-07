@@ -155,6 +155,10 @@ export default function DashboardPage() {
               Administration
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button onClick={() => router.push('/app/admin')}
+                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
+                Vue globale
+              </button>
               <button onClick={() => router.push('/app/admin/projects')}
                 style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
                 Gérer les projets
