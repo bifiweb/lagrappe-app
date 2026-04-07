@@ -20,9 +20,15 @@ export default function JoinProjectPage() {
         return
       }
 
-      // Trouver le projet par token
-      const { data: projectRows } = await supabase
+      console.log('Token:', token)
+      console.log('User:', user.id)
+
+      const { data: projectRows, error: rpcError } = await supabase
         .rpc('get_project_by_invite_token', { p_token: token })
+
+      console.log('ProjectRows:', projectRows)
+      console.log('RPC Error:', rpcError)
+
       const project = projectRows?.[0] ?? null
 
       if (!project) {
@@ -32,7 +38,6 @@ export default function JoinProjectPage() {
 
       setProjectName(project.name)
 
-      // Vérifier si déjà membre
       const { data: existing } = await supabase
         .from('project_members')
         .select('*')
@@ -46,12 +51,12 @@ export default function JoinProjectPage() {
         return
       }
 
-      // Ajouter comme membre
       const { error } = await supabase
         .from('project_members')
         .insert({ project_id: project.id, user_id: user.id })
 
       if (error) {
+        console.log('Insert error:', error)
         setStatus('error')
       } else {
         setStatus('success')
