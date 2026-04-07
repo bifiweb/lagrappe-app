@@ -3,7 +3,19 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { Profile } from '@/types'
+
+interface PlayerSummary {
+  pseudo: string
+  email: string
+  points: number
+  score_perso: number | null
+  cepage_correct: boolean
+  region_correct: boolean
+  prix_correct: boolean
+  millesime_correct: boolean
+  aromes: string[]
+  notes_libres: string | null
+}
 
 interface SessionSummary {
   id: string
@@ -14,17 +26,7 @@ interface SessionSummary {
   wine_cepage: string
   wine_region: string
   project_name: string
-  players: {
-    pseudo: string
-    points: number
-    score_perso: number | null
-    cepage_correct: boolean
-    region_correct: boolean
-    prix_correct: boolean
-    millesime_correct: boolean
-    aromes: string[]
-    notes_libres: string | null
-  }[]
+  players: PlayerSummary[]
 }
 
 export default function AdminMainPage() {
@@ -44,7 +46,6 @@ export default function AdminMainPage() {
         .from('profiles').select('*').eq('id', user.id).single()
       if (prof?.role !== 'admin') { router.push('/app/dashboard'); return }
 
-      // Charger toutes les sessions
       const { data: rawSessions } = await supabase
         .from('sessions')
         .select('*')
@@ -52,16 +53,16 @@ export default function AdminMainPage() {
 
       if (!rawSessions?.length) { setLoading(false); return }
 
-      // Charger les wines, notes, tastings, players
       const wineIds = [...new Set(rawSessions.map(s => s.wine_id))]
       const sessionIds = rawSessions.map(s => s.id)
 
-      const [{ data: wines }, { data: notes }, { data: tastings }, { data: players }, { data: projects }] = await Promise.all([
+      const [{ data: wines }, { data: notes }, { data: tastings }, { data: players }, { data: projects }, { data: profiles }] = await Promise.all([
         supabase.from('wines').select('*').in('id', wineIds),
         supabase.from('grappiste_notes').select('*').in('wine_id', wineIds),
         supabase.from('tastings').select('*').in('session_id', sessionIds),
         supabase.from('session_players').select('*').in('session_id', sessionIds),
         supabase.from('projects').select('*'),
+        supabase.from('profiles').select('id, email, display_name'),
       ])
 
       const summaries: SessionSummary[] = rawSessions.map(session => {
@@ -71,10 +72,12 @@ export default function AdminMainPage() {
         const sessionTastings = tastings?.filter(t => t.session_id === session.id) ?? []
         const sessionPlayers = players?.filter(p => p.session_id === session.id) ?? []
 
-        const playersSummary = sessionPlayers.map(p => {
+        const playersSummary: PlayerSummary[] = sessionPlayers.map(p => {
           const tasting = sessionTastings.find(t => t.user_id === p.user_id)
+          const profile = profiles?.find(pr => pr.id === p.user_id)
           return {
             pseudo: p.pseudo,
+            email: profile?.email ?? '—',
             points: p.points_session ?? 0,
             score_perso: tasting?.score_perso ?? null,
             cepage_correct: tasting?.cepage_guess === note?.cepage,
@@ -109,6 +112,42 @@ export default function AdminMainPage() {
     return new Date(d).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
+  function exportCSV() {
+    const rows = [
+      ['Date', 'Projet', 'Vin', 'Cépage', 'Région', 'Pseudo', 'Email', 'Points', 'Note perso', 'Cépage correct', 'Région correcte', 'Prix correct', 'Millésime correct', 'Notes libres']
+    ]
+
+    sessions.filter(s => s.status === 'revealed').forEach(session => {
+      session.players.forEach(player => {
+        rows.push([
+          formatDate(session.created_at),
+          session.project_name,
+          session.wine_name,
+          session.wine_cepage,
+          session.wine_region,
+          player.pseudo,
+          player.email,
+          player.points.toString(),
+          player.score_perso?.toString() ?? '—',
+          player.cepage_correct ? 'Oui' : 'Non',
+          player.region_correct ? 'Oui' : 'Non',
+          player.prix_correct ? 'Oui' : 'Non',
+          player.millesime_correct ? 'Oui' : 'Non',
+          player.notes_libres ?? '',
+        ])
+      })
+    })
+
+    const csv = rows.map(r => r.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `lagrappe-export-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const filtered = sessions.filter(s => {
     if (filterStatus === 'revealed') return s.status === 'revealed'
     if (filterStatus === 'active') return s.status !== 'revealed'
@@ -131,6 +170,10 @@ export default function AdminMainPage() {
           <button onClick={() => router.push('/app/dashboard')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Vue globale</span>
+          <button onClick={exportCSV}
+            style={{ padding: '7px 14px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>
+            ↓ Export CSV
+          </button>
           <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>Admin</span>
         </div>
       </div>
@@ -166,18 +209,16 @@ export default function AdminMainPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {filtered.map(session => {
             const isOpen = expanded === session.id
-            const avgScore = session.players.length
-              ? Math.round(session.players.reduce((s, p) => s + (p.score_perso ?? 0), 0) / session.players.filter(p => p.score_perso !== null).length * 10) / 10
+            const playersWithScore = session.players.filter(p => p.score_perso !== null)
+            const avgScore = playersWithScore.length
+              ? Math.round(playersWithScore.reduce((s, p) => s + (p.score_perso ?? 0), 0) / playersWithScore.length * 10) / 10
               : null
-            const topPlayer = session.players[0]
 
             return (
               <div key={session.id} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', overflow: 'hidden' }}>
 
-                {/* Header session */}
                 <div onClick={() => setExpanded(isOpen ? null : session.id)}
                   style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
-
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
                       <span style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{session.wine_name}</span>
@@ -205,56 +246,48 @@ export default function AdminMainPage() {
                   </div>
                 </div>
 
-                {/* Détails session */}
                 {isOpen && (
                   <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '1rem 1.25rem', background: '#fdf8f5' }}>
 
-                    {/* Infos vin */}
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '11px', background: '#edeaf8', color: '#3C3489', padding: '3px 10px', borderRadius: '8px' }}>{session.wine_cepage}</span>
                       <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '3px 10px', borderRadius: '8px' }}>{session.wine_region}</span>
                     </div>
 
-                    {/* Classement joueurs */}
                     <div style={{ marginBottom: '1rem' }}>
-                      <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>
-                        Joueurs
-                      </div>
+                      <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Joueurs</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {session.players.map((player, i) => (
                           <div key={player.pseudo} style={{ background: '#fff', borderRadius: '10px', padding: '10px 12px', border: '0.5px solid #e0e0e0' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                               <span style={{ fontSize: '12px', color: '#888', minWidth: '16px' }}>{i + 1}</span>
-                              <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', flex: 1 }}>
-                                {player.pseudo} {i === 0 ? '👑' : ''}
-                              </span>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
+                                  {player.pseudo} {i === 0 ? '👑' : ''}
+                                </div>
+                                <div style={{ fontSize: '11px', color: '#aaa' }}>{player.email}</div>
+                              </div>
                               {player.score_perso !== null && (
-                                <span style={{ fontSize: '12px', color: '#888' }}>
-                                  ❤️ {player.score_perso}/10
-                                </span>
+                                <span style={{ fontSize: '12px', color: '#888' }}>❤️ {player.score_perso}/10</span>
                               )}
                               <span style={{ fontSize: '13px', fontWeight: '500', color: accent }}>
                                 {player.points.toLocaleString()} pts
                               </span>
                             </div>
 
-                            {/* Badges résultats */}
                             <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '6px', background: player.cepage_correct ? '#e8f0e8' : '#f5f5f5', color: player.cepage_correct ? '#27500A' : '#888' }}>
-                                {player.cepage_correct ? '✓' : '✗'} Cépage
-                              </span>
-                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '6px', background: player.region_correct ? '#e8f0e8' : '#f5f5f5', color: player.region_correct ? '#27500A' : '#888' }}>
-                                {player.region_correct ? '✓' : '✗'} Région
-                              </span>
-                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '6px', background: player.prix_correct ? '#e8f0e8' : '#f5f5f5', color: player.prix_correct ? '#27500A' : '#888' }}>
-                                {player.prix_correct ? '✓' : '✗'} Prix
-                              </span>
-                              <span style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '6px', background: player.millesime_correct ? '#e8f0e8' : '#f5f5f5', color: player.millesime_correct ? '#27500A' : '#888' }}>
-                                {player.millesime_correct ? '✓' : '✗'} Millésime
-                              </span>
+                              {[
+                                { label: 'Cépage', ok: player.cepage_correct },
+                                { label: 'Région', ok: player.region_correct },
+                                { label: 'Prix', ok: player.prix_correct },
+                                { label: 'Millésime', ok: player.millesime_correct },
+                              ].map(({ label, ok }) => (
+                                <span key={label} style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '6px', background: ok ? '#e8f0e8' : '#f5f5f5', color: ok ? '#27500A' : '#888' }}>
+                                  {ok ? '✓' : '✗'} {label}
+                                </span>
+                              ))}
                             </div>
 
-                            {/* Notes libres */}
                             {player.notes_libres && (
                               <div style={{ marginTop: '6px', fontSize: '12px', color: '#666', fontStyle: 'italic', borderTop: '0.5px solid #f0f0f0', paddingTop: '6px' }}>
                                 "{player.notes_libres}"
@@ -265,7 +298,6 @@ export default function AdminMainPage() {
                       </div>
                     </div>
 
-                    {/* Lien vers le reveal */}
                     {session.status === 'revealed' && (
                       <button onClick={() => router.push(`/app/session/${session.id}/reveal`)}
                         style={{ width: '100%', padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#444', fontSize: '13px', cursor: 'pointer' }}>
@@ -286,7 +318,6 @@ export default function AdminMainPage() {
           </div>
         )}
 
-        {/* Navigation admin */}
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '8px' }}>
           <button onClick={() => router.push('/app/admin/projects')}
             style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
