@@ -1,154 +1,138 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-export default function LoginPage() {
-  const [email, setEmail] = useState('')
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleReset(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirm) {
+      setError('Les mots de passe ne correspondent pas.')
+      return
+    }
+    if (password.length < 6) {
+      setError('Le mot de passe doit faire au moins 6 caractères.')
+      return
+    }
     setLoading(true)
     setError(null)
-    setSuccess(null)
 
-    if (mode === 'signup') {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else setSuccess('Compte créé ! Vérifie ton email pour confirmer.')
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError('Email ou mot de passe incorrect.')
-      else router.push('/app/dashboard')
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) setError(error.message)
+    else {
+      setSuccess(true)
+      setTimeout(() => router.push('/app/dashboard'), 2000)
     }
     setLoading(false)
   }
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: '#fdf8f5',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-      fontFamily: 'system-ui, sans-serif',
+      minHeight: '100vh', background: '#fdf8f5',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '1rem', fontFamily: 'system-ui, sans-serif',
     }}>
       <div style={{ width: '100%', maxWidth: '400px' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
             width: '56px', height: '56px', borderRadius: '50%',
-            background: '#8d323b', margin: '0 auto 1rem',
+            background: '#fff', border: '0.5px solid #e0e0e0',
+            margin: '0 auto 1rem',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontSize: '24px' }}>🍷</span>
+            <img
+              src="https://cdn.shopify.com/s/files/1/0383/1660/5571/files/La-grappe-logo-fond-blanc.png?v=1718613636"
+              alt="La Grappe"
+              style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+            />
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: 0 }}>
-            La Grappe
+            Nouveau mot de passe
           </h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-            Dégustation à l'aveugle
+            Choisis un nouveau mot de passe
           </p>
         </div>
 
-        <div style={{
-          background: '#fff',
-          border: '0.5px solid #e0e0e0',
-          borderRadius: '16px',
-          padding: '2rem',
-        }}>
-          <div style={{
-            display: 'flex',
-            border: '0.5px solid #e0e0e0',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            marginBottom: '1.5rem',
-          }}>
-            {(['login', 'signup'] as const).map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(null); setSuccess(null) }}
-                style={{
-                  flex: 1, padding: '9px',
-                  background: mode === m ? '#8d323b' : 'transparent',
-                  color: mode === m ? '#fff' : '#888',
-                  border: 'none', cursor: 'pointer',
-                  fontSize: '13px', fontWeight: '500',
-                }}>
-                {m === 'login' ? 'Se connecter' : 'Créer un compte'}
+        <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem' }}>
+
+          {success ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', marginBottom: '1rem' }}>✅</div>
+              <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
+                Mot de passe mis à jour !
+              </div>
+              <div style={{ fontSize: '13px', color: '#888' }}>
+                Redirection en cours...
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleReset}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
+                  Nouveau mot de passe
+                </label>
+                <input
+                  type="password" required value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%', padding: '10px 12px',
+                    border: '0.5px solid #e0e0e0', borderRadius: '8px',
+                    fontSize: '14px', color: '#1a1a1a',
+                    background: '#fff', outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
+                  Confirmer le mot de passe
+                </label>
+                <input
+                  type="password" required value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%', padding: '10px 12px',
+                    border: '0.5px solid #e0e0e0', borderRadius: '8px',
+                    fontSize: '14px', color: '#1a1a1a',
+                    background: '#fff', outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              {error && (
+                <div style={{
+                  background: '#fceae8', color: '#8d2020',
+                  borderRadius: '8px', padding: '10px 12px',
+                  fontSize: '13px', marginBottom: '1rem',
+                }}>{error}</div>
+              )}
+
+              <button type="submit" disabled={loading} style={{
+                width: '100%', padding: '13px',
+                background: loading ? '#c0a0a0' : '#8d323b',
+                color: '#fff', border: 'none',
+                borderRadius: '8px', fontSize: '14px',
+                fontWeight: '500', cursor: loading ? 'default' : 'pointer',
+              }}>
+                {loading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
               </button>
-            ))}
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
-                Email
-              </label>
-              <input
-                type="email" required value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="ton@email.com"
-                style={{
-                  width: '100%', padding: '10px 12px',
-                  border: '0.5px solid #e0e0e0', borderRadius: '8px',
-                  fontSize: '14px', color: '#1a1a1a',
-                  background: '#fff', outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
-                Mot de passe
-              </label>
-              <input
-                type="password" required value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{
-                  width: '100%', padding: '10px 12px',
-                  border: '0.5px solid #e0e0e0', borderRadius: '8px',
-                  fontSize: '14px', color: '#1a1a1a',
-                  background: '#fff', outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-
-            {error && (
-              <div style={{
-                background: '#fceae8', color: '#8d2020',
-                borderRadius: '8px', padding: '10px 12px',
-                fontSize: '13px', marginBottom: '1rem',
-              }}>{error}</div>
-            )}
-            {success && (
-              <div style={{
-                background: '#e8f5e8', color: '#1a6b1a',
-                borderRadius: '8px', padding: '10px 12px',
-                fontSize: '13px', marginBottom: '1rem',
-              }}>{success}</div>
-            )}
-
-            <button type="submit" disabled={loading} style={{
-              width: '100%', padding: '13px',
-              background: loading ? '#c0a0a0' : '#8d323b',
-              color: '#fff', border: 'none',
-              borderRadius: '8px', fontSize: '14px',
-              fontWeight: '500', cursor: loading ? 'default' : 'pointer',
-            }}>
-              {loading ? 'Chargement...' : mode === 'login' ? 'Se connecter' : 'Créer mon compte'}
-            </button>
-          </form>
+            </form>
+          )}
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>
