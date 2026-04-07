@@ -268,6 +268,19 @@ export default function CavePage() {
                         </div>
                       )}
 
+                      {/* Prix */}
+                      {notes?.prix_exact && (
+                        <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500', marginBottom: '10px' }}>
+                          CHF {notes.prix_exact.toFixed(2)}
+                          {notes.prix_chf && (
+                            <span style={{ fontSize: '12px', color: '#888', fontWeight: '400', marginLeft: '6px' }}>
+                              ({notes.prix_chf})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+
                       {/* Actions */}
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
