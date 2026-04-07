@@ -1,37 +1,45 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-export default function ResetPasswordPage() {
+type Mode = 'login' | 'signup' | 'forgot'
+
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
+  const [mode, setMode] = useState<Mode>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  async function handleReset(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (password !== confirm) {
-      setError('Les mots de passe ne correspondent pas.')
-      return
-    }
-    if (password.length < 6) {
-      setError('Le mot de passe doit faire au moins 6 caractères.')
-      return
-    }
     setLoading(true)
     setError(null)
+    setSuccess(null)
 
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) setError(error.message)
-    else {
-      setSuccess(true)
-      setTimeout(() => router.push('/app/dashboard'), 2000)
+    if (mode === 'signup') {
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) setError(error.message)
+      else setSuccess('Compte créé ! Vérifie ton email pour confirmer.')
+
+    } else if (mode === 'login') {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setError('Email ou mot de passe incorrect.')
+      else router.push('/app/dashboard')
+
+    } else if (mode === 'forgot') {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      if (error) setError(error.message)
+      else setSuccess('Email envoyé ! Vérifie ta boîte mail pour réinitialiser ton mot de passe.')
     }
+
     setLoading(false)
   }
 
@@ -57,30 +65,76 @@ export default function ResetPasswordPage() {
             />
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: 0 }}>
-            Nouveau mot de passe
+            La Grappe
           </h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-            Choisis un nouveau mot de passe
+            Dégustation à l'aveugle
           </p>
         </div>
 
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem' }}>
 
-          {success ? (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '1rem' }}>✅</div>
-              <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                Mot de passe mis à jour !
+          {/* Tabs login / signup — cachés si mode forgot */}
+          {mode !== 'forgot' && (
+            <div style={{
+              display: 'flex', border: '0.5px solid #e0e0e0',
+              borderRadius: '8px', overflow: 'hidden', marginBottom: '1.5rem',
+            }}>
+              {(['login', 'signup'] as const).map(m => (
+                <button key={m} onClick={() => { setMode(m); setError(null); setSuccess(null) }}
+                  style={{
+                    flex: 1, padding: '9px',
+                    background: mode === m ? '#8d323b' : 'transparent',
+                    color: mode === m ? '#fff' : '#888',
+                    border: 'none', cursor: 'pointer',
+                    fontSize: '13px', fontWeight: '500',
+                  }}>
+                  {m === 'login' ? 'Se connecter' : 'Créer un compte'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Titre mode forgot */}
+          {mode === 'forgot' && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <button onClick={() => { setMode('login'); setError(null); setSuccess(null) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '13px', padding: 0, marginBottom: '12px' }}>
+                ← Retour
+              </button>
+              <div style={{ fontSize: '16px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
+                Mot de passe oublié ?
               </div>
               <div style={{ fontSize: '13px', color: '#888' }}>
-                Redirection en cours...
+                Entre ton email et on t'envoie un lien pour le réinitialiser.
               </div>
             </div>
-          ) : (
-            <form onSubmit={handleReset}>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
+                Email
+              </label>
+              <input
+                type="email" required value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="ton@email.com"
+                style={{
+                  width: '100%', padding: '10px 12px',
+                  border: '0.5px solid #e0e0e0', borderRadius: '8px',
+                  fontSize: '14px', color: '#1a1a1a',
+                  background: '#fff', outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Champ mot de passe — caché en mode forgot */}
+            {mode !== 'forgot' && (
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
-                  Nouveau mot de passe
+                  Mot de passe
                 </label>
                 <input
                   type="password" required value={password}
@@ -95,44 +149,49 @@ export default function ResetPasswordPage() {
                   }}
                 />
               </div>
+            )}
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
-                  Confirmer le mot de passe
-                </label>
-                <input
-                  type="password" required value={confirm}
-                  onChange={e => setConfirm(e.target.value)}
-                  placeholder="••••••••"
-                  style={{
-                    width: '100%', padding: '10px 12px',
-                    border: '0.5px solid #e0e0e0', borderRadius: '8px',
-                    fontSize: '14px', color: '#1a1a1a',
-                    background: '#fff', outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
+            {/* Lien mot de passe oublié — visible seulement en mode login */}
+            {mode === 'login' && (
+              <div style={{ textAlign: 'right', marginBottom: '1.5rem', marginTop: '-4px' }}>
+                <button type="button"
+                  onClick={() => { setMode('forgot'); setError(null); setSuccess(null) }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8d323b', fontSize: '12px', padding: 0 }}>
+                  Mot de passe oublié ?
+                </button>
               </div>
+            )}
 
-              {error && (
-                <div style={{
-                  background: '#fceae8', color: '#8d2020',
-                  borderRadius: '8px', padding: '10px 12px',
-                  fontSize: '13px', marginBottom: '1rem',
-                }}>{error}</div>
-              )}
+            {mode !== 'login' && <div style={{ marginBottom: '1.5rem' }} />}
 
-              <button type="submit" disabled={loading} style={{
-                width: '100%', padding: '13px',
-                background: loading ? '#c0a0a0' : '#8d323b',
-                color: '#fff', border: 'none',
-                borderRadius: '8px', fontSize: '14px',
-                fontWeight: '500', cursor: loading ? 'default' : 'pointer',
-              }}>
-                {loading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
-              </button>
-            </form>
-          )}
+            {error && (
+              <div style={{
+                background: '#fceae8', color: '#8d2020',
+                borderRadius: '8px', padding: '10px 12px',
+                fontSize: '13px', marginBottom: '1rem',
+              }}>{error}</div>
+            )}
+            {success && (
+              <div style={{
+                background: '#e8f5e8', color: '#1a6b1a',
+                borderRadius: '8px', padding: '10px 12px',
+                fontSize: '13px', marginBottom: '1rem',
+              }}>{success}</div>
+            )}
+
+            <button type="submit" disabled={loading} style={{
+              width: '100%', padding: '13px',
+              background: loading ? '#c0a0a0' : '#8d323b',
+              color: '#fff', border: 'none',
+              borderRadius: '8px', fontSize: '14px',
+              fontWeight: '500', cursor: loading ? 'default' : 'pointer',
+            }}>
+              {loading ? 'Chargement...' :
+                mode === 'login' ? 'Se connecter' :
+                mode === 'signup' ? 'Créer mon compte' :
+                'Envoyer le lien'}
+            </button>
+          </form>
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>
