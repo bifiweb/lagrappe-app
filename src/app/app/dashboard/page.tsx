@@ -123,9 +123,14 @@ export default function DashboardPage() {
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#8d323b')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                    🍾
-                  </div>
+                  {(project as any).image_url ? (
+                    <img src={(project as any).image_url} alt={project.name}
+                      style={{ width: '48px', height: '48px', borderRadius: '12px', objectFit: 'cover', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                      🍾
+                    </div>
+                  )}
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '3px' }}>
                       {project.name}
