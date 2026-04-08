@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
+import { getAromeIcon } from '@/lib/arome-icons'
 import type { Session, Wine } from '@/types'
+
 
 export default function TastingPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -182,20 +184,40 @@ export default function TastingPage() {
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>
                 Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {content.aromes.map(a => (
-                  <button key={a} onClick={() => toggleArome(a)}
-                    style={{
-                      padding: '6px 12px', borderRadius: '16px', fontSize: '12px', cursor: 'pointer',
-                      border: aromes.includes(a) ? 'none' : '0.5px solid #e0e0e0',
-                      background: aromes.includes(a) ? accent : '#fff',
-                      color: aromes.includes(a) ? '#fff' : '#666',
-                      opacity: !aromes.includes(a) && aromes.length >= MAX_AROMES ? 0.4 : 1,
-                    }}>
-                    {a}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {content.aromes.map(a => {
+                  const selected = aromes.includes(a)
+                  const disabled = !selected && aromes.length >= MAX_AROMES
+                  return (
+                    <button key={a} onClick={() => toggleArome(a)}
+                      style={{
+                        padding: '8px 14px', borderRadius: '20px', fontSize: '13px', cursor: disabled ? 'default' : 'pointer',
+                        border: selected ? 'none' : '0.5px solid #e0e0e0',
+                        background: selected ? accent : '#fff',
+                        color: selected ? '#fff' : '#666',
+                        opacity: disabled ? 0.35 : 1,
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        transition: 'all .15s ease',
+                        transform: selected ? 'scale(1.05)' : 'scale(1)',
+                      }}>
+                      <span style={{ fontSize: '14px' }}>{getAromeIcon(a)}</span>
+                      {a}
+                    </button>
+                  )
+                })}
               </div>
+
+              {/* Arômes sélectionnés — recap visuel */}
+              {aromes.length > 0 && (
+                <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}20`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {aromes.map(a => (
+                    <span key={a} style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', color: accent, fontWeight: '500' }}>
+                      {getAromeIcon(a)} {a}
+                      {aromes.indexOf(a) < aromes.length - 1 && <span style={{ color: '#e0e0e0', marginLeft: '2px' }}>·</span>}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </>
         )}
