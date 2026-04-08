@@ -138,6 +138,7 @@ export default function RevealPage() {
             {notes?.region && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.region}</span>}
             {notes?.cepage && <span style={{ background: '#edeaf8', color: '#3C3489', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.cepage}</span>}
             {notes?.millesime && <span style={{ background: '#e8f0e8', color: '#27500A', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>{notes.millesime}</span>}
+            {notes?.elevage && <span style={{ background: '#f0f0e8', color: '#5a5200', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>🪣 {notes.elevage}</span>}
             {notes?.prix_exact && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>CHF {notes.prix_exact.toFixed(2)}</span>}
           </div>
         </div>
@@ -342,6 +343,12 @@ export default function RevealPage() {
                 mine={myTasting.millesime_estime?.toString() ?? null}
                 official={notes?.millesime?.toString() ?? null}
                 correct={myTasting.millesime_estime === notes?.millesime}
+              />
+              <CompareRow
+                label="Élevage"
+                mine={myTasting.elevage_guess}
+                official={notes?.elevage ?? null}
+                correct={myTasting.elevage_guess === notes?.elevage}
               />
               <CompareRow
                 label="Prix"
