@@ -28,13 +28,38 @@ const SCORE_EMOJIS = ['😫','😞','😕','😐','🙂','😊','😋','😍','�
 const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
 const BOUCHE_OPTIONS = ['Léger, facile', 'Souple, équilibré', 'Puissant, corsé']
 
-function WineGlass({ color, size = 48 }: { color: string, size?: number }) {
+function WineGlass({ color, size = 48, animate = false }: { color: string, size?: number, animate?: boolean }) {
+  const [filled, setFilled] = useState(false)
+
+  useEffect(() => {
+    if (animate) {
+      setFilled(false)
+      const t = setTimeout(() => setFilled(true), 100)
+      return () => clearTimeout(t)
+    }
+  }, [animate, color])
+
   return (
-    <svg width={size} height={size * 1.4} viewBox="0 0 48 67" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Verre */}
+    <svg width={size} height={size * 1.4} viewBox="0 0 48 67" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+      <defs>
+        <clipPath id={`glass-clip-${color.replace('#','')}`}>
+          <path d="M8 4 C8 4 4 20 4 28 C4 38 13 46 24 46 C35 46 44 38 44 28 C44 20 40 4 40 4 Z" />
+        </clipPath>
+      </defs>
+      {/* Contour verre */}
       <path d="M8 4 C8 4 4 20 4 28 C4 38 13 46 24 46 C35 46 44 38 44 28 C44 20 40 4 40 4 Z" fill="white" stroke="#e0e0e0" strokeWidth="1.5"/>
-      {/* Vin */}
-      <path d="M7 28 C7 28 6 32 7 35 C9 41 16 46 24 46 C32 46 39 41 41 35 C42 32 41 28 41 28 Z" fill={color} opacity="0.85"/>
+      {/* Vin avec animation */}
+      <rect
+        x="0" y="0" width="48" height="48"
+        fill={color}
+        opacity="0.85"
+        clipPath={`url(#glass-clip-${color.replace('#','')})`}
+        style={{
+          transform: (animate ? filled : true) ? 'translateY(20px)' : 'translateY(48px)',
+          transition: animate ? 'transform .6s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
+          transformOrigin: 'bottom',
+        }}
+      />
       {/* Pied */}
       <line x1="24" y1="46" x2="24" y2="60" stroke="#e0e0e0" strokeWidth="2"/>
       <line x1="14" y1="60" x2="34" y2="60" stroke="#e0e0e0" strokeWidth="2" strokeLinecap="round"/>
@@ -61,6 +86,7 @@ export default function TastingPage() {
   const [region, setRegion] = useState<string | null>(null)
   const [scorePerso, setScorePerso] = useState<number | null>(null)
   const [notes, setNotes] = useState('')
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left')
 
   const router = useRouter()
   const params = useParams()
@@ -86,13 +112,29 @@ export default function TastingPage() {
   }, [])
 
   function toggleArome(a: string) {
+    haptic()
     if (aromes.includes(a)) setAromes(aromes.filter(x => x !== a))
     else if (aromes.length < MAX_AROMES) setAromes([...aromes, a])
   }
 
   function goStep(n: number) {
+    setSlideDirection(n > step ? 'left' : 'right')
     setAnimating(true)
-    setTimeout(() => { setStep(n); setAnimating(false) }, 150)
+    setTimeout(() => {
+      setStep(n)
+      setAnimating(false)
+    }, 200)
+  
+  function haptic(duration = 8) {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(duration)
+    }
+  }
+
+    // Haptic feedback
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(8)
+    }
   }
 
   async function submitTasting() {
@@ -193,7 +235,7 @@ export default function TastingPage() {
         </div>
       )}
 
-      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1.5rem 1.5rem 6rem', opacity: animating ? 0 : 1, transform: animating ? 'translateY(8px)' : 'translateY(0)', transition: 'opacity .15s, transform .15s' }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1.5rem 1.5rem 6rem', opacity: animating ? 0 : 1, transform: animating ? `translateX(${slideDirection === 'left' ? '30px' : '-30px'})` : 'translateX(0)', transition: 'opacity .2s ease, transform .2s ease' }}>
 
         {/* En-tête étape */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
@@ -227,9 +269,9 @@ export default function TastingPage() {
                 const selected = robe === r
                 const robeColor = ROBE_COLORS[r] ?? '#ccc'
                 return (
-                  <div key={r} onClick={() => setRobe(r)}
+                  <div key={r} onClick={() => { setRobe(r); haptic() }}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '10px', borderRadius: '12px', border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: selected ? '#fdf5f5' : '#fff', transition: 'all .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', minWidth: '72px' }}>
-                    <WineGlass color={robeColor} size={36} />
+                    <WineGlass color={robeColor} size={36} animate={selected} />
                     <span style={{ fontSize: '11px', fontWeight: selected ? '500' : '400', color: selected ? accent : '#666', textAlign: 'center', lineHeight: 1.2 }}>
                       {r}
                     </span>
@@ -342,7 +384,7 @@ export default function TastingPage() {
                 const selected = accord === a
                 const icon = getAccordIcon(a)
                 return (
-                  <div key={a} onClick={() => setAccord(accord === a ? null : a)}
+                  <div key={a} onClick={() => { setAccord(accord === a ? null : a); haptic() }}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '10px 12px', borderRadius: '12px', border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: selected ? '#fdf5f5' : '#fff', transition: 'all .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', minWidth: '72px', boxShadow: selected ? `0 2px 8px ${accent}30` : 'none' }}>
                     {icon ? (
                       <img src={icon} alt={a} style={{ width: '40px', height: '40px', objectFit: 'contain', filter: selected ? `drop-shadow(0 0 4px ${accent}60)` : 'none', transition: 'filter .15s' }} />
@@ -375,7 +417,7 @@ export default function TastingPage() {
               </div>
               <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
-                  <button key={n} onClick={() => setScorePerso(n)}
+                  <button key={n} onClick={() => { setScorePerso(n); haptic(12) }}
                     style={{ width: '38px', height: '38px', borderRadius: '50%', fontSize: '13px', fontWeight: '500', cursor: 'pointer', border: scorePerso !== null && n <= scorePerso ? 'none' : '0.5px solid #e0e0e0', background: scorePerso === n ? accent : scorePerso !== null && n < scorePerso ? '#f5ede8' : '#fff', color: scorePerso === n ? '#fff' : scorePerso !== null && n < scorePerso ? accent : '#666', transition: 'all .15s ease', transform: scorePerso === n ? 'scale(1.15)' : 'scale(1)' }}>
                     {n}
                   </button>
@@ -465,7 +507,7 @@ export default function TastingPage() {
               Continuer →
             </button>
           ) : (
-            <button onClick={submitTasting} disabled={saving}
+            <button onClick={() => { haptic(50); submitTasting() }} disabled={saving}
               style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: saving ? '#c0a0a0' : accent, color: '#fff', fontSize: '14px', fontWeight: '500', cursor: saving ? 'default' : 'pointer' }}>
               {saving ? 'Envoi...' : 'Soumettre ma dégustation 🍷'}
             </button>
