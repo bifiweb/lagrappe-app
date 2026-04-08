@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
-import { getAromeIcon } from '@/lib/arome-icons'
+import { getAromeStyle } from '@/lib/arome-icons'
 import type { Session, Wine } from '@/types'
 
 
@@ -188,34 +188,51 @@ export default function TastingPage() {
                 {content.aromes.map(a => {
                   const selected = aromes.includes(a)
                   const disabled = !selected && aromes.length >= MAX_AROMES
+                  const style = getAromeStyle(a)
                   return (
                     <button key={a} onClick={() => toggleArome(a)}
                       style={{
-                        padding: '8px 14px', borderRadius: '20px', fontSize: '13px', cursor: disabled ? 'default' : 'pointer',
+                        padding: '7px 12px', borderRadius: '20px', fontSize: '12px',
+                        cursor: disabled ? 'default' : 'pointer',
                         border: selected ? 'none' : '0.5px solid #e0e0e0',
                         background: selected ? accent : '#fff',
-                        color: selected ? '#fff' : '#666',
+                        color: selected ? '#fff' : '#444',
                         opacity: disabled ? 0.35 : 1,
-                        display: 'flex', alignItems: 'center', gap: '5px',
-                        transition: 'all .15s ease',
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        transition: 'transform .15s ease, box-shadow .15s ease',
                         transform: selected ? 'scale(1.05)' : 'scale(1)',
+                        boxShadow: selected ? `0 2px 8px ${accent}40` : 'none',
                       }}>
-                      <span style={{ fontSize: '14px' }}>{getAromeIcon(a)}</span>
+                      {/* Icône colorée */}
+                      <span style={{
+                        width: '20px', height: '20px', borderRadius: '50%',
+                        background: selected ? 'rgba(255,255,255,0.25)' : style.color,
+                        color: selected ? '#fff' : style.textColor,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '9px', fontWeight: '700', flexShrink: 0,
+                        letterSpacing: '-0.5px',
+                      }}>
+                        {style.icon}
+                      </span>
                       {a}
                     </button>
                   )
                 })}
               </div>
 
-              {/* Arômes sélectionnés — recap visuel */}
+              {/* Recap arômes sélectionnés */}
               {aromes.length > 0 && (
-                <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}20`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {aromes.map(a => (
-                    <span key={a} style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', color: accent, fontWeight: '500' }}>
-                      {getAromeIcon(a)} {a}
-                      {aromes.indexOf(a) < aromes.length - 1 && <span style={{ color: '#e0e0e0', marginLeft: '2px' }}>·</span>}
-                    </span>
-                  ))}
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: '#888', marginRight: '4px' }}>Sélectionnés :</span>
+                  {aromes.map(a => {
+                    const style = getAromeStyle(a)
+                    return (
+                      <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', background: style.color, color: style.textColor, padding: '3px 8px', borderRadius: '10px', fontWeight: '500' }}>
+                        <span style={{ fontSize: '9px', fontWeight: '700' }}>{style.icon}</span>
+                        {a}
+                      </span>
+                    )
+                  })}
                 </div>
               )}
             </div>
