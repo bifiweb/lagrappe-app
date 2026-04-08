@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
+import { getAccordIcon } from '@/lib/accord-icons'
 import type { Session, Wine } from '@/types'
 
 const ROBE_COLORS: Record<string, string> = {
@@ -26,6 +27,20 @@ const ROBE_COLORS: Record<string, string> = {
 const SCORE_EMOJIS = ['😫','😞','😕','😐','🙂','😊','😋','😍','🤩','🏆','👑']
 const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
 const BOUCHE_OPTIONS = ['Léger, facile', 'Souple, équilibré', 'Puissant, corsé']
+
+function WineGlass({ color, size = 48 }: { color: string, size?: number }) {
+  return (
+    <svg width={size} height={size * 1.4} viewBox="0 0 48 67" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Verre */}
+      <path d="M8 4 C8 4 4 20 4 28 C4 38 13 46 24 46 C35 46 44 38 44 28 C44 20 40 4 40 4 Z" fill="white" stroke="#e0e0e0" strokeWidth="1.5"/>
+      {/* Vin */}
+      <path d="M7 28 C7 28 6 32 7 35 C9 41 16 46 24 46 C32 46 39 41 41 35 C42 32 41 28 41 28 Z" fill={color} opacity="0.85"/>
+      {/* Pied */}
+      <line x1="24" y1="46" x2="24" y2="60" stroke="#e0e0e0" strokeWidth="2"/>
+      <line x1="14" y1="60" x2="34" y2="60" stroke="#e0e0e0" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  )
+}
 
 export default function TastingPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -77,10 +92,7 @@ export default function TastingPage() {
 
   function goStep(n: number) {
     setAnimating(true)
-    setTimeout(() => {
-      setStep(n)
-      setAnimating(false)
-    }, 150)
+    setTimeout(() => { setStep(n); setAnimating(false) }, 150)
   }
 
   async function submitTasting() {
@@ -130,25 +142,14 @@ export default function TastingPage() {
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>
-            Bouteille #{session?.bottle_number}
-          </span>
+          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Bouteille #{session?.bottle_number}</span>
           <span style={{ fontSize: '13px', color: '#888' }}>{step + 1} / {steps.length}</span>
         </div>
-
-        {/* Progress bar cliquable */}
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '4px', paddingBottom: '12px' }}>
           {steps.map((s, i) => (
-            <div key={i}
-              onClick={() => i < step && goStep(i)}
-              style={{
-                flex: 1, height: '3px', borderRadius: '2px',
-                background: i <= step ? accent : '#e0e0e0',
-                transition: 'background .3s',
-                cursor: i < step ? 'pointer' : 'default',
-              }}
-              title={i < step ? `Retour à ${s}` : s}
-            />
+            <div key={i} onClick={() => i < step && goStep(i)}
+              style={{ flex: 1, height: '3px', borderRadius: '2px', background: i <= step ? accent : '#e0e0e0', transition: 'background .3s', cursor: i < step ? 'pointer' : 'default' }}
+              title={i < step ? `Retour à ${s}` : s} />
           ))}
         </div>
       </div>
@@ -187,12 +188,7 @@ export default function TastingPage() {
         </div>
       )}
 
-      <div style={{
-        maxWidth: '500px', margin: '0 auto', padding: '1.5rem 1.5rem 6rem',
-        opacity: animating ? 0 : 1,
-        transform: animating ? 'translateY(8px)' : 'translateY(0)',
-        transition: 'opacity .15s, transform .15s',
-      }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1.5rem 1.5rem 6rem', opacity: animating ? 0 : 1, transform: animating ? 'translateY(8px)' : 'translateY(0)', transition: 'opacity .15s, transform .15s' }}>
 
         {/* En-tête étape */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
@@ -218,31 +214,28 @@ export default function TastingPage() {
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666', lineHeight: 1.5 }}>
               💡 Incline le verre sur fond blanc. La teinte au bord révèle l'âge du vin.
             </div>
-            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Un mot sur la robe ?</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>Un mot sur la robe ?</div>
+
+            {/* Verres de vin colorés */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginBottom: '1.25rem' }}>
               {content.robes.map(r => {
                 const selected = robe === r
                 const robeColor = ROBE_COLORS[r] ?? '#ccc'
                 return (
-                  <button key={r} onClick={() => setRobe(r)}
-                    style={{
-                      padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
-                      border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0',
-                      background: '#fff', color: selected ? accent : '#666',
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      fontWeight: selected ? '500' : '400',
-                      boxShadow: selected ? `0 2px 8px ${accent}30` : 'none',
-                      transition: 'all .15s ease',
-                    }}>
-                    <span style={{ width: '18px', height: '18px', borderRadius: '50%', background: robeColor, border: '1.5px solid rgba(0,0,0,0.1)', flexShrink: 0 }} />
-                    {r}
-                  </button>
+                  <div key={r} onClick={() => setRobe(r)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '10px', borderRadius: '12px', border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: selected ? '#fdf5f5' : '#fff', transition: 'all .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', minWidth: '72px' }}>
+                    <WineGlass color={robeColor} size={36} />
+                    <span style={{ fontSize: '11px', fontWeight: selected ? '500' : '400', color: selected ? accent : '#666', textAlign: 'center', lineHeight: 1.2 }}>
+                      {r}
+                    </span>
+                  </div>
                 )
               })}
             </div>
+
             {robe && (
-              <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: ROBE_COLORS[robe] ?? '#ccc', border: '2px solid rgba(0,0,0,0.1)', flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px' }}>
+                <WineGlass color={ROBE_COLORS[robe] ?? '#ccc'} size={28} />
                 <div>
                   <div style={{ fontSize: '12px', color: '#888' }}>Robe sélectionnée</div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>{robe}</div>
@@ -280,21 +273,8 @@ export default function TastingPage() {
                   const icon = getAromeIcon(a)
                   return (
                     <button key={a} onClick={() => toggleArome(a)}
-                      style={{
-                        padding: '7px 12px', borderRadius: '20px', fontSize: '12px',
-                        cursor: disabled ? 'default' : 'pointer',
-                        border: selected ? 'none' : '0.5px solid #e0e0e0',
-                        background: selected ? accent : '#fff',
-                        color: selected ? '#fff' : '#444',
-                        opacity: disabled ? 0.35 : 1,
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        transition: 'transform .15s ease, box-shadow .15s ease',
-                        transform: selected ? 'scale(1.05)' : 'scale(1)',
-                        boxShadow: selected ? `0 2px 8px ${accent}40` : 'none',
-                      }}>
-                      {icon && (
-                        <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />
-                      )}
+                      style={{ padding: '7px 12px', borderRadius: '20px', fontSize: '12px', cursor: disabled ? 'default' : 'pointer', border: selected ? 'none' : '0.5px solid #e0e0e0', background: selected ? accent : '#fff', color: selected ? '#fff' : '#444', opacity: disabled ? 0.35 : 1, display: 'flex', alignItems: 'center', gap: '6px', transition: 'transform .15s ease, box-shadow .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', boxShadow: selected ? `0 2px 8px ${accent}40` : 'none' }}>
+                      {icon && <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />}
                       {a}
                     </button>
                   )
@@ -325,8 +305,6 @@ export default function TastingPage() {
               💡 L'acidité picote les côtés de la langue, les tanins assèchent les gencives, le gras enrobe.
             </div>
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '16px' }}>Structure en bouche</div>
-
-            {/* Slider bouche */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 {BOUCHE_OPTIONS.map((opt, i) => (
@@ -337,11 +315,7 @@ export default function TastingPage() {
                   </div>
                 ))}
               </div>
-              <input
-                type="range" min={0} max={2} step={1} value={boucheIndex}
-                onChange={e => setBoucheIndex(Number(e.target.value))}
-                style={{ width: '100%', accentColor: accent, height: '6px' }}
-              />
+              <input type="range" min={0} max={2} step={1} value={boucheIndex} onChange={e => setBoucheIndex(Number(e.target.value))} style={{ width: '100%', accentColor: accent, height: '6px' }} />
               <div style={{ textAlign: 'center', fontSize: '15px', fontWeight: '500', color: accent, marginTop: '12px', transition: 'all .2s' }}>
                 {BOUCHE_OPTIONS[boucheIndex]}
               </div>
@@ -355,28 +329,32 @@ export default function TastingPage() {
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666', lineHeight: 1.5 }}>
               💡 Quel plat mettrait ce vin en valeur ? Fais confiance à ton instinct !
             </div>
-            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>
               Accord idéal <span style={{ fontWeight: '400', color: '#888' }}>(1 seul choix)</span>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {content.accords.map(a => (
-                <button key={a} onClick={() => setAccord(accord === a ? null : a)}
-                  style={{
-                    padding: '10px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
-                    border: accord === a ? 'none' : '0.5px solid #e0e0e0',
-                    background: accord === a ? accent : '#fff',
-                    color: accord === a ? '#fff' : '#666',
-                    transition: 'all .15s ease',
-                    transform: accord === a ? 'scale(1.05)' : 'scale(1)',
-                    boxShadow: accord === a ? `0 2px 8px ${accent}40` : 'none',
-                  }}>
-                  {a}
-                </button>
-              ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
+              {content.accords.map(a => {
+                const selected = accord === a
+                const icon = getAccordIcon(a)
+                return (
+                  <div key={a} onClick={() => setAccord(accord === a ? null : a)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '10px 12px', borderRadius: '12px', border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: selected ? '#fdf5f5' : '#fff', transition: 'all .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', minWidth: '72px', boxShadow: selected ? `0 2px 8px ${accent}30` : 'none' }}>
+                    {icon ? (
+                      <img src={icon} alt={a} style={{ width: '40px', height: '40px', objectFit: 'contain', filter: selected ? `drop-shadow(0 0 4px ${accent}60)` : 'none', transition: 'filter .15s' }} />
+                    ) : (
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🍽</div>
+                    )}
+                    <span style={{ fontSize: '11px', fontWeight: selected ? '500' : '400', color: selected ? accent : '#666', textAlign: 'center', lineHeight: 1.2, maxWidth: '72px' }}>
+                      {a}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
             {accord && (
-              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', fontSize: '13px', color: accent, fontWeight: '500' }}>
-                🍽 {accord}
+              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', fontSize: '13px', color: accent, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {getAccordIcon(accord) && <img src={getAccordIcon(accord)!} alt={accord} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />}
+                {accord}
               </div>
             )}
           </>
@@ -385,7 +363,6 @@ export default function TastingPage() {
         {/* ÉTAPE 4 : NOTES PERSO */}
         {step === 4 && (
           <>
-            {/* Score avec emoji dynamique */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>Top ou flop ?</div>
               <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '12px', transition: 'transform .2s', lineHeight: 1 }}>
@@ -394,14 +371,7 @@ export default function TastingPage() {
               <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
                   <button key={n} onClick={() => setScorePerso(n)}
-                    style={{
-                      width: '38px', height: '38px', borderRadius: '50%', fontSize: '13px', fontWeight: '500', cursor: 'pointer',
-                      border: scorePerso !== null && n <= scorePerso ? 'none' : '0.5px solid #e0e0e0',
-                      background: scorePerso === n ? accent : scorePerso !== null && n < scorePerso ? '#f5ede8' : '#fff',
-                      color: scorePerso === n ? '#fff' : scorePerso !== null && n < scorePerso ? accent : '#666',
-                      transition: 'all .15s ease',
-                      transform: scorePerso === n ? 'scale(1.15)' : 'scale(1)',
-                    }}>
+                    style={{ width: '38px', height: '38px', borderRadius: '50%', fontSize: '13px', fontWeight: '500', cursor: 'pointer', border: scorePerso !== null && n <= scorePerso ? 'none' : '0.5px solid #e0e0e0', background: scorePerso === n ? accent : scorePerso !== null && n < scorePerso ? '#f5ede8' : '#fff', color: scorePerso === n ? '#fff' : scorePerso !== null && n < scorePerso ? accent : '#666', transition: 'all .15s ease', transform: scorePerso === n ? 'scale(1.15)' : 'scale(1)' }}>
                     {n}
                   </button>
                 ))}
@@ -412,7 +382,6 @@ export default function TastingPage() {
                 </div>
               )}
             </div>
-
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>Notes libres</div>
               <textarea value={notes} onChange={e => setNotes(e.target.value)}
@@ -430,7 +399,7 @@ export default function TastingPage() {
             </div>
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Cépage ?</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>🍇 Cépage ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {content.cepages.map(c => (
                   <button key={c} onClick={() => setCepage(c)}
@@ -442,7 +411,7 @@ export default function TastingPage() {
             </div>
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Région ?</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>📍 Région ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {content.regions.map(r => (
                   <button key={r} onClick={() => setRegion(r)}
@@ -454,14 +423,14 @@ export default function TastingPage() {
             </div>
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Millésime ?</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>📅 Millésime ?</div>
               <input type="number" value={millesime} onChange={e => setMillesime(e.target.value)}
                 placeholder="Ex: 2021" min={2000} max={2025}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
             </div>
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Prix estimé ?</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>💰 Prix estimé ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {PRIX_OPTIONS.map(p => (
                   <button key={p} onClick={() => setPrix(p)}
@@ -476,7 +445,7 @@ export default function TastingPage() {
 
       </div>
 
-      {/* Navigation fixe en bas */}
+      {/* Navigation */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '0.5px solid #e0e0e0', padding: '1rem 1.5rem' }}>
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '10px' }}>
           {step > 0 && (
