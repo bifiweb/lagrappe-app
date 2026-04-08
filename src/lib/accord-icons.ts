@@ -2,7 +2,7 @@ export function getAccordIcon(accord: string): string | null {
   const map: Record<string, string> = {
     'Salade':           '/accords/salad.png',
     'Charcuterie':      '/accords/charcuterie.png',
-    'Raclette':         '/accords/fondue.png',
+    'Raclette/Fondue':  '/accords/fondue.png',
     'Poulet au four':   '/accords/chicken-leg.png',
     'Burger':           '/accords/burger.png',
     'Côte de boeuf':    '/accords/beef.png',
