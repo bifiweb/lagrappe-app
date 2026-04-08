@@ -7,6 +7,7 @@ import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
 import type { Session, Wine } from '@/types'
+import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS, ELEVAGE_OPTIONS } from '@/types'
 
 const ROBE_COLORS: Record<string, string> = {
   'Violacée':        '#6B2D8B',
@@ -98,6 +99,7 @@ export default function TastingPage() {
   const [region, setRegion] = useState<string | null>(null)
   const [scorePerso, setScorePerso] = useState<number | null>(null)
   const [notes, setNotes] = useState('')
+  const [elevage, setElevage] = useState<string | null>(null)
 
   const router = useRouter()
   const params = useParams()
@@ -157,6 +159,7 @@ export default function TastingPage() {
       region_guess: region,
       score_perso: scorePerso,
       notes_libres: notes,
+      elevage_guess: elevage,
       submitted_at: new Date().toISOString(),
     })
     await supabase.from('session_players')
@@ -494,6 +497,29 @@ export default function TastingPage() {
                 placeholder="Ex: 2021" min={2000} max={2025}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
             </div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>
+                🪣 Élevage ?
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {ELEVAGE_OPTIONS.map(e => (
+                  <button key={e} onClick={() => { setElevage(e); haptic() }}
+                    style={{
+                      padding: '8px 14px', borderRadius: '20px',
+                      border: elevage === e ? 'none' : '0.5px solid #e0e0e0',
+                      background: elevage === e ? accent : '#fff',
+                      color: elevage === e ? '#fff' : '#666',
+                      fontSize: '13px', cursor: 'pointer',
+                      transition: 'all .15s',
+                      transform: elevage === e ? 'scale(1.05)' : 'scale(1)',
+                    }}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>💰 Prix estimé ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
