@@ -7,6 +7,25 @@ import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import type { Session, Wine } from '@/types'
 
+const ROBE_COLORS: Record<string, string> = {
+  // Rouges
+  'Violacée':    '#6B2D8B',
+  'Rouge pâle':  '#C0504D',
+  'Rouge dense': '#8B1A1A',
+  'Tuilée':      '#B5651D',
+  // Blancs
+  'Jaune pâle':  '#F0E68C',
+  'Or / Paille': '#D4B96A',
+  'Ambrée':      '#C68642',
+  'Rosée':       '#FFB7C5',
+  // Rosés
+  'Rose pâle':   '#FFD1DC',
+  'Rose saumon': '#FF9B8A',
+  'Rose vif':    '#FF6B8A',
+  'Rose orangé': '#FF8C69',
+  // Pétillants
+  'Blanc de blancs': '#F0EDD0',
+}
 
 export default function TastingPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -15,7 +34,6 @@ export default function TastingPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  // Fiche de dégustation
   const [robe, setRobe] = useState<string | null>(null)
   const [nezIntensite, setNezIntensite] = useState(3)
   const [aromes, setAromes] = useState<string[]>([])
@@ -119,7 +137,6 @@ export default function TastingPage() {
             {step + 1} / {steps.length}
           </span>
         </div>
-        {/* Barre de progression */}
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '4px', paddingBottom: '12px' }}>
           {steps.map((_, i) => (
             <div key={i} style={{ flex: 1, height: '3px', borderRadius: '2px', background: i <= step ? accent : '#e0e0e0', transition: 'background .3s' }} />
@@ -145,13 +162,50 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Un mot sur la robe ?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {content.robes.map(r => (
-                  <button key={r} onClick={() => setRobe(r)}
-                    style={{ padding: '8px 16px', borderRadius: '20px', border: robe === r ? 'none' : '0.5px solid #e0e0e0', background: robe === r ? accent : '#fff', color: robe === r ? '#fff' : '#666', fontSize: '13px', cursor: 'pointer' }}>
-                    {r}
-                  </button>
-                ))}
+                {content.robes.map(r => {
+                  const selected = robe === r
+                  const robeColor = ROBE_COLORS[r] ?? '#ccc'
+                  return (
+                    <button key={r} onClick={() => setRobe(r)}
+                      style={{
+                        padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
+                        border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0',
+                        background: '#fff',
+                        color: selected ? accent : '#666',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        fontWeight: selected ? '500' : '400',
+                        boxShadow: selected ? `0 2px 8px ${accent}30` : 'none',
+                        transition: 'all .15s ease',
+                      }}>
+                      <span style={{
+                        width: '18px', height: '18px', borderRadius: '50%',
+                        background: robeColor,
+                        border: '1.5px solid rgba(0,0,0,0.1)',
+                        flexShrink: 0,
+                        boxShadow: selected ? `0 0 0 2px ${accent}40` : 'none',
+                      }} />
+                      {r}
+                    </button>
+                  )
+                })}
               </div>
+
+              {/* Aperçu robe sélectionnée */}
+              {robe && (
+                <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px' }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '50%',
+                    background: ROBE_COLORS[robe] ?? '#ccc',
+                    border: '2px solid rgba(0,0,0,0.1)',
+                    flexShrink: 0,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  }} />
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#888' }}>Robe sélectionnée</div>
+                    <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>{robe}</div>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
