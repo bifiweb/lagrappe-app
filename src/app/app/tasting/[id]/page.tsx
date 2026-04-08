@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
+import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS, ELEVAGE_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
 import type { Session, Wine } from '@/types'
-import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS, ELEVAGE_OPTIONS } from '@/types'
+
 
 const ROBE_COLORS: Record<string, string> = {
   'Violacée':        '#6B2D8B',
