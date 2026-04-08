@@ -24,7 +24,7 @@ const ROBE_COLORS: Record<string, string> = {
   'Blanc de blancs': '#F0EDD0',
 }
 
-const SCORE_EMOJIS = ['😫','😞','😕','😔','😐','😏,'🙂','😋','😍','🤩']
+const SCORE_EMOJIS = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
 const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
 const BOUCHE_OPTIONS = ['Léger, facile', 'Souple, équilibré', 'Puissant, corsé']
 
