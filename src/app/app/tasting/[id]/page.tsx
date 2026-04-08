@@ -101,6 +101,14 @@ export default function TastingPage() {
   const [notes, setNotes] = useState('')
   const [elevage, setElevage] = useState<string | null>(null)
 
+  // Système d'aide
+  const [hintsUsed, setHintsUsed] = useState(0)
+  const [hintCounts, setHintCounts] = useState({ aromes: 0, cepage: 0, region: 0, prix: 0 })
+  const [eliminatedAromes, setEliminatedAromes] = useState<string[]>([])
+  const [eliminatedCepages, setEliminatedCepages] = useState<string[]>([])
+  const [eliminatedRegions, setEliminatedRegions] = useState<string[]>([])
+  const [eliminatedPrix, setEliminatedPrix] = useState<string[]>([])
+
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -140,6 +148,39 @@ export default function TastingPage() {
     }, 200)
   }
 
+  async function useHint(section: 'aromes' | 'cepage' | 'region' | 'prix') {
+    if (hintCounts[section] >= 2 || !wine) return
+    haptic(20)
+
+    const eliminated: string[] = section === 'aromes' ? eliminatedAromes
+      : section === 'cepage' ? eliminatedCepages
+      : section === 'region' ? eliminatedRegions
+      : eliminatedPrix
+
+    const wineContent = WINE_CONTENT[wine.type]
+    const allOptions: string[] = section === 'aromes' ? wineContent.aromes
+      : section === 'cepage' ? wineContent.cepages
+      : section === 'region' ? wineContent.regions
+      : PRIX_OPTIONS
+
+    const { data: newEliminated } = await supabase.rpc('get_hint', {
+      p_wine_id: wine.id,
+      p_section: section,
+      p_all_options: allOptions,
+      p_already_eliminated: eliminated,
+    })
+
+    if (!newEliminated) return
+
+    if (section === 'aromes') setEliminatedAromes(newEliminated)
+    else if (section === 'cepage') setEliminatedCepages(newEliminated)
+    else if (section === 'region') setEliminatedRegions(newEliminated)
+    else setEliminatedPrix(newEliminated)
+
+    setHintCounts(prev => ({ ...prev, [section]: prev[section] + 1 }))
+    setHintsUsed(prev => prev + 1)
+  }
+
   async function submitTasting() {
     haptic(50)
     setSaving(true)
@@ -160,6 +201,7 @@ export default function TastingPage() {
       score_perso: scorePerso,
       notes_libres: notes,
       elevage_guess: elevage,
+      hints_used: hintsUsed,
       submitted_at: new Date().toISOString(),
     }, { onConflict: 'session_id,user_id' })
     await supabase.from('session_players')
@@ -320,30 +362,43 @@ export default function TastingPage() {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>
-                Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span></span>
+                {hintCounts.aromes < 2 && (
+                  <button onClick={() => useHint('aromes')}
+                    style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '10px', border: '0.5px solid #d4a030', background: '#fffbf0', color: '#8a6000', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    💡 <span style={{ textDecoration: 'line-through', opacity: 0.7 }}>100pts</span>
+                  </button>
+                )}
               </div>
+              {eliminatedAromes.length > 0 && (
+                <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '6px' }}>
+                  {eliminatedAromes.length} arôme{eliminatedAromes.length > 1 ? 's' : ''} éliminé{eliminatedAromes.length > 1 ? 's' : ''} par l'aide
+                </div>
+              )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {content.aromes.map(a => {
                   const selected = aromes.includes(a)
-                  const disabled = !selected && aromes.length >= MAX_AROMES
+                  const eliminated = eliminatedAromes.includes(a)
+                  const disabled = eliminated || (!selected && aromes.length >= MAX_AROMES)
                   const icon = getAromeIcon(a)
                   return (
-                    <button key={a} onClick={() => toggleArome(a)}
+                    <button key={a} onClick={() => !eliminated && toggleArome(a)}
                       style={{
                         padding: '7px 12px', borderRadius: '20px', fontSize: '12px',
                         cursor: disabled ? 'default' : 'pointer',
                         border: selected ? 'none' : '0.5px solid #e0e0e0',
-                        background: selected ? accent : '#fff',
-                        color: selected ? '#fff' : '#444',
-                        opacity: disabled ? 0.35 : 1,
+                        background: eliminated ? '#f5f5f5' : selected ? accent : '#fff',
+                        color: eliminated ? '#ccc' : selected ? '#fff' : '#444',
+                        opacity: (!eliminated && !selected && aromes.length >= MAX_AROMES) ? 0.35 : 1,
                         display: 'flex', alignItems: 'center', gap: '6px',
                         transition: 'transform .15s ease, box-shadow .15s ease',
                         transform: selected ? 'scale(1.05)' : 'scale(1)',
                         boxShadow: selected ? `0 2px 8px ${accent}40` : 'none',
+                        textDecoration: eliminated ? 'line-through' : 'none',
                       }}>
                       {icon && (
-                        <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />
+                        <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: eliminated ? 'grayscale(1) opacity(0.3)' : selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />
                       )}
                       {a}
                     </button>
@@ -470,25 +525,47 @@ export default function TastingPage() {
               💡 Pas de panique — c'est une intuition, pas un examen. Même les pros se plantent !
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>🍇 Cépage ?</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {content.cepages.map(c => (
-                  <button key={c} onClick={() => { setCepage(c); haptic() }}
-                    style={{ padding: '8px 14px', borderRadius: '20px', border: cepage === c ? 'none' : '0.5px solid #e0e0e0', background: cepage === c ? accent : '#fff', color: cepage === c ? '#fff' : '#666', fontSize: '13px', cursor: 'pointer', transition: 'all .15s', transform: cepage === c ? 'scale(1.05)' : 'scale(1)' }}>
-                    {c}
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>🍇 Cépage ?</span>
+                {hintCounts.cepage < 2 && (
+                  <button onClick={() => useHint('cepage')}
+                    style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '10px', border: '0.5px solid #d4a030', background: '#fffbf0', color: '#8a6000', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    💡 <span style={{ textDecoration: 'line-through', opacity: 0.7 }}>100pts</span>
                   </button>
-                ))}
+                )}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {content.cepages.map(c => {
+                  const eliminated = eliminatedCepages.includes(c)
+                  return (
+                    <button key={c} onClick={() => { if (!eliminated) { setCepage(c); haptic() } }}
+                      style={{ padding: '8px 14px', borderRadius: '20px', border: cepage === c ? 'none' : '0.5px solid #e0e0e0', background: eliminated ? '#f5f5f5' : cepage === c ? accent : '#fff', color: eliminated ? '#ccc' : cepage === c ? '#fff' : '#666', fontSize: '13px', cursor: eliminated ? 'default' : 'pointer', transition: 'all .15s', transform: cepage === c ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : 'none' }}>
+                      {c}
+                    </button>
+                  )
+                })}
               </div>
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>📍 Région ?</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {content.regions.map(r => (
-                  <button key={r} onClick={() => { setRegion(r); haptic() }}
-                    style={{ padding: '8px 14px', borderRadius: '20px', border: region === r ? 'none' : '0.5px solid #e0e0e0', background: region === r ? accent : '#fff', color: region === r ? '#fff' : '#666', fontSize: '13px', cursor: 'pointer', transition: 'all .15s', transform: region === r ? 'scale(1.05)' : 'scale(1)' }}>
-                    {r}
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>📍 Région ?</span>
+                {hintCounts.region < 2 && (
+                  <button onClick={() => useHint('region')}
+                    style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '10px', border: '0.5px solid #d4a030', background: '#fffbf0', color: '#8a6000', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    💡 <span style={{ textDecoration: 'line-through', opacity: 0.7 }}>100pts</span>
                   </button>
-                ))}
+                )}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {content.regions.map(r => {
+                  const eliminated = eliminatedRegions.includes(r)
+                  return (
+                    <button key={r} onClick={() => { if (!eliminated) { setRegion(r); haptic() } }}
+                      style={{ padding: '8px 14px', borderRadius: '20px', border: region === r ? 'none' : '0.5px solid #e0e0e0', background: eliminated ? '#f5f5f5' : region === r ? accent : '#fff', color: eliminated ? '#ccc' : region === r ? '#fff' : '#666', fontSize: '13px', cursor: eliminated ? 'default' : 'pointer', transition: 'all .15s', transform: region === r ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : 'none' }}>
+                      {r}
+                    </button>
+                  )
+                })}
               </div>
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
@@ -521,14 +598,25 @@ export default function TastingPage() {
 
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>💰 Prix estimé ?</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {PRIX_OPTIONS.map(p => (
-                  <button key={p} onClick={() => { setPrix(p); haptic() }}
-                    style={{ padding: '8px 14px', borderRadius: '20px', border: prix === p ? 'none' : '0.5px solid #e0e0e0', background: prix === p ? accent : '#fff', color: prix === p ? '#fff' : '#666', fontSize: '13px', cursor: 'pointer', transition: 'all .15s', transform: prix === p ? 'scale(1.05)' : 'scale(1)' }}>
-                    {p}
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>💰 Prix estimé ?</span>
+                {hintCounts.prix < 2 && (
+                  <button onClick={() => useHint('prix')}
+                    style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '10px', border: '0.5px solid #d4a030', background: '#fffbf0', color: '#8a6000', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    💡 <span style={{ textDecoration: 'line-through', opacity: 0.7 }}>100pts</span>
                   </button>
-                ))}
+                )}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {PRIX_OPTIONS.map(p => {
+                  const eliminated = eliminatedPrix.includes(p)
+                  return (
+                    <button key={p} onClick={() => { if (!eliminated) { setPrix(p); haptic() } }}
+                      style={{ padding: '8px 14px', borderRadius: '20px', border: prix === p ? 'none' : '0.5px solid #e0e0e0', background: eliminated ? '#f5f5f5' : prix === p ? accent : '#fff', color: eliminated ? '#ccc' : prix === p ? '#fff' : '#666', fontSize: '13px', cursor: eliminated ? 'default' : 'pointer', transition: 'all .15s', transform: prix === p ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : 'none' }}>
+                      {p}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </>
@@ -538,6 +626,11 @@ export default function TastingPage() {
 
       {/* Navigation */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '0.5px solid #e0e0e0', padding: '1rem 1.5rem' }}>
+        {hintsUsed > 0 && (
+          <div style={{ maxWidth: '500px', margin: '0 auto 8px', textAlign: 'center', fontSize: '11px', color: '#8a6000', background: '#fffbf0', borderRadius: '8px', padding: '4px 0' }}>
+            💡 {hintsUsed} aide{hintsUsed > 1 ? 's' : ''} utilisée{hintsUsed > 1 ? 's' : ''} — malus : −{hintsUsed * 100} pts
+          </div>
+        )}
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '10px' }}>
           {step > 0 && (
             <button onClick={() => goStep(step - 1)}

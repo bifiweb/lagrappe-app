@@ -147,6 +147,7 @@ export interface Tasting {
   pts_cepage: number
   pts_region: number
   total_points: number
+  hints_used: number
   submitted_at: string | null
   created_at: string
 }
