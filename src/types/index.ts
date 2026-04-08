@@ -134,6 +134,7 @@ export interface Tasting {
   millesime_estime: number | null
   cepage_guess: string | null
   region_guess: string | null
+  elevage_guess: string | null
   // Notes perso
   score_perso: number | null
   notes_libres: string | null
@@ -192,9 +193,9 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
       'Réglisse', 'Tabac', 'Notes sauvages', 'Champignons', 'Pain grillé',
     ],
     bouche: ['Léger, facile', 'Souple, équilibré', 'Puissant, corsé'],
-    accords: ['Salade', 'Charcuterie', 'Raclette', 'Poulet au four', 'Burger', 'Côte de boeuf', 'Civet de cerf', 'Fondant au chocolat'],
-    cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah', 'Cabernet', 'Diolinoir', 'Garanoir', 'Cornalin', 'Humagne Rouge', 'Je sais pas'],
-    regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs', 'Je sais pas'],
+    accords: ['Salade', 'Charcuterie', 'Raclette/Fondue', 'Poulet au four', 'Burger', 'Côte de boeuf', 'Civet de cerf', 'Fondant au chocolat'],
+    cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah', 'Cabernet', 'Diolinoir', 'Garanoir', 'Cornalin', 'Humagne Rouge'],
+    regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs'],
   },
   blanc: {
     robes: ['Jaune pâle', 'Or / Paille', 'Ambrée', 'Rosée'],
@@ -205,27 +206,32 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
       'Épices', 'Vanille', 'Miel', 'Beurre', 'Champignons',
     ],
     bouche: ['Acidité vive', 'Équilibre gras/acidité', 'Gras, onctueux'],
-    accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
-    cepages: ['Chasselas', 'Chardonnay', 'Pinot Gris', 'Riesling', 'Sauvignon', 'Gewurztraminer', 'Viognier', 'Petite Arvine', 'Heida', 'Je sais pas'],
-    regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs', 'Je sais pas'],
+    accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette / Fondue', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
+    cepages: ['Chasselas', 'Chardonnay', 'Pinot Gris', 'Riesling', 'Sauvignon', 'Gewurztraminer', 'Viognier', 'Petite Arvine', 'Heida'],
+    regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs'],
   },
   rose: {
     robes: ['Rose pâle', 'Rose saumon', 'Rose vif', 'Rose orangé'],
     aromes: ['Fraise', 'Framboise', 'Cerise', 'Rose', 'Pêche', 'Agrumes', 'Bonbon', 'Fleurs', 'Minéralité'],
     bouche: ['Léger, frais', 'Fruité, équilibré', 'Structuré'],
     accords: ['Salade', 'Poisson grillé', 'Sushi', 'Charcuterie', 'Pizza', 'Barbecue', 'Fromage frais'],
-    cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah', 'Je sais pas'],
-    regions: ['Valais', 'Genève', 'Vaud', 'Neuchâtel', 'Tessin', 'Je sais pas'],
+    cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah'],
+    regions: ['Valais', 'Genève', 'Vaud', 'Neuchâtel', 'Tessin'],
   },
   petillant: {
     robes: ['Jaune pâle', 'Or', 'Rosé', 'Blanc de blancs'],
     aromes: ['Brioche', 'Levure', 'Pomme', 'Citron', 'Fleurs blanches', 'Minéralité', 'Amande', 'Noisette'],
     bouche: ['Léger, délicat', 'Vif, bulles fines', 'Crémeux, persistant'],
     accords: ['Apéritif', 'Fruits de mer', 'Sushi', 'Fromage frais', 'Desserts légers'],
-    cepages: ['Chasselas', 'Chardonnay', 'Pinot Noir', 'Je sais pas'],
-    regions: ['Valais', 'Vaud', 'Genève', 'Neuchâtel', 'Je sais pas'],
+    cepages: ['Chasselas', 'Chardonnay', 'Pinot Noir'],
+    regions: ['Valais', 'Vaud', 'Genève', 'Neuchâtel'],
   },
 }
+
+export const ELEVAGE_OPTIONS = [
+  'Inox',
+  'Barrique / Amphore',
+]
 
 export const PRIX_OPTIONS = [
   '< 20 CHF',
@@ -249,13 +255,13 @@ export const MAX_AROMES = 5
 export const SCORING = {
   ROBE_CORRECT: 300,
   ROBE_WRONG: 100,
-  AROME_PER_PLAYER: 100,
-  AROME_GRAPPISTE_BONUS: 50,
+  AROME_PER_PLAYER: 300,
+  AROME_GRAPPISTE_BONUS: 300,
   BOUCHE_CORRECT: 300,
   BOUCHE_WRONG: 100,
   PRIX_CORRECT: 500,
   PRIX_WRONG: 100,
-  MILLESIME_CORRECT: 400,
+  MILLESIME_CORRECT: 500,
   MILLESIME_WRONG: 100,
   CEPAGE_CORRECT: 1000,
   CEPAGE_WRONG: 200,
