@@ -93,6 +93,10 @@ export default function DashboardPage() {
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
               🍷 Ma cave
             </button>
+            <button onClick={() => router.push('/app/profile')}
+              style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
+              👤 Mon profil
+            </button>
             <button onClick={() => router.push('/app/quiz')}
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
               🧠 Quiz
