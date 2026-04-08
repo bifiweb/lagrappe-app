@@ -230,7 +230,7 @@ export default function TastingPage() {
               <span onClick={() => goStep(3)} style={{ cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: '#fff', border: '0.5px solid #e0e0e0', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {getAccordIcon(accord)
                   ? <img src={getAccordIcon(accord)!} alt={accord} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
-                  : '🍽'}
+                  : '🍴'}
                 {accord}
               </span>
             )}
