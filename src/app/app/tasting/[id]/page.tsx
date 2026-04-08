@@ -161,7 +161,7 @@ export default function TastingPage() {
       notes_libres: notes,
       elevage_guess: elevage,
       submitted_at: new Date().toISOString(),
-    })
+    }, { onConflict: 'session_id,user_id' })
     await supabase.from('session_players')
       .update({ tasting_done: true })
       .eq('session_id', sessionId)
