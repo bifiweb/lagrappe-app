@@ -105,7 +105,7 @@ export default function TastingPage() {
   const sessionId = params.id as string
 
   const steps = ['Vue', 'Nez', 'Bouche', 'Accords', 'Notes', 'Devinette']
-  const stepIcons = ['🫧', '👃', '👄', '🍴', '📝', '🔮']
+  const stepIcons = ['👁️', '👃', '👄', '🍴', '📝', '🔮']
 
   useEffect(() => {
     async function load() {
