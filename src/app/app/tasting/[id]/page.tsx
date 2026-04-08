@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS } from '@/types'
-import { getAromeStyle } from '@/lib/arome-icons'
+import { getAromeIcon } from '@/lib/arome-icons'
 import type { Session, Wine } from '@/types'
 
 
@@ -188,7 +188,7 @@ export default function TastingPage() {
                 {content.aromes.map(a => {
                   const selected = aromes.includes(a)
                   const disabled = !selected && aromes.length >= MAX_AROMES
-                  const style = getAromeStyle(a)
+                  const icon = getAromeIcon(a)
                   return (
                     <button key={a} onClick={() => toggleArome(a)}
                       style={{
@@ -203,17 +203,14 @@ export default function TastingPage() {
                         transform: selected ? 'scale(1.05)' : 'scale(1)',
                         boxShadow: selected ? `0 2px 8px ${accent}40` : 'none',
                       }}>
-                      {/* Icône colorée */}
-                      <span style={{
-                        width: '20px', height: '20px', borderRadius: '50%',
-                        background: selected ? 'rgba(255,255,255,0.25)' : style.color,
-                        color: selected ? '#fff' : style.textColor,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '9px', fontWeight: '700', flexShrink: 0,
-                        letterSpacing: '-0.5px',
-                      }}>
-                        {style.icon}
-                      </span>
+                      {icon && (
+                        <img src={icon} alt={a}
+                          style={{
+                            width: '20px', height: '20px', objectFit: 'contain',
+                            filter: selected ? 'brightness(0) invert(1)' : 'none',
+                            transition: 'filter .15s ease',
+                          }} />
+                      )}
                       {a}
                     </button>
                   )
@@ -222,13 +219,13 @@ export default function TastingPage() {
 
               {/* Recap arômes sélectionnés */}
               {aromes.length > 0 && (
-                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#888', marginRight: '4px' }}>Sélectionnés :</span>
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>Tes arômes :</span>
                   {aromes.map(a => {
-                    const style = getAromeStyle(a)
+                    const icon = getAromeIcon(a)
                     return (
-                      <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', background: style.color, color: style.textColor, padding: '3px 8px', borderRadius: '10px', fontWeight: '500' }}>
-                        <span style={{ fontSize: '9px', fontWeight: '700' }}>{style.icon}</span>
+                      <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', background: '#f5ede8', color: accent, padding: '4px 10px', borderRadius: '10px', fontWeight: '500' }}>
+                        {icon && <img src={icon} alt={a} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
                         {a}
                       </span>
                     )
