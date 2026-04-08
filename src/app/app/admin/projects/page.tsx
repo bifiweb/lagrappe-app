@@ -22,14 +22,11 @@ export default function AdminProjectsPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  // Form state — projet
   const [projectName, setProjectName] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
   const [projectSlug, setProjectSlug] = useState('')
   const [projectImageUrl, setProjectImageUrl] = useState('')
   const [bottleCount, setBottleCount] = useState(6)
-
-  // Form state — accès
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [accessMode, setAccessMode] = useState<'all' | 'restricted'>('all')
 
@@ -174,6 +171,18 @@ export default function AdminProjectsPage() {
     if (!editingProject) setEditingProject(null)
   }
 
+  async function deleteProject(project: ProjectWithStats) {
+    if (!confirm(`Supprimer "${project.name}" ? Cette action est irréversible et supprimera aussi tous les vins associés.`)) return
+
+    await supabase.from('wines').delete().eq('project_id', project.id)
+    await supabase.from('project_members').delete().eq('project_id', project.id)
+    await supabase.from('projects').delete().eq('id', project.id)
+
+    setProjects(projects.filter(p => p.id !== project.id))
+    setEditingProject(null)
+    setCreating(false)
+  }
+
   function toggleMember(userId: string) {
     if (memberIds.includes(userId))
       setMemberIds(memberIds.filter(id => id !== userId))
@@ -227,7 +236,6 @@ export default function AdminProjectsPage() {
                   cursor: 'pointer',
                 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {/* Image ou emoji */}
                   {(project as any).image_url ? (
                     <img src={(project as any).image_url} alt={project.name}
                       style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
@@ -237,12 +245,8 @@ export default function AdminProjectsPage() {
                     </div>
                   )}
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '3px' }}>
-                      {project.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#888' }}>
-                      {project.description ?? 'Pas de description'}
-                    </div>
+                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '3px' }}>{project.name}</div>
+                    <div style={{ fontSize: '12px', color: '#888' }}>{project.description ?? 'Pas de description'}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>
@@ -300,14 +304,12 @@ export default function AdminProjectsPage() {
                     placeholder="ex: Swiss Wine Challenge 2026"
                     style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
-
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Description</label>
                   <textarea value={projectDescription} onChange={e => setProjectDescription(e.target.value)}
                     placeholder="ex: Coffret de 6 vins suisses à déguster à l'aveugle"
                     style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', resize: 'none', minHeight: '70px', fontFamily: 'system-ui', boxSizing: 'border-box' }} />
                 </div>
-
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>
                     Slug URL <span style={{ fontWeight: '400', color: '#aaa' }}>(généré automatiquement)</span>
@@ -319,7 +321,6 @@ export default function AdminProjectsPage() {
                     URL : /app/project/{projectSlug || '...'}
                   </div>
                 </div>
-
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Image URL</label>
                   <input value={projectImageUrl} onChange={e => setProjectImageUrl(e.target.value)}
@@ -339,18 +340,11 @@ export default function AdminProjectsPage() {
                 {creating ? (
                   <div>
                     <div style={{ marginBottom: '12px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>
-                        Nombre de bouteilles
-                      </label>
+                      <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Nombre de bouteilles</label>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {[1, 2, 3, 4, 5, 6, 9, 12].map(n => (
                           <button key={n} onClick={() => setBottleCount(n)}
-                            style={{
-                              width: '44px', height: '44px', borderRadius: '8px', fontSize: '15px', fontWeight: '500', cursor: 'pointer',
-                              border: bottleCount === n ? 'none' : '0.5px solid #e0e0e0',
-                              background: bottleCount === n ? accent : '#fff',
-                              color: bottleCount === n ? '#fff' : '#666',
-                            }}>
+                            style={{ width: '44px', height: '44px', borderRadius: '8px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', border: bottleCount === n ? 'none' : '0.5px solid #e0e0e0', background: bottleCount === n ? accent : '#fff', color: bottleCount === n ? '#fff' : '#666' }}>
                             {n}
                           </button>
                         ))}
@@ -416,7 +410,6 @@ export default function AdminProjectsPage() {
                         </div>
                       ))}
                     </div>
-
                     {editingProject && (
                       <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '10px 12px' }}>
                         <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>🔗 Lien d'invitation</div>
@@ -436,7 +429,17 @@ export default function AdminProjectsPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
+            {/* Bouton supprimer */}
+            {editingProject && (
+              <div style={{ marginTop: '1rem' }}>
+                <button onClick={() => deleteProject(editingProject)}
+                  style={{ width: '100%', padding: '10px', border: '0.5px solid #fca5a5', borderRadius: '8px', background: '#fff', color: '#dc2626', fontSize: '13px', cursor: 'pointer' }}>
+                  🗑 Supprimer ce projet
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
               <button onClick={() => { setCreating(false); setEditingProject(null) }}
                 style={{ flex: 1, padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
                 Annuler
