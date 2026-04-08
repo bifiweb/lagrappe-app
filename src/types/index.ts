@@ -62,6 +62,7 @@ export interface GrappisteNotes {
   prix_chf: string | null
   prix_exact: number | null
   cave: string | null
+  elevage: string | null
   image_url: string | null
   created_at: string
 }

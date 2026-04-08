@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { WINE_CONTENT } from '@/types'
+import { WINE_CONTENT, ELEVAGE_OPTIONS } from '@/types'
 import type { Wine, GrappisteNotes, Project, WineType } from '@/types'
 
 interface WineWithNotes extends Wine {
@@ -97,6 +97,7 @@ export default function AdminWinesPage() {
   const [millesime, setMillesime] = useState('')
   const [prixExact, setPrixExact] = useState('')
   const [cave, setCave] = useState('')
+  const [elevage, setElevage] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [shopifyUrl, setShopifyUrl] = useState('')
 
@@ -153,6 +154,7 @@ export default function AdminWinesPage() {
     setMillesime(n?.millesime?.toString() ?? '')
     setPrixExact(n?.prix_exact?.toString() ?? '')
     setCave(n?.cave ?? '')
+    setElevage(n?.elevage ?? '')
     setImageUrl(n?.image_url ?? '')
     setShopifyUrl(wine.shopify_url ?? '')
     setSuccess(false)
@@ -189,6 +191,7 @@ export default function AdminWinesPage() {
       prix_chf: isNaN(prixNum) ? null : getPriceRange(prixNum),
       prix_exact: isNaN(prixNum) ? null : prixNum,
       cave,
+      elevage: elevage || null,
       image_url: imageUrl,
     }, { onConflict: 'wine_id' })
 
@@ -351,6 +354,11 @@ export default function AdminWinesPage() {
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Bouche</label>
                 <SelectButtons options={content.bouche} value={bouche} onChange={setBouche} accent={accent} />
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>🪣 Élevage</label>
+                <SelectButtons options={ELEVAGE_OPTIONS} value={elevage} onChange={setElevage} accent={accent} />
               </div>
 
               <div style={{ marginBottom: '12px' }}>
