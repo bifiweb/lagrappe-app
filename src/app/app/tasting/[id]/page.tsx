@@ -160,7 +160,12 @@ export default function TastingPage() {
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {step > 0 && robe && (
               <span onClick={() => goStep(0)} style={{ cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: '#fff', border: '0.5px solid #e0e0e0', color: '#666', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: ROBE_COLORS[robe] ?? '#ccc', display: 'inline-block', border: '0.5px solid rgba(0,0,0,0.1)' }} />
+                <svg width="10" height="14" viewBox="0 0 48 67" fill="none">
+                  <path d="M8 4 C8 4 4 20 4 28 C4 38 13 46 24 46 C35 46 44 38 44 28 C44 20 40 4 40 4 Z" fill="white" stroke="#e0e0e0" strokeWidth="3"/>
+                  <path d="M7 28 C7 28 6 32 7 35 C9 41 16 46 24 46 C32 46 39 41 41 35 C42 32 41 28 41 28 Z" fill={ROBE_COLORS[robe] ?? '#ccc'}/>
+                  <line x1="24" y1="46" x2="24" y2="60" stroke="#e0e0e0" strokeWidth="4"/>
+                  <line x1="14" y1="60" x2="34" y2="60" stroke="#e0e0e0" strokeWidth="4" strokeLinecap="round"/>
+                </svg>
                 {robe}
               </span>
             )}
