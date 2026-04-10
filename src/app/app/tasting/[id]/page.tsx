@@ -27,7 +27,7 @@ const ROBE_COLORS: Record<string, string> = {
 
 const SCORE_EMOJIS = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
 const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
-const BOUCHE_OPTIONS = ['Léger, facile', 'Souple, équilibré', 'Puissant, corsé']
+
 
 function HintBanner({ used, onUse }: { used: number, onUse: () => void }) {
   if (used >= 2) return null
@@ -212,7 +212,7 @@ export default function TastingPage() {
       robe,
       nez_intensite: nezIntensite,
       aromes,
-      bouche: BOUCHE_OPTIONS[boucheIndex],
+      bouche: WINE_CONTENT[wine!.type].bouche[boucheIndex],
       accords: accord ? [accord] : [],
       prix_estime: prix,
       millesime_estime: millesime ? parseInt(millesime) : null,
@@ -285,7 +285,7 @@ export default function TastingPage() {
             )}
             {step > 2 && (
               <span onClick={() => goStep(2)} style={{ cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: '#fff', border: '0.5px solid #e0e0e0', color: '#666' }}>
-                👄 {BOUCHE_OPTIONS[boucheIndex]}
+                👄 {content.bouche[boucheIndex]}
               </span>
             )}
             {step > 3 && accord && (
@@ -442,7 +442,7 @@ export default function TastingPage() {
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '16px' }}>Structure en bouche</div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                {BOUCHE_OPTIONS.map((opt, i) => (
+                {content.bouche.map((opt, i) => (
                   <div key={i} style={{ textAlign: i === 0 ? 'left' : i === 2 ? 'right' : 'center', flex: 1 }}>
                     <div style={{ fontSize: '11px', color: boucheIndex === i ? accent : '#aaa', fontWeight: boucheIndex === i ? '500' : '400', transition: 'color .2s' }}>
                       {opt.split(',')[0]}
@@ -454,7 +454,7 @@ export default function TastingPage() {
                 onChange={e => { setBoucheIndex(Number(e.target.value)); haptic() }}
                 style={{ width: '100%', accentColor: accent, height: '6px' }} />
               <div style={{ textAlign: 'center', fontSize: '15px', fontWeight: '500', color: accent, marginTop: '12px', transition: 'all .2s' }}>
-                {BOUCHE_OPTIONS[boucheIndex]}
+                {content.bouche[boucheIndex]}
               </div>
             </div>
           </>
