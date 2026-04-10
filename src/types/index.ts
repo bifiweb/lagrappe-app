@@ -208,7 +208,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
       'Épices', 'Vanille', 'Miel', 'Beurre', 'Champignons',
     ],
     bouche: ['Acidité vive', 'Équilibre gras/acidité', 'Gras, onctueux'],
-    accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette / Fondue', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
+    accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette/Fondue', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
     cepages: ['Chasselas', 'Chardonnay', 'Pinot Gris', 'Riesling', 'Sauvignon', 'Gewurztraminer', 'Viognier', 'Petite Arvine', 'Heida', 'Müller Thurgau', 'Johannisberg', 'Muscat'],
     regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs'],
   },
