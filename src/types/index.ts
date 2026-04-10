@@ -200,7 +200,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
     regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs'],
   },
   blanc: {
-    robes: ['Jaune pâle', 'Or / Paille', 'Ambrée', 'Rosée'],
+    robes: ['Jaune pâle', 'Or / Paille', 'Ambrée'],
     aromes: [
       'Pomme', 'Poire', 'Pêche', 'Abricot', 'Coing', 'Rhubarbe',
       'Citron', 'Pamplemousse', 'Ananas', 'Litchi', 'Fruit de la passion',
