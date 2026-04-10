@@ -183,11 +183,15 @@ export default function TastingPage() {
       : section === 'region' ? wineContent.regions
       : PRIX_OPTIONS
 
+    const alreadyExcluded = section === 'aromes'
+      ? [...eliminated, ...aromes]
+      : eliminated
+
     const { data: newEliminated } = await supabase.rpc('get_hint', {
       p_wine_id: wine.id,
       p_section: section,
       p_all_options: allOptions,
-      p_already_eliminated: eliminated,
+      p_already_eliminated: alreadyExcluded,
     })
 
     if (!newEliminated) return
