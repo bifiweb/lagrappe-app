@@ -178,7 +178,7 @@ export default function ProjectPage() {
                     <div key={wine.id}
                       onClick={() => router.push(`/app/session/new?wine=${wine.id}&project=${project?.id}`)}
                       style={{
-                        background: '#fff',
+                        background: isRevealed ? '#fff' : wine.type === 'rouge' ? '#f5ede8' : wine.type === 'blanc' ? '#f5f3e0' : wine.type === 'rose' ? '#fdf0f0' : '#fff',
                         border: isRevealed ? '0.5px solid #c8e6c9' : '0.5px solid #e0e0e0',
                         borderRadius: '16px', padding: '1.25rem',
                         cursor: 'pointer', textAlign: 'center',
