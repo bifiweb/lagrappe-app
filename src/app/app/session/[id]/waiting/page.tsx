@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { useSessionRealtime } from '@/hooks/useRealtime'
@@ -10,8 +10,8 @@ export default function WaitingPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<SessionPlayer[]>([])
   const [isChef, setIsChef] = useState(false)
-  const [revealing, setRevealing] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const isRevealingRef = useRef(false)
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -26,6 +26,12 @@ export default function WaitingPage() {
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
+      // Si déjà en cours de révélation (rechargement de page), lancer le décompte
+      if (sess?.status === 'revealing') {
+        beginCountdown(false)
+        return
+      }
+
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
@@ -36,8 +42,27 @@ export default function WaitingPage() {
     load()
   }, [])
 
+  function beginCountdown(chefWrites: boolean) {
+    if (isRevealingRef.current) return
+    isRevealingRef.current = true
+    let n = 3
+    setCountdown(3)
+    const interval = setInterval(() => {
+      n--
+      setCountdown(n)
+      if (n <= 0) {
+        clearInterval(interval)
+        if (chefWrites) {
+          supabase.from('sessions').update({ status: 'revealed' }).eq('id', sessionId)
+        }
+        router.push(`/app/session/${sessionId}/reveal`)
+      }
+    }, 1000)
+  }
+
   useSessionRealtime(sessionId, {
     onPlayerUpdate: (p) => setPlayers(prev => prev.map(x => x.id === p.id ? { ...x, ...p } : x)),
+    onRevealing: () => beginCountdown(false),
     onReveal: () => router.push(`/app/session/${sessionId}/reveal`),
   })
 
@@ -45,21 +70,12 @@ export default function WaitingPage() {
   const allDone = doneCount === players.length && players.length > 0
 
   async function startReveal() {
-    setRevealing(true)
-    let n = 5
-    setCountdown(5)
-    const interval = setInterval(() => {
-      n--
-      setCountdown(n)
-      if (n <= 0) {
-        clearInterval(interval)
-        // Mettre à jour le statut de la session
-        supabase.from('sessions')
-          .update({ status: 'revealed' })
-          .eq('id', sessionId)
-          .then(() => router.push(`/app/session/${sessionId}/reveal`))
-      }
-    }, 1000)
+    if (isRevealingRef.current) return
+    // Mettre le status à 'revealing' → tous les clients démarrent leur décompte
+    await supabase.from('sessions').update({ status: 'revealing' }).eq('id', sessionId)
+    // Le chef démarre aussi immédiatement (sans attendre l'écho postgres_changes)
+    // et sera responsable de passer à 'revealed' en fin de décompte
+    beginCountdown(true)
   }
 
   return (
@@ -78,14 +94,17 @@ export default function WaitingPage() {
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
-        {/* Décompte révélation */}
+        {/* Décompte révélation — affiché sur tous les appareils */}
         {countdown !== null && (
-          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-            <div style={{ fontSize: '14px', color: '#888', marginBottom: '1rem' }}>
+          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <div style={{ fontSize: '14px', color: '#888', marginBottom: '1.5rem' }}>
               Le vin mystère se révèle...
             </div>
-            <div style={{ fontSize: '80px', fontWeight: '500', color: '#8d323b', lineHeight: 1 }}>
-              {countdown <= 0 ? '🍷' : countdown}
+            <div style={{
+              fontSize: '120px', fontWeight: '700', color: countdown <= 0 ? '#8d323b' : '#1a1a1a',
+              lineHeight: 1, transition: 'all .3s',
+            }}>
+              {countdown <= 0 ? '🍾' : countdown}
             </div>
           </div>
         )}
@@ -102,7 +121,6 @@ export default function WaitingPage() {
               </div>
             </div>
 
-            {/* Progression */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.5rem' }}>
               {players.map(p => (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '0.5px solid #f0f0f0' }}>
@@ -123,18 +141,17 @@ export default function WaitingPage() {
               ))}
             </div>
 
-            {/* Bouton révéler — chef seulement */}
             {isChef && (
               <button
                 onClick={startReveal}
-                disabled={!allDone || revealing}
+                disabled={!allDone}
                 style={{
                   width: '100%', padding: '14px',
-                  background: allDone && !revealing ? '#8d323b' : '#c0a0a0',
+                  background: allDone ? '#8d323b' : '#c0a0a0',
                   color: '#fff', border: 'none',
                   borderRadius: '12px', fontSize: '15px',
                   fontWeight: '500',
-                  cursor: allDone && !revealing ? 'pointer' : 'default',
+                  cursor: allDone ? 'pointer' : 'default',
                 }}>
                 {allDone ? 'Révéler le vin mystère ! 🍾' : `En attente... (${doneCount}/${players.length})`}
               </button>
