@@ -328,6 +328,9 @@ export default function SessionPage() {
   async function submitChifoumiMove(move: ChifoumiMove) {
     if (myChifoumiMove || !profile) return
     setMyChifoumiMove(move)
+    // Ajouter son propre coup localement (le broadcast ne revient pas à l'émetteur)
+    chifoumiMovesRef.current = { ...chifoumiMovesRef.current, [profile.id]: move }
+    setChifoumiMoves({ ...chifoumiMovesRef.current })
     chifoumiChannelRef.current?.send({
       type: 'broadcast',
       event: 'move',
