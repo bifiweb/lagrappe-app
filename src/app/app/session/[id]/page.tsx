@@ -1,25 +1,54 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import { resolveTiebreak } from '@/lib/scoring'
 import type { Profile, Session, SessionPlayer } from '@/types'
+
+type ChifoumiMove = 'pierre' | 'feuille' | 'ciseaux'
+const CHIFOUMI_EMOJI: Record<ChifoumiMove, string> = { pierre: '✊', feuille: '🖐️', ciseaux: '✌️' }
+
+function getChifoumiWinner(moves: Record<string, ChifoumiMove>, tiedIds: string[]): string | 'tie' {
+  if (tiedIds.length !== 2) return tiedIds[0]
+  const [a, b] = tiedIds
+  const ma = moves[a], mb = moves[b]
+  if (ma === mb) return 'tie'
+  if (
+    (ma === 'pierre' && mb === 'ciseaux') ||
+    (ma === 'feuille' && mb === 'pierre') ||
+    (ma === 'ciseaux' && mb === 'feuille')
+  ) return a
+  return b
+}
 
 export default function SessionPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<SessionPlayer[]>([])
-  const [phase, setPhase] = useState<'lobby' | 'voting' | 'countdown'>('lobby')
+  const [phase, setPhase] = useState<'lobby' | 'voting' | 'chifoumi' | 'countdown'>('lobby')
   const [myVote, setMyVote] = useState<string | null>(null)
   const [votesIn, setVotesIn] = useState(0)
   const [hasVoted, setHasVoted] = useState(false)
   const [chef, setChef] = useState<SessionPlayer | null>(null)
   const [countdown, setCountdown] = useState(10)
-  const [tiebreakMsg, setTiebreakMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [determiningChef, setDeterminingChef] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  // Chifoumi
+  const [tiedPlayerIds, setTiedPlayerIds] = useState<string[]>([])
+  const [myChifoumiMove, setMyChifoumiMove] = useState<ChifoumiMove | null>(null)
+  const [chifoumiMoves, setChifoumiMoves] = useState<Record<string, ChifoumiMove>>({})
+  const [chifoumiRound, setChifoumiRound] = useState(1)
+  const [chifoumiResult, setChifoumiResult] = useState<string | null>(null)
+
+  // Refs pour les callbacks broadcast (évite les closures périmées)
+  const tiedPlayerIdsRef = useRef<string[]>([])
+  const chifoumiMovesRef = useRef<Record<string, ChifoumiMove>>({})
+  const chifoumiRoundRef = useRef(1)
+  const currentPlayersRef = useRef<SessionPlayer[]>([])
+  const chifoumiChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -51,6 +80,7 @@ export default function SessionPage() {
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
+      currentPlayersRef.current = pl ?? []
 
       const { data: existingVote } = await supabase
         .from('votes').select('*').eq('session_id', sessionId).eq('voter_id', user.id).maybeSingle()
@@ -72,6 +102,7 @@ export default function SessionPage() {
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
+      currentPlayersRef.current = pl ?? []
 
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
@@ -97,6 +128,7 @@ export default function SessionPage() {
         .from('session_players').select('*').eq('session_id', sessionId)
       const currentPlayers = pl ?? []
       setPlayers(currentPlayers)
+      currentPlayersRef.current = currentPlayers
 
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
@@ -120,6 +152,73 @@ export default function SessionPage() {
     return () => clearInterval(interval)
   }, [sessionId, phase, determiningChef])
 
+  // Setup canal chifoumi via Realtime Broadcast
+  useEffect(() => {
+    if (phase !== 'chifoumi' || !profile) return
+
+    // Nettoyage canal précédent si re-manche
+    if (chifoumiChannelRef.current) {
+      supabase.removeChannel(chifoumiChannelRef.current)
+    }
+
+    const channel = supabase.channel(`chifoumi-${sessionId}-r${chifoumiRoundRef.current}`)
+
+    channel.on('broadcast', { event: 'move' }, ({ payload }: { payload: { userId: string; move: ChifoumiMove; round: number } }) => {
+      if (payload.round !== chifoumiRoundRef.current) return
+
+      chifoumiMovesRef.current = { ...chifoumiMovesRef.current, [payload.userId]: payload.move }
+      setChifoumiMoves({ ...chifoumiMovesRef.current })
+
+      const ids = tiedPlayerIdsRef.current
+      const allMoved = ids.every(id => chifoumiMovesRef.current[id])
+
+      if (allMoved) {
+        const winnerId = getChifoumiWinner(chifoumiMovesRef.current, ids)
+
+        if (winnerId === 'tie') {
+          // Nouvelle manche
+          setChifoumiResult('Égalité ! Nouvelle manche...')
+          setTimeout(() => {
+            chifoumiRoundRef.current += 1
+            chifoumiMovesRef.current = {}
+            setChifoumiMoves({})
+            setMyChifoumiMove(null)
+            setChifoumiRound(r => r + 1)
+            setChifoumiResult(null)
+          }, 1800)
+        } else {
+          // On a un gagnant — on désigne le chef
+          const winnerPlayer = currentPlayersRef.current.find(p => p.user_id === winnerId)
+          const loserIds = ids.filter(id => id !== winnerId)
+          const loserPlayer = currentPlayersRef.current.find(p => p.user_id === loserIds[0])
+          const winMove = chifoumiMovesRef.current[winnerId]
+          const loseMove = chifoumiMovesRef.current[loserIds[0]]
+          setChifoumiResult(
+            `${CHIFOUMI_EMOJI[winMove]} bat ${CHIFOUMI_EMOJI[loseMove]} — ${winnerPlayer?.pseudo} est le chef !`
+          )
+          // Seul le "premier" tied player (alphabétiquement) écrit en DB pour éviter les doublons
+          if (profile?.id === ids[0]) {
+            setTimeout(async () => {
+              await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
+              await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', winnerId)
+              await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
+            }, 1500)
+          }
+          setTimeout(() => {
+            setChef(winnerPlayer ?? null)
+            setPhase('countdown')
+            startCountdown()
+          }, 2200)
+        }
+      }
+    })
+
+    channel.subscribe()
+    chifoumiChannelRef.current = channel
+
+    return () => { supabase.removeChannel(channel) }
+  }, [phase, chifoumiRound, profile])
+
   async function launchVote() {
     await supabase.from('sessions')
       .update({ status: 'voting' })
@@ -141,13 +240,8 @@ export default function SessionPage() {
   function shareLink() {
     const url = getShareUrl()
     if (navigator.share) {
-      navigator.share({
-        title: 'La Grappe — Dégustation à l\'aveugle',
-        text: 'Rejoins ma session de dégustation !',
-        url,
-      })
+      navigator.share({ title: 'La Grappe — Dégustation à l\'aveugle', text: 'Rejoins ma session de dégustation !', url })
     } else {
-      // Fallback WhatsApp
       window.open(`https://wa.me/?text=${encodeURIComponent(`Rejoins ma session de dégustation La Grappe ! ${url}`)}`, '_blank')
     }
   }
@@ -159,16 +253,9 @@ export default function SessionPage() {
     if (players.length === 1) {
       const soloPlayer = players[0]
       setChef(soloPlayer)
-      await supabase.from('session_players')
-        .update({ is_chef: false })
-        .eq('session_id', sessionId)
-      await supabase.from('session_players')
-        .update({ is_chef: true })
-        .eq('session_id', sessionId)
-        .eq('user_id', user.id)
-      await supabase.from('sessions')
-        .update({ status: 'countdown' })
-        .eq('id', sessionId)
+      await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
+      await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', user.id)
+      await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
       setPhase('countdown')
       startCountdown()
       return
@@ -184,17 +271,15 @@ export default function SessionPage() {
 
     if (!error) {
       setHasVoted(true)
-
       setTimeout(async () => {
         const { count } = await supabase
-          .from('votes').select('*', { count: 'exact', head: true })
-          .eq('session_id', sessionId)
+          .from('votes').select('*', { count: 'exact', head: true }).eq('session_id', sessionId)
         const newCount = count ?? 0
         setVotesIn(newCount)
 
-        const { data: pl } = await supabase
-          .from('session_players').select('*').eq('session_id', sessionId)
+        const { data: pl } = await supabase.from('session_players').select('*').eq('session_id', sessionId)
         const currentPlayers = pl ?? []
+        currentPlayersRef.current = currentPlayers
 
         if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
           setDeterminingChef(true)
@@ -205,47 +290,49 @@ export default function SessionPage() {
   }
 
   async function determineChef(currentPlayers: SessionPlayer[]) {
-    const { data: votes } = await supabase
-      .from('votes').select('voted_for').eq('session_id', sessionId)
-
+    const { data: votes } = await supabase.from('votes').select('voted_for').eq('session_id', sessionId)
     if (!votes || votes.length === 0) return
 
     const tally: Record<string, number> = {}
     votes.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
 
     const maxVotes = Math.max(...Object.values(tally))
-    const winners = Object.entries(tally)
-      .filter(([, v]) => v === maxVotes).map(([id]) => id)
-
-    let chefId = winners[0]
+    const winners = Object.entries(tally).filter(([, v]) => v === maxVotes).map(([id]) => id)
 
     if (winners.length > 1) {
-      const winnerPlayers = currentPlayers.filter(p => winners.includes(p.user_id))
-      const names = winnerPlayers.map(p => p.pseudo)
-      const result = resolveTiebreak(names)
-      const winnerPlayer = winnerPlayers.find(p => p.pseudo === result.winner)
-      chefId = winnerPlayer?.user_id ?? winners[0]
-      setTiebreakMsg(result.reason)
+      // Égalité → chifoumi !
+      tiedPlayerIdsRef.current = winners
+      chifoumiMovesRef.current = {}
+      chifoumiRoundRef.current = 1
+      setTiedPlayerIds(winners)
+      setChifoumiMoves({})
+      setChifoumiRound(1)
+      setMyChifoumiMove(null)
+      setPhase('chifoumi')
+      return
     }
 
+    await assignChef(winners[0], currentPlayers)
+  }
+
+  async function assignChef(chefId: string, currentPlayers: SessionPlayer[]) {
     const chefPlayer = currentPlayers.find(p => p.user_id === chefId)
     setChef(chefPlayer ?? null)
-
-    await supabase.from('session_players')
-      .update({ is_chef: false })
-      .eq('session_id', sessionId)
-
-    await supabase.from('session_players')
-      .update({ is_chef: true })
-      .eq('session_id', sessionId)
-      .eq('user_id', chefId)
-
-    await supabase.from('sessions')
-      .update({ status: 'countdown' })
-      .eq('id', sessionId)
-
+    await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
+    await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', chefId)
+    await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
     setPhase('countdown')
     startCountdown()
+  }
+
+  async function submitChifoumiMove(move: ChifoumiMove) {
+    if (myChifoumiMove || !profile) return
+    setMyChifoumiMove(move)
+    chifoumiChannelRef.current?.send({
+      type: 'broadcast',
+      event: 'move',
+      payload: { userId: profile.id, move, round: chifoumiRoundRef.current },
+    })
   }
 
   function startCountdown() {
@@ -256,9 +343,7 @@ export default function SessionPage() {
       setCountdown(n)
       if (n <= 0) {
         clearInterval(interval)
-        supabase.from('sessions')
-          .update({ status: 'tasting' })
-          .eq('id', sessionId)
+        supabase.from('sessions').update({ status: 'tasting' }).eq('id', sessionId)
           .then(() => router.push(`/app/tasting/${sessionId}`))
       }
     }, 1000)
@@ -269,6 +354,8 @@ export default function SessionPage() {
       <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
     </div>
   )
+
+  const amInTiebreak = tiedPlayerIds.includes(profile?.id ?? '')
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -308,7 +395,6 @@ export default function SessionPage() {
               ))}
             </div>
 
-            {/* Lien de partage */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>Invite tes amis à rejoindre</div>
               <div style={{ fontSize: '11px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '10px' }}>
@@ -316,21 +402,11 @@ export default function SessionPage() {
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={copyLink}
-                  style={{
-                    flex: 1, padding: '9px', border: '0.5px solid #e0e0e0',
-                    borderRadius: '8px', background: copied ? '#e8f0e8' : '#fff',
-                    color: copied ? '#27500A' : '#1a1a1a', fontSize: '13px',
-                    cursor: 'pointer', fontWeight: '500',
-                  }}>
+                  style={{ flex: 1, padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: copied ? '#e8f0e8' : '#fff', color: copied ? '#27500A' : '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
                   {copied ? '✓ Copié !' : '📋 Copier le lien'}
                 </button>
                 <button onClick={shareLink}
-                  style={{
-                    flex: 1, padding: '9px', border: '0.5px solid #e0e0e0',
-                    borderRadius: '8px', background: '#fff',
-                    color: '#1a1a1a', fontSize: '13px',
-                    cursor: 'pointer', fontWeight: '500',
-                  }}>
+                  style={{ flex: 1, padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
                   💬 Partager
                 </button>
               </div>
@@ -360,12 +436,7 @@ export default function SessionPage() {
                 {players.filter(p => p.user_id !== profile?.id).map(p => (
                   <div key={p.id}
                     onClick={() => setMyVote(p.user_id)}
-                    style={{
-                      background: '#fff',
-                      border: myVote === p.user_id ? '2px solid #8d323b' : '0.5px solid #e0e0e0',
-                      borderRadius: '12px', padding: '1rem',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px',
-                    }}>
+                    style={{ background: '#fff', border: myVote === p.user_id ? '2px solid #8d323b' : '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '500', color: '#8d323b' }}>
                       {p.pseudo[0].toUpperCase()}
                     </div>
@@ -376,22 +447,10 @@ export default function SessionPage() {
               </div>
             )}
 
-            {tiebreakMsg && (
-              <div style={{ background: '#faeeda', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#633806', fontStyle: 'italic' }}>
-                🎲 Égalité ! {tiebreakMsg}
-              </div>
-            )}
-
             {!hasVoted && (
               <button onClick={submitVote}
                 disabled={!myVote && players.length > 1}
-                style={{
-                  width: '100%', padding: '14px',
-                  background: (!myVote && players.length > 1) ? '#c0a0a0' : '#8d323b',
-                  color: '#fff', border: 'none', borderRadius: '12px',
-                  fontSize: '15px', fontWeight: '500',
-                  cursor: (!myVote && players.length > 1) ? 'default' : 'pointer'
-                }}>
+                style={{ width: '100%', padding: '14px', background: (!myVote && players.length > 1) ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: (!myVote && players.length > 1) ? 'default' : 'pointer' }}>
                 {players.length === 1 ? 'Je suis le chef, on commence ! →' : 'Confirmer mon vote'}
               </button>
             )}
@@ -402,31 +461,88 @@ export default function SessionPage() {
           </>
         )}
 
+        {/* CHIFOUMI */}
+        {phase === 'chifoumi' && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+              Manche {chifoumiRound}
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
+              Égalité ! Chifoumi 🤜
+            </div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '2rem' }}>
+              {amInTiebreak
+                ? 'Choisis ton coup pour devenir chef !'
+                : `Duel en cours entre ${tiedPlayerIds.map(id => players.find(p => p.user_id === id)?.pseudo).join(' et ')}...`}
+            </div>
+
+            {amInTiebreak && !myChifoumiMove && !chifoumiResult && (
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '2rem' }}>
+                {(['pierre', 'feuille', 'ciseaux'] as ChifoumiMove[]).map(move => (
+                  <button key={move} onClick={() => submitChifoumiMove(move)}
+                    style={{ width: '88px', height: '88px', borderRadius: '20px', border: '0.5px solid #e0e0e0', background: '#fff', fontSize: '40px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px', transition: 'all .15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.border = '2px solid #8d323b'; e.currentTarget.style.background = '#f5ede8' }}
+                    onMouseLeave={e => { e.currentTarget.style.border = '0.5px solid #e0e0e0'; e.currentTarget.style.background = '#fff' }}>
+                    {CHIFOUMI_EMOJI[move]}
+                    <span style={{ fontSize: '10px', color: '#888', fontWeight: '500' }}>{move}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {amInTiebreak && myChifoumiMove && !chifoumiResult && (
+              <div style={{ marginBottom: '2rem' }}>
+                <div style={{ fontSize: '56px', marginBottom: '8px' }}>{CHIFOUMI_EMOJI[myChifoumiMove]}</div>
+                <div style={{ fontSize: '13px', color: '#888' }}>
+                  Tu as choisi <strong>{myChifoumiMove}</strong> — en attente de l'adversaire...
+                </div>
+              </div>
+            )}
+
+            {!amInTiebreak && !chifoumiResult && (
+              <div style={{ fontSize: '48px', marginBottom: '1rem' }}>⏳</div>
+            )}
+
+            {/* Résultat de la manche */}
+            {chifoumiResult && (
+              <div style={{ background: '#faeeda', borderRadius: '16px', padding: '1.25rem', margin: '0 auto', maxWidth: '320px', fontSize: '15px', color: '#633806', fontWeight: '500' }}>
+                {chifoumiResult}
+              </div>
+            )}
+
+            {/* Coups joués (visibles pour tous une fois les deux coups posés) */}
+            {Object.keys(chifoumiMoves).length === tiedPlayerIds.length && tiedPlayerIds.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '1.5rem' }}>
+                {tiedPlayerIds.map(id => {
+                  const p = players.find(pl => pl.user_id === id)
+                  const move = chifoumiMoves[id]
+                  return (
+                    <div key={id} style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '36px' }}>{move ? CHIFOUMI_EMOJI[move] : '❓'}</div>
+                      <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{p?.pseudo}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* COUNTDOWN */}
         {phase === 'countdown' && (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>
-              Chef désigné
-            </div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>Chef désigné</div>
             <div style={{ fontSize: '48px', marginBottom: '.25rem' }}>👑</div>
             <div style={{ fontSize: '36px', fontWeight: '500', color: '#8d323b', marginBottom: '.5rem' }}>
               {chef?.pseudo}
             </div>
-            {tiebreakMsg ? (
-              <div style={{ background: '#faeeda', borderRadius: '12px', padding: '1rem', margin: '1rem auto', maxWidth: '320px', fontSize: '13px', color: '#633806', fontStyle: 'italic' }}>
-                🎲 {tiebreakMsg}
-              </div>
-            ) : (
-              <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
-                élu chef par le groupe
-              </div>
-            )}
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
+              élu chef par le groupe
+            </div>
             <div style={{ fontSize: '72px', fontWeight: '500', color: '#8d323b', lineHeight: 1, margin: '1.5rem 0' }}>
               {countdown <= 0 ? '🍷' : countdown}
             </div>
-            <div style={{ fontSize: '14px', color: '#888' }}>
-              La dégustation commence...
-            </div>
+            <div style={{ fontSize: '14px', color: '#888' }}>La dégustation commence...</div>
           </div>
         )}
 
