@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Tasting } from '@/types'
 
+const AVATAR_OPTIONS = ['🍷','🍾','🧀','🍇','🫧','🦅','🐺','🦁','🐉','🌹','🌊','🔥','⚡','🎩','🌙','🍓','🍑','🥂','🧙','🤠']
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [tastings, setTastings] = useState<Tasting[]>([])
@@ -13,6 +15,8 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState(false)
   const [displayName, setDisplayName] = useState('')
   const [editingName, setEditingName] = useState(false)
+  const [editingAvatar, setEditingAvatar] = useState(false)
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -25,6 +29,7 @@ export default function ProfilePage() {
         .from('profiles').select('*').eq('id', user.id).single()
       setProfile(prof)
       setDisplayName(prof?.display_name ?? '')
+      setSelectedAvatar(prof?.avatar ?? null)
 
       const { data: t } = await supabase
         .from('tastings')
@@ -49,6 +54,14 @@ export default function ProfilePage() {
     setSuccess(true)
     setEditingName(false)
     setTimeout(() => setSuccess(false), 2000)
+  }
+
+  async function saveAvatar(emoji: string) {
+    if (!profile) return
+    setSelectedAvatar(emoji)
+    await supabase.from('profiles').update({ avatar: emoji }).eq('id', profile.id)
+    setProfile({ ...profile, avatar: emoji })
+    setEditingAvatar(false)
   }
 
   async function handleLogout() {
@@ -90,9 +103,35 @@ export default function ProfilePage() {
 
         {/* Avatar + nom */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: '28px', fontWeight: '500', color: '#fff' }}>
-            {initials}
+          <div
+            onClick={() => setEditingAvatar(true)}
+            title="Changer l'avatar Wine Mode"
+            style={{ width: '72px', height: '72px', borderRadius: '50%', background: selectedAvatar ? '#f5ede8' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: selectedAvatar ? '40px' : '28px', fontWeight: '500', color: '#fff', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color .2s' }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = accent)}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+          >
+            {selectedAvatar ?? initials}
           </div>
+          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '12px', cursor: 'pointer' }} onClick={() => setEditingAvatar(true)}>
+            ✏️ Avatar Wine Mode
+          </div>
+
+          {editingAvatar && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', color: '#444', marginBottom: '10px', fontWeight: '500' }}>Choisis ton avatar pour le Wine Mode</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                {AVATAR_OPTIONS.map(emoji => (
+                  <button key={emoji} onClick={() => saveAvatar(emoji)}
+                    style={{ width: '44px', height: '44px', borderRadius: '50%', fontSize: '24px', border: selectedAvatar === emoji ? `2px solid ${accent}` : '2px solid #f0f0f0', background: selectedAvatar === emoji ? '#f5ede8' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' }}>
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setEditingAvatar(false)} style={{ marginTop: '10px', padding: '6px 16px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
+                Annuler
+              </button>
+            </div>
+          )}
 
           {editingName ? (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>

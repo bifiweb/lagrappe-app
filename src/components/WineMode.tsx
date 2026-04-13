@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useWineMode } from '@/store/wineMode'
+import WineModeGame from './WineModeGame'
 
 const PARTICLES = ['🍷', '🍾', '🫧', '✨', '🎊', '🎉', '⭐', '💫', '🌟', '🍇']
 const PARTICLE_COUNT = 22
@@ -25,6 +26,7 @@ export default function WineMode() {
   const { wineMode, toggleWineMode } = useWineMode()
   const [particles, setParticles] = useState<Particle[]>([])
   const [mounted, setMounted] = useState(false)
+  const [gameOpen, setGameOpen] = useState(false)
 
   useEffect(() => { setMounted(true); setParticles(generateParticles()) }, [])
 
@@ -46,12 +48,20 @@ export default function WineMode() {
     }
   }, [wineMode])
 
+  // Close game when Wine Mode is turned off
+  useEffect(() => {
+    if (!wineMode) setGameOpen(false)
+  }, [wineMode])
+
   if (!mounted) return null
 
   return (
     <>
+      {/* Full-screen game */}
+      {gameOpen && <WineModeGame onClose={() => setGameOpen(false)} />}
+
       {/* Overlay festif — pointer-events: none pour ne pas bloquer l'app */}
-      {wineMode && (
+      {wineMode && !gameOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9980, pointerEvents: 'none',
           background: 'linear-gradient(45deg, #FF006E12, #8338EC12, #FFBE0B0e, #06D6A012)',
@@ -66,7 +76,7 @@ export default function WineMode() {
       )}
 
       {/* Particules */}
-      {wineMode && (
+      {wineMode && !gameOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9990, pointerEvents: 'none', overflow: 'hidden' }}>
           {particles.map(p => (
             <div key={p.id} style={{
@@ -93,6 +103,25 @@ export default function WineMode() {
         }}>
           {wineMode ? '🎊 Wine Mode ON' : 'Activer le Wine Mode ?'}
         </div>
+
+        {/* Game launch button — only in Wine Mode */}
+        {wineMode && !gameOpen && (
+          <button
+            onClick={() => setGameOpen(true)}
+            title="Lancer le jeu de bouchons"
+            style={{
+              width: '44px', height: '44px', borderRadius: '22px 0 0 22px',
+              border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg, #FFBE0B, #FF006E)',
+              boxShadow: '0 0 16px rgba(255,190,11,0.5)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '20px',
+              marginBottom: '4px',
+              animation: 'wine-pulse 2s ease infinite',
+            }}>
+            🍾
+          </button>
+        )}
 
         <button onClick={toggleWineMode} title={wineMode ? 'Désactiver le Wine Mode' : 'Activer le Wine Mode'}
           style={{

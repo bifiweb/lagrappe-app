@@ -237,6 +237,45 @@ export default function WaitingPage() {
                 Ta dégustation est soumise — en attente des autres joueurs...
               </div>
             )}
+
+            {/* Wine Mode promo banner */}
+            {!wineMode && (
+              <div style={{
+                marginTop: '1.5rem', padding: '1rem 1.25rem',
+                background: 'linear-gradient(135deg, #1a003a, #2d0050)',
+                borderRadius: '16px', textAlign: 'center',
+                border: '1px solid rgba(255,190,11,0.25)',
+              }}>
+                <div style={{ fontSize: '22px', marginBottom: '6px' }}>🍾✨</div>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFBE0B', marginBottom: '4px' }}>
+                  En attendant... Wine Mode !
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>
+                  Lance un jeu de bouchons multijoueur en temps réel avec les autres joueurs !
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,190,11,0.7)' }}>
+                  Clique sur le bouton 🍷 à droite de l'écran pour activer le Wine Mode
+                </div>
+              </div>
+            )}
+
+            {wineMode && (
+              <div style={{
+                marginTop: '1.5rem', padding: '1rem 1.25rem',
+                background: 'linear-gradient(135deg, #1a003a, #2d0050)',
+                borderRadius: '16px', textAlign: 'center',
+                border: '1px solid rgba(255,190,11,0.5)',
+                animation: 'wine-pulse 2s ease infinite',
+              }}>
+                <div style={{ fontSize: '22px', marginBottom: '6px' }}>🍾</div>
+                <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFBE0B', marginBottom: '4px' }}>
+                  Wine Mode activé !
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                  Clique sur 🍾 à droite pour lancer le jeu de bouchons !
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
