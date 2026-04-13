@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useWineMode } from '@/store/wineMode'
 
 const PARTICLES = ['🍷', '🍾', '🫧', '✨', '🎊', '🎉', '⭐', '💫', '🌟', '🍇']
@@ -25,7 +25,6 @@ export default function WineMode() {
   const { wineMode, toggleWineMode } = useWineMode()
   const [particles, setParticles] = useState<Particle[]>([])
   const [mounted, setMounted] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => { setMounted(true); setParticles(generateParticles()) }, [])
 
@@ -34,12 +33,6 @@ export default function WineMode() {
     const interval = setInterval(() => setParticles(generateParticles()), 12000)
     return () => clearInterval(interval)
   }, [wineMode])
-
-  useEffect(() => {
-    if (!mounted) return
-    if (wineMode) { audioRef.current?.play().catch(() => {}) }
-    else { audioRef.current?.pause(); if (audioRef.current) audioRef.current.currentTime = 0 }
-  }, [wineMode, mounted])
 
   useEffect(() => {
     const linkId = 'pacifico-font'
@@ -57,10 +50,6 @@ export default function WineMode() {
 
   return (
     <>
-      <audio ref={audioRef} loop style={{ display: 'none' }}>
-        <source src="/music/disco.mp3" type="audio/mpeg" />
-      </audio>
-
       {/* Overlay festif — pointer-events: none pour ne pas bloquer l'app */}
       {wineMode && (
         <div style={{
