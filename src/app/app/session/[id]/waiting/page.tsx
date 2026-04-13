@@ -12,6 +12,7 @@ export default function WaitingPage() {
   const [isChef, setIsChef] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const isRevealingRef = useRef(false)
+  const revealChannelRef = useRef<ReturnType<typeof createClient>['channel'] extends (name: string, ...args: any[]) => infer R ? R : never | null>(null as any)
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -26,12 +27,6 @@ export default function WaitingPage() {
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
-      // Si déjà en cours de révélation (rechargement de page), lancer le décompte
-      if (sess?.status === 'revealing') {
-        beginCountdown(false)
-        return
-      }
-
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
@@ -41,6 +36,27 @@ export default function WaitingPage() {
     }
     load()
   }, [])
+
+  // Canal broadcast pour le signal de révélation (instantané, sans passer par postgres_changes)
+  useEffect(() => {
+    if (!sessionId) return
+    const channel = supabase.channel(`reveal:${sessionId}`)
+    channel.on('broadcast', { event: 'countdown' }, () => {
+      beginCountdown(false)
+    })
+    channel.subscribe()
+    revealChannelRef.current = channel
+    return () => { supabase.removeChannel(channel) }
+  }, [sessionId])
+
+  useSessionRealtime(sessionId, {
+    onPlayerUpdate: (p) => setPlayers(prev => prev.map(x => x.id === p.id ? { ...x, ...p } : x)),
+    // Fallback : si un joueur recharge la page après que le reveal soit lancé
+    onReveal: () => { if (!isRevealingRef.current) router.push(`/app/session/${sessionId}/reveal`) },
+  })
+
+  const doneCount = players.filter(p => p.tasting_done).length
+  const allDone = doneCount === players.length && players.length > 0
 
   function beginCountdown(chefWrites: boolean) {
     if (isRevealingRef.current) return
@@ -60,21 +76,15 @@ export default function WaitingPage() {
     }, 1000)
   }
 
-  useSessionRealtime(sessionId, {
-    onPlayerUpdate: (p) => setPlayers(prev => prev.map(x => x.id === p.id ? { ...x, ...p } : x)),
-    onRevealing: () => beginCountdown(false),
-    onReveal: () => router.push(`/app/session/${sessionId}/reveal`),
-  })
-
-  const doneCount = players.filter(p => p.tasting_done).length
-  const allDone = doneCount === players.length && players.length > 0
-
   async function startReveal() {
     if (isRevealingRef.current) return
-    // Mettre le status à 'revealing' → tous les clients démarrent leur décompte
-    await supabase.from('sessions').update({ status: 'revealing' }).eq('id', sessionId)
-    // Le chef démarre aussi immédiatement (sans attendre l'écho postgres_changes)
-    // et sera responsable de passer à 'revealed' en fin de décompte
+    // Envoyer le signal à tous les autres via broadcast
+    await revealChannelRef.current?.send({
+      type: 'broadcast',
+      event: 'countdown',
+      payload: {},
+    })
+    // Le chef démarre son propre décompte et sera responsable d'écrire en DB
     beginCountdown(true)
   }
 
@@ -94,15 +104,16 @@ export default function WaitingPage() {
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
-        {/* Décompte révélation — affiché sur tous les appareils */}
+        {/* Décompte — affiché sur tous les appareils simultanément */}
         {countdown !== null && (
           <div style={{ textAlign: 'center', padding: '4rem 0' }}>
             <div style={{ fontSize: '14px', color: '#888', marginBottom: '1.5rem' }}>
               Le vin mystère se révèle...
             </div>
             <div style={{
-              fontSize: '120px', fontWeight: '700', color: countdown <= 0 ? '#8d323b' : '#1a1a1a',
-              lineHeight: 1, transition: 'all .3s',
+              fontSize: '120px', fontWeight: '700',
+              color: countdown <= 0 ? '#8d323b' : '#1a1a1a',
+              lineHeight: 1, transition: 'all .2s',
             }}>
               {countdown <= 0 ? '🍾' : countdown}
             </div>
@@ -149,8 +160,7 @@ export default function WaitingPage() {
                   width: '100%', padding: '14px',
                   background: allDone ? '#8d323b' : '#c0a0a0',
                   color: '#fff', border: 'none',
-                  borderRadius: '12px', fontSize: '15px',
-                  fontWeight: '500',
+                  borderRadius: '12px', fontSize: '15px', fontWeight: '500',
                   cursor: allDone ? 'pointer' : 'default',
                 }}>
                 {allDone ? 'Révéler le vin mystère ! 🍾' : `En attente... (${doneCount}/${players.length})`}

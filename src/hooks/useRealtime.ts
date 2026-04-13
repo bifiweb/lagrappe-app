@@ -11,7 +11,6 @@ export function useSessionRealtime(
     onSessionUpdate?: (session: Partial<Session>) => void
     onPlayerJoin?: (player: SessionPlayer) => void
     onPlayerUpdate?: (player: Partial<SessionPlayer>) => void
-    onRevealing?: () => void
     onReveal?: () => void
   }
 ) {
@@ -30,9 +29,6 @@ export function useSessionRealtime(
       (payload) => {
         const updated = payload.new as Session
         callbacks.onSessionUpdate?.(updated)
-        if (updated.status === 'revealing') {
-          callbacks.onRevealing?.()
-        }
         if (updated.status === 'revealed') {
           callbacks.onReveal?.()
         }
