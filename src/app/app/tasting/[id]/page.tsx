@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS, ELEVAGE_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
+import { useWineMode } from '@/store/wineMode'
 import type { Session, Wine } from '@/types'
 
 
@@ -27,6 +28,19 @@ const ROBE_COLORS: Record<string, string> = {
 
 const SCORE_EMOJIS = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
 const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
+
+// Speed Tasting — durées par étape (secondes)
+const STEP_TIMES = [20, 45, 20, 25, 40, 60]
+
+// Wild Cards
+type WildCardType = 'speed' | 'joker' | 'double' | 'chaos'
+interface WildCard { type: WildCardType; title: string; desc: string; emoji: string; color: string }
+const WILD_CARDS: WildCard[] = [
+  { type: 'speed',  emoji: '⚡', title: 'SPEED BOOST !',     desc: '+20 secondes accordées !',                    color: '#FFBE0B' },
+  { type: 'joker',  emoji: '🎭', title: 'JOKER !',           desc: 'Un arôme incorrect est éliminé !',            color: '#06D6A0' },
+  { type: 'double', emoji: '🃏', title: 'DOUBLE POINTS !',   desc: 'Ta prochaine réponse compte double !',        color: '#FF006E' },
+  { type: 'chaos',  emoji: '🌪️', title: 'CHAOS !',           desc: 'Tu passes à l\'étape suivante dans 5s…',      color: '#8338EC' },
+]
 
 
 function HintBanner({ used, onUse }: { used: number, onUse: () => void }) {
@@ -129,6 +143,12 @@ export default function TastingPage() {
   const [eliminatedRegions, setEliminatedRegions] = useState<string[]>([])
   const [eliminatedPrix, setEliminatedPrix] = useState<string[]>([])
 
+  // Wine Mode
+  const { wineMode } = useWineMode()
+  const [timeLeft, setTimeLeft] = useState<number | null>(null)
+  const [wildCard, setWildCard] = useState<WildCard | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -136,6 +156,42 @@ export default function TastingPage() {
 
   const steps = ['Vue', 'Nez', 'Bouche', 'Accords', 'Notes', 'Devinette']
   const stepIcons = ['👁️', '👃', '👄', '🍴', '📝', '🔮']
+
+  // Speed Tasting — timer par étape
+  useEffect(() => {
+    if (!wineMode) return
+    if (timerRef.current) clearInterval(timerRef.current)
+    const duration = STEP_TIMES[step]
+    setTimeLeft(duration)
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(timerRef.current!)
+          if (step < steps.length - 1) goStep(step + 1)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [step, wineMode])
+
+  // Wild Cards — apparaissent aléatoirement sur certaines étapes
+  useEffect(() => {
+    if (!wineMode) return
+    if (![1, 3, 5].includes(step)) return
+    if (Math.random() > 0.55) return // 45% de chance
+    const card = WILD_CARDS[Math.floor(Math.random() * WILD_CARDS.length)]
+    const timeout = setTimeout(() => {
+      setWildCard(card)
+      if (card.type === 'chaos') {
+        setTimeout(() => { setWildCard(null); if (step < steps.length - 1) goStep(step + 1) }, 5000)
+      } else {
+        setTimeout(() => setWildCard(null), 3500)
+      }
+    }, 1500)
+    return () => clearTimeout(timeout)
+  }, [step, wineMode])
 
   useEffect(() => {
     async function load() {
@@ -151,6 +207,11 @@ export default function TastingPage() {
     }
     load()
   }, [])
+
+  function applyWildCard(card: WildCard) {
+    if (card.type === 'speed') setTimeLeft(prev => (prev ?? 0) + 20)
+    if (card.type === 'joker' && wine) useHint('aromes')
+  }
 
   function toggleArome(a: string) {
     haptic()
@@ -256,15 +317,36 @@ export default function TastingPage() {
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Bouteille #{session?.bottle_number}</span>
-          <span style={{ fontSize: '13px', color: '#888' }}>{step + 1} / {steps.length}</span>
+          {wineMode && timeLeft !== null ? (
+            <span style={{
+              fontSize: '13px', fontWeight: '700', minWidth: '32px', textAlign: 'center',
+              color: timeLeft <= 5 ? '#FF006E' : timeLeft <= 10 ? '#FFBE0B' : '#8338EC',
+              animation: timeLeft <= 5 ? 'timer-pulse 0.5s ease infinite' : timeLeft <= 10 ? 'timer-pulse 1s ease infinite' : 'none',
+            }}>⏱ {timeLeft}s</span>
+          ) : (
+            <span style={{ fontSize: '13px', color: '#888' }}>{step + 1} / {steps.length}</span>
+          )}
         </div>
-        <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '4px', paddingBottom: '12px' }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '4px', paddingBottom: wineMode ? '6px' : '12px' }}>
           {steps.map((s, i) => (
             <div key={i} onClick={() => i < step && goStep(i)}
               style={{ flex: 1, height: '3px', borderRadius: '2px', background: i <= step ? accent : '#e0e0e0', transition: 'background .3s', cursor: i < step ? 'pointer' : 'default' }}
               title={i < step ? `Retour à ${s}` : s} />
           ))}
         </div>
+        {/* Barre timer Speed Tasting */}
+        {wineMode && timeLeft !== null && (
+          <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '10px' }}>
+            <div style={{ height: '4px', background: '#f0f0f0', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%', borderRadius: '2px',
+                background: timeLeft <= 5 ? '#FF006E' : timeLeft <= 10 ? '#FFBE0B' : 'linear-gradient(90deg, #8338EC, #FF006E)',
+                width: `${(timeLeft / STEP_TIMES[step]) * 100}%`,
+                transition: 'width 1s linear, background 0.3s',
+              }} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Recap étapes précédentes */}
@@ -645,6 +727,33 @@ export default function TastingPage() {
         </div>
       </div>
 
+      {/* Wild Card popup */}
+      {wildCard && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9985, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: wildCard.type === 'chaos' ? 'none' : 'auto',
+        }} onClick={() => { applyWildCard(wildCard); setWildCard(null) }}>
+          <div style={{
+            background: '#1a0030', border: `2px solid ${wildCard.color}`,
+            borderRadius: '24px', padding: '2rem 2.5rem', textAlign: 'center',
+            maxWidth: '320px', width: '90%',
+            boxShadow: `0 0 40px ${wildCard.color}66, 0 0 80px ${wildCard.color}33`,
+            animation: 'wildcard-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+            fontFamily: 'system-ui, sans-serif',
+          }}>
+            <div style={{ fontSize: '56px', marginBottom: '12px' }}>{wildCard.emoji}</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: wildCard.color, marginBottom: '8px', letterSpacing: '0.05em' }}>
+              {wildCard.title}
+            </div>
+            <div style={{ fontSize: '14px', color: '#e0d0ff', marginBottom: '16px' }}>
+              {wildCard.desc}
+            </div>
+            {wildCard.type !== 'chaos' && (
+              <div style={{ fontSize: '12px', color: '#888' }}>Appuie pour continuer</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

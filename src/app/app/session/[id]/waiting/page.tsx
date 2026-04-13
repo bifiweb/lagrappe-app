@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { useSessionRealtime } from '@/hooks/useRealtime'
+import { useWineMode } from '@/store/wineMode'
 import type { Session, SessionPlayer } from '@/types'
 
 export default function WaitingPage() {
@@ -11,7 +12,9 @@ export default function WaitingPage() {
   const [players, setPlayers] = useState<SessionPlayer[]>([])
   const [isChef, setIsChef] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [flash, setFlash] = useState(false)
   const isRevealingRef = useRef(false)
+  const { wineMode } = useWineMode()
   const revealChannelRef = useRef<ReturnType<typeof createClient>['channel'] extends (name: string, ...args: any[]) => infer R ? R : never | null>(null as any)
   const router = useRouter()
   const params = useParams()
@@ -68,10 +71,17 @@ export default function WaitingPage() {
       setCountdown(n)
       if (n <= 0) {
         clearInterval(interval)
-        if (chefWrites) {
-          supabase.from('sessions').update({ status: 'revealed' }).eq('id', sessionId)
+        if (wineMode) {
+          // Flash dramatique avant la redirection
+          setFlash(true)
+          setTimeout(() => {
+            if (chefWrites) supabase.from('sessions').update({ status: 'revealed' }).eq('id', sessionId)
+            router.push(`/app/session/${sessionId}/reveal`)
+          }, 800)
+        } else {
+          if (chefWrites) supabase.from('sessions').update({ status: 'revealed' }).eq('id', sessionId)
+          router.push(`/app/session/${sessionId}/reveal`)
         }
-        router.push(`/app/session/${sessionId}/reveal`)
       }
     }, 1000)
   }
@@ -104,20 +114,69 @@ export default function WaitingPage() {
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
+        {/* Flash dramatique Wine Mode */}
+        {flash && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 99999,
+            background: 'linear-gradient(135deg, #FF006E, #8338EC, #FFBE0B)',
+            animation: 'disco-bg 0.4s ease',
+            pointerEvents: 'none',
+          }} />
+        )}
+
         {/* Décompte — affiché sur tous les appareils simultanément */}
-        {countdown !== null && (
-          <div style={{ textAlign: 'center', padding: '4rem 0' }}>
-            <div style={{ fontSize: '14px', color: '#888', marginBottom: '1.5rem' }}>
-              Le vin mystère se révèle...
+        {countdown !== null && !flash && (
+          wineMode ? (
+            <div style={{ textAlign: 'center', padding: '3rem 0', position: 'relative' }}>
+              <div style={{ fontSize: '14px', color: '#FFBE0B', marginBottom: '1rem', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                🎊 Le vin mystère se révèle...
+              </div>
+              <div style={{
+                fontSize: '160px', fontWeight: '900', lineHeight: 1,
+                transition: 'all .15s',
+                background: countdown <= 0
+                  ? 'linear-gradient(135deg, #FF006E, #FFBE0B)'
+                  : countdown === 1
+                  ? 'linear-gradient(135deg, #FF006E, #8338EC)'
+                  : countdown === 2
+                  ? 'linear-gradient(135deg, #FFBE0B, #FF006E)'
+                  : 'linear-gradient(135deg, #06D6A0, #8338EC)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                filter: `drop-shadow(0 0 30px ${countdown <= 1 ? '#FF006E' : '#8338EC'})`,
+                animation: 'timer-pulse 0.5s ease infinite',
+              }}>
+                {countdown <= 0 ? '🍾' : countdown}
+              </div>
+              {/* Confettis mini autour du chiffre */}
+              {[...Array(8)].map((_, i) => (
+                <div key={i} style={{
+                  position: 'absolute',
+                  top: `${20 + Math.random() * 60}%`,
+                  left: `${10 + i * 11}%`,
+                  fontSize: `${16 + Math.random() * 16}px`,
+                  animation: `float-particle ${1.5 + Math.random()}s ease infinite`,
+                  pointerEvents: 'none',
+                }}>
+                  {['🎊', '✨', '🍷', '💫', '🎉', '⭐', '🍾', '🎶'][i]}
+                </div>
+              ))}
             </div>
-            <div style={{
-              fontSize: '120px', fontWeight: '700',
-              color: countdown <= 0 ? '#8d323b' : '#1a1a1a',
-              lineHeight: 1, transition: 'all .2s',
-            }}>
-              {countdown <= 0 ? '🍾' : countdown}
+          ) : (
+            <div style={{ textAlign: 'center', padding: '4rem 0' }}>
+              <div style={{ fontSize: '14px', color: '#888', marginBottom: '1.5rem' }}>
+                Le vin mystère se révèle...
+              </div>
+              <div style={{
+                fontSize: '120px', fontWeight: '700',
+                color: countdown <= 0 ? '#8d323b' : '#1a1a1a',
+                lineHeight: 1, transition: 'all .2s',
+              }}>
+                {countdown <= 0 ? '🍾' : countdown}
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* Attente normale */}
