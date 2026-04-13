@@ -48,6 +48,7 @@ export default function SessionPage() {
   const chifoumiRoundRef = useRef(1)
   const currentPlayersRef = useRef<SessionPlayer[]>([])
   const chifoumiChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const chifoumiResolvedRef = useRef(false) // garde anti-double-résolution
 
   const router = useRouter()
   const params = useParams()
@@ -152,6 +153,48 @@ export default function SessionPage() {
     return () => clearInterval(interval)
   }, [sessionId, phase, determiningChef])
 
+  // Résolution chifoumi — appelée depuis le broadcast ET depuis submitChifoumiMove
+  function resolveChifoumi(moves: Record<string, ChifoumiMove>, ids: string[]) {
+    if (chifoumiResolvedRef.current) return
+    const allMoved = ids.every(id => moves[id])
+    if (!allMoved) return
+    chifoumiResolvedRef.current = true
+
+    const winnerId = getChifoumiWinner(moves, ids)
+
+    if (winnerId === 'tie') {
+      setChifoumiResult('Égalité ! Nouvelle manche...')
+      setTimeout(() => {
+        chifoumiResolvedRef.current = false
+        chifoumiRoundRef.current += 1
+        chifoumiMovesRef.current = {}
+        setChifoumiMoves({})
+        setMyChifoumiMove(null)
+        setChifoumiRound(r => r + 1)
+        setChifoumiResult(null)
+      }, 1800)
+    } else {
+      const winnerPlayer = currentPlayersRef.current.find(p => p.user_id === winnerId)
+      const loserIds = ids.filter(id => id !== winnerId)
+      const winMove = moves[winnerId]
+      const loseMove = moves[loserIds[0]]
+      setChifoumiResult(`${CHIFOUMI_EMOJI[winMove]} bat ${CHIFOUMI_EMOJI[loseMove]} — ${winnerPlayer?.pseudo} est le chef !`)
+      // Seul le premier tied player écrit en DB pour éviter les doublons
+      if (profile?.id === ids[0]) {
+        setTimeout(async () => {
+          await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
+          await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', winnerId)
+          await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
+        }, 1500)
+      }
+      setTimeout(() => {
+        setChef(winnerPlayer ?? null)
+        setPhase('countdown')
+        startCountdown()
+      }, 2200)
+    }
+  }
+
   // Setup canal chifoumi via Realtime Broadcast
   useEffect(() => {
     if (phase !== 'chifoumi' || !profile) return
@@ -165,52 +208,9 @@ export default function SessionPage() {
 
     channel.on('broadcast', { event: 'move' }, ({ payload }: { payload: { userId: string; move: ChifoumiMove; round: number } }) => {
       if (payload.round !== chifoumiRoundRef.current) return
-
       chifoumiMovesRef.current = { ...chifoumiMovesRef.current, [payload.userId]: payload.move }
       setChifoumiMoves({ ...chifoumiMovesRef.current })
-
-      const ids = tiedPlayerIdsRef.current
-      const allMoved = ids.every(id => chifoumiMovesRef.current[id])
-
-      if (allMoved) {
-        const winnerId = getChifoumiWinner(chifoumiMovesRef.current, ids)
-
-        if (winnerId === 'tie') {
-          // Nouvelle manche
-          setChifoumiResult('Égalité ! Nouvelle manche...')
-          setTimeout(() => {
-            chifoumiRoundRef.current += 1
-            chifoumiMovesRef.current = {}
-            setChifoumiMoves({})
-            setMyChifoumiMove(null)
-            setChifoumiRound(r => r + 1)
-            setChifoumiResult(null)
-          }, 1800)
-        } else {
-          // On a un gagnant — on désigne le chef
-          const winnerPlayer = currentPlayersRef.current.find(p => p.user_id === winnerId)
-          const loserIds = ids.filter(id => id !== winnerId)
-          const loserPlayer = currentPlayersRef.current.find(p => p.user_id === loserIds[0])
-          const winMove = chifoumiMovesRef.current[winnerId]
-          const loseMove = chifoumiMovesRef.current[loserIds[0]]
-          setChifoumiResult(
-            `${CHIFOUMI_EMOJI[winMove]} bat ${CHIFOUMI_EMOJI[loseMove]} — ${winnerPlayer?.pseudo} est le chef !`
-          )
-          // Seul le "premier" tied player (alphabétiquement) écrit en DB pour éviter les doublons
-          if (profile?.id === ids[0]) {
-            setTimeout(async () => {
-              await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
-              await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', winnerId)
-              await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
-            }, 1500)
-          }
-          setTimeout(() => {
-            setChef(winnerPlayer ?? null)
-            setPhase('countdown')
-            startCountdown()
-          }, 2200)
-        }
-      }
+      resolveChifoumi(chifoumiMovesRef.current, tiedPlayerIdsRef.current)
     })
 
     channel.subscribe()
@@ -331,6 +331,8 @@ export default function SessionPage() {
     // Ajouter son propre coup localement (le broadcast ne revient pas à l'émetteur)
     chifoumiMovesRef.current = { ...chifoumiMovesRef.current, [profile.id]: move }
     setChifoumiMoves({ ...chifoumiMovesRef.current })
+    // Vérifier immédiatement si tous ont joué (cas où l'adversaire a déjà broadcasté)
+    resolveChifoumi(chifoumiMovesRef.current, tiedPlayerIdsRef.current)
     chifoumiChannelRef.current?.send({
       type: 'broadcast',
       event: 'move',
