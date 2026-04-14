@@ -5,7 +5,16 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Tasting } from '@/types'
 
-const AVATAR_OPTIONS = ['🍷','🍾','🧀','🍇','🫧','🦅','🐺','🦁','🐉','🌹','🌊','🔥','⚡','🎩','🌙','🍓','🍑','🥂','🧙','🤠']
+const AVATAR_SEEDS = [
+  'Warrior','Pirate','Ninja','Wizard','Viking',
+  'Vampire','Cowboy','Samurai','Hunter','Knight',
+  'Rogue','Mage','Bard','Ranger','Monk',
+  'Druid','Berserker','Assassin','Sorcerer','Paladin',
+]
+
+function avatarUrl(seed: string) {
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
+}
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -106,28 +115,36 @@ export default function ProfilePage() {
           <div
             onClick={() => setEditingAvatar(true)}
             title="Changer l'avatar Wine Mode"
-            style={{ width: '72px', height: '72px', borderRadius: '50%', background: selectedAvatar ? '#f5ede8' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', fontSize: selectedAvatar ? '40px' : '28px', fontWeight: '500', color: '#fff', cursor: 'pointer', border: '2px solid transparent', transition: 'border-color .2s' }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = accent)}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+            style={{ width: '80px', height: '80px', borderRadius: '50%', background: selectedAvatar ? 'transparent' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', fontSize: '28px', fontWeight: '500', color: '#fff', cursor: 'pointer', overflow: 'hidden', border: `2px solid ${selectedAvatar ? accent : 'transparent'}`, transition: 'border-color .2s' }}
           >
-            {selectedAvatar ?? initials}
+            {selectedAvatar
+              ? <img src={avatarUrl(selectedAvatar)} width={80} height={80} alt={selectedAvatar} style={{ objectFit: 'cover' }} />
+              : initials}
           </div>
-          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '12px', cursor: 'pointer' }} onClick={() => setEditingAvatar(true)}>
-            ✏️ Avatar Wine Mode
+          <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '14px', cursor: 'pointer' }} onClick={() => setEditingAvatar(true)}>
+            ✏️ Avatar Wine Mode{selectedAvatar ? ` · ${selectedAvatar}` : ''}
           </div>
 
           {editingAvatar && (
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '13px', color: '#444', marginBottom: '10px', fontWeight: '500' }}>Choisis ton avatar pour le Wine Mode</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {AVATAR_OPTIONS.map(emoji => (
-                  <button key={emoji} onClick={() => saveAvatar(emoji)}
-                    style={{ width: '44px', height: '44px', borderRadius: '50%', fontSize: '24px', border: selectedAvatar === emoji ? `2px solid ${accent}` : '2px solid #f0f0f0', background: selectedAvatar === emoji ? '#f5ede8' : '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .15s' }}>
-                    {emoji}
+              <div style={{ fontSize: '13px', color: '#444', marginBottom: '12px', fontWeight: '500' }}>Choisis ton personnage</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', justifyItems: 'center' }}>
+                {AVATAR_SEEDS.map(seed => (
+                  <button key={seed} onClick={() => saveAvatar(seed)}
+                    title={seed}
+                    style={{
+                      width: '56px', height: '56px', padding: 0,
+                      borderRadius: '50%', overflow: 'hidden',
+                      border: selectedAvatar === seed ? `3px solid ${accent}` : '3px solid transparent',
+                      background: '#f5ede8',
+                      cursor: 'pointer', transition: 'border-color .15s',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                    <img src={avatarUrl(seed)} width={56} height={56} alt={seed} loading="lazy" style={{ display: 'block' }} />
                   </button>
                 ))}
               </div>
-              <button onClick={() => setEditingAvatar(false)} style={{ marginTop: '10px', padding: '6px 16px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
+              <button onClick={() => setEditingAvatar(false)} style={{ marginTop: '12px', padding: '6px 16px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
                 Annuler
               </button>
             </div>
