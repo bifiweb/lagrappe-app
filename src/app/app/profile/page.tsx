@@ -4,17 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Tasting } from '@/types'
-
-const AVATAR_SEEDS = [
-  'Warrior','Pirate','Ninja','Wizard','Viking',
-  'Vampire','Cowboy','Samurai','Hunter','Knight',
-  'Rogue','Mage','Bard','Ranger','Monk',
-  'Druid','Berserker','Assassin','Sorcerer','Paladin',
-]
-
-function avatarUrl(seed: string) {
-  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
-}
+import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -112,35 +102,36 @@ export default function ProfilePage() {
 
         {/* Avatar + nom */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
-          <div
-            onClick={() => setEditingAvatar(true)}
-            title="Changer l'avatar Wine Mode"
-            style={{ width: '80px', height: '80px', borderRadius: '50%', background: selectedAvatar ? 'transparent' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', fontSize: '28px', fontWeight: '500', color: '#fff', cursor: 'pointer', overflow: 'hidden', border: `2px solid ${selectedAvatar ? accent : 'transparent'}`, transition: 'border-color .2s' }}
-          >
-            {selectedAvatar
-              ? <img src={avatarUrl(selectedAvatar)} width={80} height={80} alt={selectedAvatar} style={{ objectFit: 'cover' }} />
-              : initials}
-          </div>
+          {/* Avatar display with emoji badge */}
+          {(() => {
+            const char = selectedAvatar ? getCharacter(selectedAvatar) : null
+            return (
+              <div onClick={() => setEditingAvatar(true)} title="Changer l'avatar Wine Mode" style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 6px', cursor: 'pointer' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: selectedAvatar ? 'transparent' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '500', color: '#fff', overflow: 'hidden', border: `2px solid ${selectedAvatar ? accent : 'transparent'}` }}>
+                  {selectedAvatar
+                    ? <img src={avatarUrl(selectedAvatar, char?.skinColor)} width={80} height={80} alt={char?.label ?? selectedAvatar} style={{ objectFit: 'cover', display: 'block' }} />
+                    : initials}
+                </div>
+                {char && <span style={{ position: 'absolute', bottom: 0, right: 0, fontSize: '28px', lineHeight: 1, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}>{char.emoji}</span>}
+              </div>
+            )
+          })()}
           <div style={{ fontSize: '11px', color: '#aaa', marginBottom: '14px', cursor: 'pointer' }} onClick={() => setEditingAvatar(true)}>
-            ✏️ Avatar Wine Mode{selectedAvatar ? ` · ${selectedAvatar}` : ''}
+            ✏️ Personnage Wine Mode{selectedAvatar ? ` · ${getCharacter(selectedAvatar)?.label ?? selectedAvatar}` : ''}
           </div>
 
           {editingAvatar && (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '13px', color: '#444', marginBottom: '12px', fontWeight: '500' }}>Choisis ton personnage</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', justifyItems: 'center' }}>
-                {AVATAR_SEEDS.map(seed => (
-                  <button key={seed} onClick={() => saveAvatar(seed)}
-                    title={seed}
-                    style={{
-                      width: '56px', height: '56px', padding: 0,
-                      borderRadius: '50%', overflow: 'hidden',
-                      border: selectedAvatar === seed ? `3px solid ${accent}` : '3px solid transparent',
-                      background: '#f5ede8',
-                      cursor: 'pointer', transition: 'border-color .15s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                    <img src={avatarUrl(seed)} width={56} height={56} alt={seed} loading="lazy" style={{ display: 'block' }} />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', justifyItems: 'center' }}>
+                {CHARACTERS.map(char => (
+                  <button key={char.seed} onClick={() => saveAvatar(char.seed)}
+                    title={char.label}
+                    style={{ position: 'relative', width: '54px', height: '54px', padding: 0, borderRadius: '50%', overflow: 'visible', border: selectedAvatar === char.seed ? `3px solid ${accent}` : '3px solid transparent', background: 'transparent', cursor: 'pointer', transition: 'border-color .15s' }}>
+                    <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: '#f5ede8' }}>
+                      <img src={avatarUrl(char.seed, char.skinColor)} width={54} height={54} alt={char.label} loading="lazy" style={{ display: 'block' }} />
+                    </div>
+                    <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '18px', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>{char.emoji}</span>
                   </button>
                 ))}
               </div>
