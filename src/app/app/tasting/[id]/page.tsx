@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS, ELEVAGE_OPTIONS } from '@/types'
+import { WINE_CONTENT, MAX_AROMES, ELEVAGE_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
 import { CEPAGE_INFO } from '@/lib/cepage-info'
@@ -109,13 +109,14 @@ export default function TastingPage() {
   const [animating, setAnimating] = useState(false)
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left')
   const [gifOpenStep, setGifOpenStep] = useState<number | null>(null)
+  const [showBareme, setShowBareme] = useState(false)
 
   const [robe, setRobe] = useState<string | null>(null)
   const [nezIntensite, setNezIntensite] = useState(3)
   const [aromes, setAromes] = useState<string[]>([])
   const [boucheIndex, setBoucheIndex] = useState(1)
   const [accord, setAccord] = useState<string | null>(null)
-  const [prix, setPrix] = useState<string | null>(null)
+  const [prix, setPrix] = useState('')
   const [millesime, setMillesime] = useState('')
   const [cepage, setCepage] = useState<string | null>(null)
   const [region, setRegion] = useState<string | null>(null)
@@ -125,11 +126,10 @@ export default function TastingPage() {
 
   // Système d'aide
   const [hintsUsed, setHintsUsed] = useState(0)
-  const [hintCounts, setHintCounts] = useState({ aromes: 0, cepage: 0, region: 0, prix: 0 })
+  const [hintCounts, setHintCounts] = useState({ aromes: 0, cepage: 0, region: 0 })
   const [eliminatedAromes, setEliminatedAromes] = useState<string[]>([])
   const [eliminatedCepages, setEliminatedCepages] = useState<string[]>([])
   const [eliminatedRegions, setEliminatedRegions] = useState<string[]>([])
-  const [eliminatedPrix, setEliminatedPrix] = useState<string[]>([])
 
   const router = useRouter()
   const params = useParams()
@@ -171,20 +171,18 @@ export default function TastingPage() {
     }, 200)
   }
 
-  async function useHint(section: 'aromes' | 'cepage' | 'region' | 'prix') {
+  async function useHint(section: 'aromes' | 'cepage' | 'region') {
     if (hintCounts[section] >= 2 || !wine) return
     haptic(20)
 
     const eliminated: string[] = section === 'aromes' ? eliminatedAromes
       : section === 'cepage' ? eliminatedCepages
-      : section === 'region' ? eliminatedRegions
-      : eliminatedPrix
+      : eliminatedRegions
 
     const wineContent = WINE_CONTENT[wine.type]
     const allOptions: string[] = section === 'aromes' ? wineContent.aromes
       : section === 'cepage' ? wineContent.cepages
-      : section === 'region' ? wineContent.regions
-      : PRIX_OPTIONS
+      : wineContent.regions
 
     const alreadyExcluded = section === 'aromes'
       ? [...eliminated, ...aromes]
@@ -201,8 +199,7 @@ export default function TastingPage() {
 
     if (section === 'aromes') setEliminatedAromes(prev => [...prev, ...newEliminated])
     else if (section === 'cepage') setEliminatedCepages(prev => [...prev, ...newEliminated])
-    else if (section === 'region') setEliminatedRegions(prev => [...prev, ...newEliminated])
-    else setEliminatedPrix(prev => [...prev, ...newEliminated])
+    else setEliminatedRegions(prev => [...prev, ...newEliminated])
 
     setHintCounts(prev => ({ ...prev, [section]: prev[section] + 1 }))
     setHintsUsed(prev => prev + 1)
@@ -221,7 +218,7 @@ export default function TastingPage() {
       aromes,
       bouche: WINE_CONTENT[wine!.type].bouche[boucheIndex],
       accords: accord ? [accord] : [],
-      prix_estime: prix,
+      prix_estime: prix.trim() || null,
       millesime_estime: millesime ? parseInt(millesime) : null,
       cepage_guess: cepage,
       region_guess: region,
@@ -259,6 +256,11 @@ export default function TastingPage() {
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Bouteille #{session?.bottle_number}</span>
+          <button onClick={() => setShowBareme(v => !v)}
+            title="Barème des points"
+            style={{ background: showBareme ? accent : '#f5f5f5', border: 'none', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', color: showBareme ? '#fff' : '#888', cursor: 'pointer', fontWeight: '500' }}>
+            📊
+          </button>
           <span style={{ fontSize: '13px', color: '#888' }}>{step + 1} / {steps.length}</span>
         </div>
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '4px', paddingBottom: '12px' }}>
@@ -269,6 +271,33 @@ export default function TastingPage() {
           ))}
         </div>
       </div>
+
+      {/* Barème des points */}
+      {showBareme && (
+        <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1.5rem' }}>
+          <div style={{ background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', padding: '1rem', margin: '12px 0 0' }}>
+            <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>📊 Barème des points</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
+              {[
+                { icon: '👁️', label: 'Robe', detail: '300 pts si juste · 100 pts sinon' },
+                { icon: '👃', label: 'Arômes', detail: '100 pts par joueur qui a mis le même · +50 pts si officiel' },
+                { icon: '👄', label: 'Bouche', detail: '300 pts si juste · 100 pts sinon' },
+                { icon: '🍇', label: 'Cépage', detail: '1 000 pts si juste · 200 pts sinon' },
+                { icon: '📍', label: 'Région', detail: '1 000 pts si juste · 200 pts sinon' },
+                { icon: '📅', label: 'Millésime', detail: '400 pts si juste · 100 pts sinon' },
+                { icon: '💰', label: 'Prix', detail: '1 000 pts si exact · −100 pts par CHF d\'écart' },
+                { icon: '💡', label: 'Aide', detail: '−100 pts par aide utilisée' },
+              ].map(({ icon, label, detail }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span style={{ fontSize: '13px', flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontWeight: '500', color: '#1a1a1a', minWidth: '70px' }}>{label}</span>
+                  <span style={{ color: '#666' }}>{detail}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Recap étapes précédentes */}
       {step > 0 && (
@@ -656,19 +685,19 @@ export default function TastingPage() {
 
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>💰 Prix estimé ?</div>
-              <HintBanner used={hintCounts.prix} onUse={() => useHint('prix')} />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {PRIX_OPTIONS.map(p => {
-                  const eliminated = eliminatedPrix.includes(p)
-                  return (
-                    <button key={p} onClick={() => { if (!eliminated) { setPrix(p); haptic() } }}
-                      style={{ padding: '8px 14px', borderRadius: '20px', border: prix === p ? 'none' : '0.5px solid #e0e0e0', background: eliminated ? '#f5f5f5' : prix === p ? accent : '#fff', color: eliminated ? '#ccc' : prix === p ? '#fff' : '#666', fontSize: '13px', cursor: eliminated ? 'default' : 'pointer', transition: 'all .15s', transform: prix === p ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : 'none' }}>
-                      {p}
-                    </button>
-                  )
-                })}
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>💰 Prix estimé ?</div>
+              <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
+                1 000 pts si exact · −100 pts par CHF d'écart
               </div>
+              <input
+                type="number"
+                value={prix}
+                onChange={e => setPrix(e.target.value)}
+                placeholder="Ex: 24.50"
+                min={0}
+                step={0.5}
+                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
           </>
         )}

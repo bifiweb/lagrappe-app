@@ -459,9 +459,9 @@ export default function RevealPage() {
               />
               <CompareRow
                 label="Prix"
-                mine={myTasting.prix_estime}
-                official={notes?.prix_chf ?? null}
-                correct={myTasting.prix_estime === notes?.prix_chf}
+                mine={myTasting.prix_estime ? `CHF ${myTasting.prix_estime}` : null}
+                official={notes?.prix_exact != null ? `CHF ${notes.prix_exact.toFixed(2)}` : (notes?.prix_chf ? `CHF ${notes.prix_chf}` : null)}
+                correct={myTasting.pts_prix === 1000}
               />
             </div>
           </div>
@@ -501,7 +501,7 @@ export default function RevealPage() {
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', textAlign: 'right' }}>
                   Ton estimation :<br />
-                  <span style={{ color: '#1a1a1a', fontWeight: '500' }}>{myTasting?.prix_estime ?? '—'}</span>
+                  <span style={{ color: '#1a1a1a', fontWeight: '500' }}>{myTasting?.prix_estime ? `CHF ${myTasting.prix_estime}` : '—'}</span>
                 </div>
               </div>
               {wine?.shopify_url && (
