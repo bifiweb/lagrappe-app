@@ -108,6 +108,7 @@ export default function TastingPage() {
   const [saving, setSaving] = useState(false)
   const [animating, setAnimating] = useState(false)
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left')
+  const [gifOpenStep, setGifOpenStep] = useState<number | null>(null)
 
   const [robe, setRobe] = useState<string | null>(null)
   const [nezIntensite, setNezIntensite] = useState(3)
@@ -162,6 +163,7 @@ export default function TastingPage() {
   function goStep(n: number) {
     setSlideDirection(n > step ? 'left' : 'right')
     setAnimating(true)
+    setGifOpenStep(null)
     haptic()
     setTimeout(() => {
       setStep(n)
@@ -339,13 +341,21 @@ export default function TastingPage() {
         {step === 0 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
-              <img src="/gif-vue.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
+              {gifOpenStep === 0 && (
+                <img src="/gif-vue.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              )}
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                   Un simple coup d'œil peut déjà te révéler plein d'indices : l'âge du vin, sa douceur ou même le type de cépage.
                 </p>
-                <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
-                  💡 <strong>Astuce de pro :</strong> éclaire bien la pièce, place une feuille blanche derrière ton verre et incline-le légèrement… magie garantie ! ✨
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+                  <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5, flex: 1 }}>
+                    💡 <strong>Astuce de pro :</strong> éclaire bien la pièce, place une feuille blanche derrière ton verre et incline-le légèrement… magie garantie ! ✨
+                  </div>
+                  <button onClick={() => setGifOpenStep(gifOpenStep === 0 ? null : 0)}
+                    style={{ flexShrink: 0, padding: '6px 10px', background: gifOpenStep === 0 ? '#f0f0f0' : '#f5ede8', border: 'none', borderRadius: '8px', fontSize: '11px', color: gifOpenStep === 0 ? '#888' : accent, cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                    {gifOpenStep === 0 ? '✕ Fermer' : '▶ Voir'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -381,13 +391,21 @@ export default function TastingPage() {
         {step === 1 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
-              <img src="/gif-nez.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
+              {gifOpenStep === 1 && (
+                <img src="/gif-nez.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              )}
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                   C'est ton nez qui va révéler toute la palette d'arômes du vin.
                 </p>
-                <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
-                  💡 <strong>Astuce :</strong> sens ton verre une première fois. Puis, fais-le tournoyer pour libérer ses arômes et sens-le à nouveau. Ce sont les fameux <strong>1er et 2ème nez</strong>.
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+                  <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5, flex: 1 }}>
+                    💡 <strong>Astuce :</strong> sens ton verre une première fois. Puis, fais-le tournoyer pour libérer ses arômes et sens-le à nouveau. Ce sont les fameux <strong>1er et 2ème nez</strong>.
+                  </div>
+                  <button onClick={() => setGifOpenStep(gifOpenStep === 1 ? null : 1)}
+                    style={{ flexShrink: 0, padding: '6px 10px', background: gifOpenStep === 1 ? '#f0f0f0' : '#f5ede8', border: 'none', borderRadius: '8px', fontSize: '11px', color: gifOpenStep === 1 ? '#888' : accent, cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                    {gifOpenStep === 1 ? '✕ Fermer' : '▶ Voir'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -458,13 +476,21 @@ export default function TastingPage() {
         {step === 2 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem' }}>
-              <img src="/gif-bouche.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
+              {gifOpenStep === 2 && (
+                <img src="/gif-bouche.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              )}
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                   C'est ici que tout s'anime : les saveurs (sucré, salé, acide, amer), mais aussi les sensations tactiles (alcool, fraîcheur, bulles, tanins). Après avoir avalé ou recraché, mesure la <strong>persistance</strong> : combien de temps le vin reste présent après la gorgée ? ⏳
                 </p>
-                <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
-                  💡 <strong>Astuce :</strong> teste la rétro-olfaction ! Aspire légèrement de l'air avec le vin en bouche… et laisse exploser les arômes. 🚀
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+                  <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5, flex: 1 }}>
+                    💡 <strong>Astuce :</strong> teste la rétro-olfaction ! Aspire légèrement de l'air avec le vin en bouche… et laisse exploser les arômes. 🚀
+                  </div>
+                  <button onClick={() => setGifOpenStep(gifOpenStep === 2 ? null : 2)}
+                    style={{ flexShrink: 0, padding: '6px 10px', background: gifOpenStep === 2 ? '#f0f0f0' : '#f5ede8', border: 'none', borderRadius: '8px', fontSize: '11px', color: gifOpenStep === 2 ? '#888' : accent, cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                    {gifOpenStep === 2 ? '✕ Fermer' : '▶ Voir'}
+                  </button>
                 </div>
               </div>
             </div>

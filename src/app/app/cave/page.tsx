@@ -79,6 +79,39 @@ export default function CavePage() {
   )
 
   const accent = '#8d323b'
+  const SCORE_EMOJIS = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
+
+  function MiniStars({ score }: { score: number | null }) {
+    if (score === null) return <span style={{ fontSize: '12px', color: '#bbb' }}>Non noté</span>
+    const stars = score / 2
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '18px', lineHeight: 1 }}>{SCORE_EMOJIS[score]}</span>
+        <div style={{ display: 'flex', gap: '1px' }}>
+          {[1,2,3,4,5].map(i => {
+            const isFull = stars >= i
+            const isHalf = !isFull && stars >= i - 0.5
+            const gradId = `cs-${i}`
+            return (
+              <svg key={i} width="14" height="14" viewBox="0 0 24 24">
+                <defs>
+                  <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="50%" stopColor="#f0a000"/>
+                    <stop offset="50%" stopColor="#e0e0e0"/>
+                  </linearGradient>
+                </defs>
+                <polygon
+                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                  fill={isFull ? '#f0a000' : isHalf ? `url(#${gradId})` : '#e0e0e0'}
+                />
+              </svg>
+            )
+          })}
+        </div>
+        <span style={{ fontSize: '11px', color: '#888' }}>{score}/10</span>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -173,9 +206,7 @@ export default function CavePage() {
                       )}
 
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ fontSize: '12px', color: '#888' }}>
-                          Note perso : <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{tasting.score_perso ?? '—'}/10</span>
-                        </div>
+                        <MiniStars score={tasting.score_perso ?? null} />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>
                             {tasting.total_points.toLocaleString()} pts
