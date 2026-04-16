@@ -280,7 +280,7 @@ export default function TastingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
               {[
                 { icon: '👁️', label: 'Robe', detail: '300 pts si juste · 100 pts sinon' },
-                { icon: '👃', label: 'Arômes', detail: '100 pts par joueur qui a mis le même · +50 pts si officiel' },
+                { icon: '👃', label: 'Arômes', detail: '300 pts × nb joueurs même arôme · +300 pts si officiel' },
                 { icon: '👄', label: 'Bouche', detail: '300 pts si juste · 100 pts sinon' },
                 { icon: '🍇', label: 'Cépage', detail: '1 000 pts si juste · 200 pts sinon' },
                 { icon: '📍', label: 'Région', detail: '1 000 pts si juste · 200 pts sinon' },
@@ -388,7 +388,10 @@ export default function TastingPage() {
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>Un mot sur la robe ?</div>
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Un mot sur la robe ?</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts si juste · 100 pts sinon</div>
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginBottom: '1.25rem' }}>
               {content.robes.map(r => {
                 const selected = robe === r
@@ -450,8 +453,11 @@ export default function TastingPage() {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>
-                Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
+                  Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts × nb joueurs ayant le même arôme · +300 pts si arôme officiel</div>
               </div>
               <HintBanner used={hintCounts.aromes} onUse={() => useHint('aromes')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -523,7 +529,10 @@ export default function TastingPage() {
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '16px' }}>Structure en bouche</div>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Structure en bouche</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts si juste · 100 pts sinon</div>
+            </div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 {content.bouche.map((opt, i) => (
@@ -616,7 +625,10 @@ export default function TastingPage() {
               💡 Pas de panique — c'est une intuition, pas un examen. Même les pros se plantent !
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>🍇 Cépage ?</div>
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🍇 Cépage ?</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 000 pts si juste · 200 pts sinon</div>
+              </div>
               <HintBanner used={hintCounts.cepage} onUse={() => useHint('cepage')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                 {content.cepages.map(c => {
@@ -641,7 +653,10 @@ export default function TastingPage() {
               )}
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>📍 Région ?</div>
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📍 Région ?</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 000 pts si juste · 200 pts sinon</div>
+              </div>
               <HintBanner used={hintCounts.region} onUse={() => useHint('region')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {content.regions.map(r => {
@@ -656,7 +671,10 @@ export default function TastingPage() {
               </div>
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>📅 Millésime ?</div>
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📅 Millésime ?</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>400 pts si juste · 100 pts sinon</div>
+              </div>
               <input type="number" value={millesime} onChange={e => setMillesime(e.target.value)}
                 placeholder="Ex: 2021" min={2000} max={2025}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />

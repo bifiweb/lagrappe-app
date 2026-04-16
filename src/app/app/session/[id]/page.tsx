@@ -417,6 +417,32 @@ export default function SessionPage() {
               </div>
             </div>
 
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>
+                📊 Barème des points
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { emoji: '👁️', label: 'Robe',      pts: '300 si juste · 100 sinon' },
+                  { emoji: '👃', label: 'Arômes',    pts: '300 pts × nb joueurs même arôme · +300 si officiel' },
+                  { emoji: '👄', label: 'Bouche',    pts: '300 si juste · 100 sinon' },
+                  { emoji: '💰', label: 'Prix',      pts: '1 000 si exact · −100/CHF d\'écart' },
+                  { emoji: '📅', label: 'Millésime', pts: '400 si juste · 100 sinon' },
+                  { emoji: '🍇', label: 'Cépage',    pts: '1 000 si juste · 200 sinon' },
+                  { emoji: '📍', label: 'Région',    pts: '1 000 si juste · 200 sinon' },
+                  { emoji: '💡', label: 'Aide',      pts: '−100 pts par aide utilisée' },
+                ].map(({ emoji, label, pts }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <span style={{ fontSize: '14px', lineHeight: 1.4, flexShrink: 0 }}>{emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{label}</span>
+                      <span style={{ fontSize: '11px', color: '#888', marginLeft: '6px' }}>{pts}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <button onClick={launchVote}
               style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
               Lancer le vote du chef →
