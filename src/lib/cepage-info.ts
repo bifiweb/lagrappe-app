@@ -8,12 +8,12 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
   'Pinot Noir': {
     robe: 'Rouge pâle à grenat, peu coloré',
     nez: 'Fraise, framboise, cerise, sous-bois, chocolat, vanille',
-    bouche: 'Léger à souple, tanins fins, acidité fraîche',
+    bouche: 'Léger à souple selon élevage, tanins fins',
   },
   'Gamay': {
     robe: 'Rouge vif, violacé',
-    nez: 'Fruits rouges frais, fraise, framboise, parfois banane (jeune)',
-    bouche: 'Fruité, léger, tanins souples, finale courte',
+    nez: 'Fruits rouges frais, fraise, framboise, épices fines',
+    bouche: 'Fruité, léger, tanins souples, vivacité',
   },
   'Merlot': {
     robe: 'Rouge profond, pourpre',
@@ -32,8 +32,8 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
   },
   'Diolinoir': {
     robe: 'Rouge intense, presque opaque',
-    nez: 'Fruits noirs, épices, notes poivrées',
-    bouche: 'Corsé, tanins denses, puissant, cépage suisse',
+    nez: 'Fruits noirs intenses, épices fines',
+    bouche: 'Corsé, puissant dans sa jeunesse',
   },
   'Garanoir': {
     robe: 'Rouge moyen',
@@ -43,16 +43,16 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
   'Cornalin': {
     robe: 'Rouge profond, brillant',
     nez: 'Cerise noire, épices, notes florales et animales',
-    bouche: 'Plein, charnu, tanins présents, typique du Valais',
+    bouche: 'Fruité intense avec une belle structure',
   },
   'Humagne Rouge': {
-    robe: 'Rouge rubis',
-    nez: 'Sauvage, fer, fruits des bois, gibier',
-    bouche: 'Rustique, tanins fermes, finale sèche, caractère montagnard',
+    robe: 'Rouge rubis, généralement pâle',
+    nez: 'Fruits des bois, épices, avec un côté gibier',
+    bouche: 'Tanins fins, avec parfois un côté rustique',
   },
   'Chasselas': {
     robe: 'Jaune pâle, reflets verts',
-    nez: 'Discret, floral, pierre à fusil, citron',
+    nez: 'Discret, floral, minéral, citron',
     bouche: 'Léger, vif, acidité fraîche, finale minérale',
   },
   'Chardonnay': {
@@ -61,7 +61,7 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
     bouche: 'Ample, gras, acidité modérée, bonne longueur',
   },
   'Pinot Gris': {
-    robe: 'Or pâle à légèrement ambrée',
+    robe: 'Or pâle',
     nez: 'Pêche, abricot, miel, épices douces, légèrement fumé',
     bouche: 'Gras, onctueux, finale épicée et longue',
   },
@@ -87,12 +87,12 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
   },
   'Petite Arvine': {
     robe: 'Or pâle à doré',
-    nez: 'Pamplemousse, agrumes confits, miel, légère salinité',
-    bouche: 'Vif, minéral, légèrement salé, très longue finale',
+    nez: 'Pamplemousse, agrumes confits, parfois fruits exotiques',
+    bouche: 'Vif, minéral, très longue finale avec de la salinité',
   },
   'Heida': {
     robe: 'Or pâle',
-    nez: 'Floral, fruits exotiques, épicé, typique du Haut-Valais',
+    nez: 'Floral, fruits exotiques, épicé',
     bouche: 'Ample, aromatique, bonne fraîcheur',
   },
   'Müller Thurgau': {
@@ -102,8 +102,8 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
   },
   'Johannisberg': {
     robe: 'Or pâle',
-    nez: 'Floral, pêche, abricot (Sylvaner valaisan)',
-    bouche: 'Souple, fruité, légèrement épicé',
+    nez: 'Fruits du verger (pomme, poire, pêche), amande',
+    bouche: 'Souple, parfois gras, amertume finale',
   },
   'Muscat': {
     robe: 'Jaune pâle à doré',
