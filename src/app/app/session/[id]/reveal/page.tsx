@@ -14,6 +14,14 @@ export default function RevealPage() {
   const [myTasting, setMyTasting] = useState<Tasting | null>(null)
   const [activeTab, setActiveTab] = useState<'groupe' | 'aromes' | 'moi' | 'vin'>('groupe')
   const [loading, setLoading] = useState(true)
+  const [postRevealScore, setPostRevealScore] = useState<number | null>(null)
+  const [postRevealNotes, setPostRevealNotes] = useState('')
+  const [editingPostReveal, setEditingPostReveal] = useState(false)
+  const [savingPostReveal, setSavingPostReveal] = useState(false)
+  const [postRevealSaved, setPostRevealSaved] = useState(false)
+
+  const SCORE_EMOJIS_R = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
+  const SCORE_LABELS_R = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -45,6 +53,10 @@ export default function RevealPage() {
 
         const myT = t?.find(x => x.user_id === user.id)
         setMyTasting(myT ?? null)
+        if (myT) {
+          setPostRevealScore(myT.score_perso ?? null)
+          setPostRevealNotes(myT.notes_libres ?? '')
+        }
 
         const { data: pl } = await supabase
           .from('session_players').select('*').eq('session_id', sessionId)
@@ -55,6 +67,19 @@ export default function RevealPage() {
     }
     load()
   }, [])
+
+  async function savePostReveal() {
+    if (!myTasting) return
+    setSavingPostReveal(true)
+    await supabase.from('tastings')
+      .update({ score_perso: postRevealScore, notes_libres: postRevealNotes.trim() || null })
+      .eq('id', myTasting.id)
+    setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_libres: postRevealNotes.trim() || null })
+    setSavingPostReveal(false)
+    setEditingPostReveal(false)
+    setPostRevealSaved(true)
+    setTimeout(() => setPostRevealSaved(false), 3000)
+  }
 
   function getAromeCounts() {
     const counts: Record<string, number> = {}
@@ -307,19 +332,6 @@ export default function RevealPage() {
                 )}
               </div>
 
-              {myTasting.score_perso !== null && (
-                <div style={{ padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
-                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Ton appréciation</div>
-                  <div style={{ fontSize: '20px', fontWeight: '500', color: accent }}>{myTasting.score_perso}/10</div>
-                </div>
-              )}
-
-              {myTasting.notes_libres && (
-                <div style={{ padding: '10px 0' }}>
-                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Notes libres</div>
-                  <div style={{ fontSize: '13px', color: '#444', fontStyle: 'italic' }}>"{myTasting.notes_libres}"</div>
-                </div>
-              )}
             </div>
 
             {/* Devinettes */}
@@ -359,6 +371,86 @@ export default function RevealPage() {
             </div>
           </div>
         )}
+
+        {activeTab === 'moi' && myTasting && (
+          <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.75rem' }}>
+                <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                  Ton avis post-révélation
+                </div>
+                {!editingPostReveal && (
+                  <button onClick={() => setEditingPostReveal(true)}
+                    style={{ padding: '4px 12px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
+                    ✏️ Éditer
+                  </button>
+                )}
+              </div>
+
+              {editingPostReveal ? (
+                <>
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>
+                    Ta note maintenant que tu sais ce que c'est
+                  </div>
+                  <div style={{ fontSize: '36px', textAlign: 'center', marginBottom: '10px' }}>
+                    {postRevealScore !== null ? SCORE_EMOJIS_R[postRevealScore] : '🤔'}
+                  </div>
+                  <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
+                    {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                      <button key={n} onClick={() => setPostRevealScore(n)}
+                        style={{ width: '34px', height: '34px', borderRadius: '50%', fontSize: '13px', fontWeight: '500', cursor: 'pointer', border: postRevealScore !== null && n <= postRevealScore ? 'none' : '0.5px solid #e0e0e0', background: postRevealScore === n ? accent : postRevealScore !== null && n < postRevealScore ? '#f5ede8' : '#fff', color: postRevealScore === n ? '#fff' : postRevealScore !== null && n < postRevealScore ? accent : '#666', transition: 'all .15s' }}>
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  {postRevealScore !== null && (
+                    <div style={{ textAlign: 'center', fontSize: '12px', color: '#888', marginBottom: '14px' }}>
+                      {SCORE_LABELS_R[postRevealScore]}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
+                    Ton commentaire de dégustation
+                  </div>
+                  <textarea value={postRevealNotes} onChange={e => setPostRevealNotes(e.target.value)}
+                    placeholder="Tanins soyeux, belle finale, accord parfait avec du gibier..."
+                    style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#444', resize: 'none', minHeight: '80px', fontFamily: 'system-ui, sans-serif', boxSizing: 'border-box', outline: 'none' }} />
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                    <button onClick={savePostReveal} disabled={savingPostReveal}
+                      style={{ flex: 2, padding: '10px', background: savingPostReveal ? '#c0a0a0' : accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: savingPostReveal ? 'default' : 'pointer' }}>
+                      {savingPostReveal ? 'Enregistrement...' : 'Enregistrer'}
+                    </button>
+                    <button onClick={() => { setEditingPostReveal(false); setPostRevealScore(myTasting?.score_perso ?? null); setPostRevealNotes(myTasting?.notes_libres ?? '') }}
+                      style={{ flex: 1, padding: '10px', background: '#f5f5f5', color: '#888', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                      Annuler
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {postRevealSaved && (
+                    <div style={{ fontSize: '12px', color: '#27500A', marginBottom: '8px' }}>✓ Commentaire enregistré !</div>
+                  )}
+                  {myTasting?.score_perso !== null && myTasting?.score_perso !== undefined && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '28px' }}>{SCORE_EMOJIS_R[myTasting.score_perso]}</span>
+                      <div>
+                        <span style={{ fontSize: '18px', fontWeight: '500', color: accent }}>{myTasting.score_perso}/10</span>
+                        <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>{SCORE_LABELS_R[myTasting.score_perso]}</span>
+                      </div>
+                    </div>
+                  )}
+                  {myTasting?.notes_libres ? (
+                    <p style={{ margin: 0, fontSize: '13px', color: '#444', fontStyle: 'italic', lineHeight: 1.5 }}>
+                      "{myTasting.notes_libres}"
+                    </p>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: '13px', color: '#bbb' }}>
+                      Pas encore de commentaire — clique sur Éditer pour en ajouter un !
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
         {/* TAB MOI — pas de dégustation */}
         {activeTab === 'moi' && !myTasting && (

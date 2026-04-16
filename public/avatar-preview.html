@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avatar Preview — Wine Mode</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+    body { background: #0d0020; font-family: system-ui, sans-serif; color: #fff; padding: 32px 24px; }
+    h2  { color: #FFBE0B; font-size: 18px; margin-bottom: 6px; font-weight: 700; }
+    p   { color: rgba(255,255,255,0.45); font-size: 13px; margin-bottom: 24px; }
+    .section { margin-bottom: 48px; }
+    .row { display: flex; flex-wrap: wrap; gap: 20px; }
+
+    /* ── Avatar card ── */
+    .card {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,190,11,0.2);
+      border-radius: 16px; padding: 14px 10px 10px; width: 100px; cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .card:hover { border-color: #FFBE0B; background: rgba(255,190,11,0.1); }
+    .card span  { font-size: 11px; color: rgba(255,255,255,0.55); text-align: center; }
+
+    /* ── Avatar container ── */
+    .avatar { position: relative; width: 72px; height: 72px; }
+    .avatar img { width: 72px; height: 72px; border-radius: 50%; display: block; object-fit: cover; }
+    .avatar svg.overlay { position: absolute; top: 0; left: 0; width: 72px; height: 72px; pointer-events: none; }
+
+    /* ── Comparison ── */
+    .compare { display: flex; gap: 32px; flex-wrap: wrap; }
+    .compare-col { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .compare-col label { font-size: 12px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: .08em; }
+  </style>
+</head>
+<body>
+
+<div class="section">
+  <h2>🎭 Version actuelle — DiceBear + badge emoji</h2>
+  <p>Portrait généré aléatoirement, emoji en overlay. L'emoji identifie le personnage mais le portrait est générique.</p>
+  <div class="row" id="current"></div>
+</div>
+
+<div class="section">
+  <h2>🎩 Version améliorée — DiceBear + costume SVG</h2>
+  <p>Même portrait DiceBear, mais on superpose un chapeau/masque SVG par-dessus. Le personnage devient immédiatement reconnaissable.</p>
+  <div class="row" id="enhanced"></div>
+</div>
+
+<div class="section">
+  <h2>🔍 Comparaison côte à côte</h2>
+  <div class="compare" id="compare"></div>
+</div>
+
+<script>
+const BASE = 'https://api.dicebear.com/7.x/adventurer/svg'
+const BG = 'b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf'
+
+const CHARS = [
+  { seed:'Texas',     emoji:'🤠', label:'Shérif',   skin:'ae5d29', costume:'sheriff'  },
+  { seed:'Yuki',      emoji:'🥷', label:'Ninja',    skin:'f2d3b1', costume:'ninja'    },
+  { seed:'Barbossa',  emoji:'☠️',  label:'Pirate',   skin:'edb98a', costume:'pirate'   },
+  { seed:'Morgana',   emoji:'🔮', label:'Sorcière', skin:'77311d', costume:'witch'    },
+  { seed:'Ragnar',    emoji:'⚔️',  label:'Viking',   skin:'d08b5b', costume:'viking'   },
+  { seed:'Carmilla',  emoji:'🧛', label:'Vampire',  skin:'f7d7c4', costume:'vampire'  },
+  { seed:'Wyatt',     emoji:'🌵', label:'Cowboy',   skin:'ae5d29', costume:'cowboy'   },
+  { seed:'Athena',    emoji:'🏹', label:'Chasseuse',skin:'7c5c39', costume:'hunter'   },
+  { seed:'Ezio',      emoji:'🗡️', label:'Assassin', skin:'614335', costume:'assassin' },
+  { seed:'Merlin',    emoji:'🪄', label:'Mage',     skin:'f7d7c4', costume:'wizard'   },
+]
+
+function avatarUrl(seed, skin) {
+  return `${BASE}?seed=${encodeURIComponent(seed)}&backgroundColor=${BG}&skinColor=${skin}`
+}
+
+// ── SVG costumes ──────────────────────────────────────────────────────────────
+const COSTUMES = {
+
+  sheriff: `
+    <!-- Chapeau de shérif -->
+    <g>
+      <!-- bord du chapeau -->
+      <ellipse cx="36" cy="27" rx="28" ry="7" fill="#5c3d1e" stroke="#3d2410" stroke-width="1"/>
+      <!-- calotte -->
+      <rect x="16" y="4" width="40" height="25" rx="6" fill="#6b4520" stroke="#3d2410" stroke-width="1"/>
+      <!-- bande déco -->
+      <rect x="16" y="22" width="40" height="5" fill="#3d2410"/>
+      <!-- étoile de shérif -->
+      <polygon points="36,9 37.5,13 42,13 38.5,15.5 40,20 36,17.5 32,20 33.5,15.5 30,13 34.5,13"
+        fill="#f5c518" stroke="#c9a000" stroke-width="0.5"/>
+    </g>`,
+
+  ninja: `
+    <!-- Masque ninja (couvre le bas du visage) -->
+    <g>
+      <!-- bandeau front -->
+      <rect x="6" y="24" width="60" height="10" rx="3" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+      <!-- nœud bandeau -->
+      <ellipse cx="60" cy="29" rx="6" ry="4" fill="#1a1a1a"/>
+      <line x1="60" y1="29" x2="68" y2="22" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+      <line x1="60" y1="29" x2="68" y2="36" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+      <!-- masque bas du visage -->
+      <rect x="6" y="44" width="60" height="28" rx="4" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+      <!-- yeux apparents (découpe) — lignes de plis -->
+      <line x1="10" y1="48" x2="62" y2="48" stroke="#333" stroke-width="0.8"/>
+    </g>`,
+
+  pirate: `
+    <!-- Bicorne de pirate -->
+    <g>
+      <!-- forme du bicorne -->
+      <path d="M4,36 Q36,-2 68,36 Z" fill="#1a1a2e" stroke="#0d0d1a" stroke-width="1.5"/>
+      <!-- bord doré -->
+      <path d="M4,36 Q36,2 68,36" fill="none" stroke="#c9a000" stroke-width="2.5"/>
+      <!-- tête de mort au centre -->
+      <circle cx="36" cy="22" r="7" fill="white" stroke="#ddd" stroke-width="0.5"/>
+      <circle cx="33.5" cy="20" r="1.8" fill="#1a1a2e"/>
+      <circle cx="38.5" cy="20" r="1.8" fill="#1a1a2e"/>
+      <path d="M32,25 Q36,28 40,25" fill="none" stroke="#1a1a2e" stroke-width="1.5"/>
+      <!-- os croisés -->
+      <line x1="29" y1="28" x2="43" y2="34" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="43" y1="28" x2="29" y2="34" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- cache-oeil -->
+      <ellipse cx="27" cy="46" rx="9" ry="6" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+      <line x1="18" y1="42" x2="36" y2="40" stroke="#1a1a1a" stroke-width="2"/>
+    </g>`,
+
+  witch: `
+    <!-- Chapeau de sorcière -->
+    <g>
+      <!-- bord du chapeau -->
+      <ellipse cx="36" cy="35" rx="30" ry="8" fill="#2d0b4e" stroke="#1a0030" stroke-width="1.5"/>
+      <!-- cône pointu -->
+      <path d="M36,0 L14,36 L58,36 Z" fill="#3d1269" stroke="#2d0b4e" stroke-width="1.5"/>
+      <!-- étoiles magiques -->
+      <circle cx="30" cy="15" r="2" fill="#FFBE0B"/>
+      <circle cx="44" cy="20" r="1.5" fill="#a78bfa"/>
+      <circle cx="38" cy="8" r="1.5" fill="#60a5fa"/>
+      <!-- bande déco -->
+      <rect x="14" y="30" width="44" height="6" rx="2" fill="#1a0030"/>
+      <!-- boucle -->
+      <rect x="32" y="29" width="8" height="8" rx="2" fill="#c9a000" stroke="#f5c518" stroke-width="1"/>
+    </g>`,
+
+  viking: `
+    <!-- Casque viking avec cornes -->
+    <g>
+      <!-- corne gauche -->
+      <path d="M8,30 Q0,10 10,5 Q14,15 18,30 Z" fill="#c8a96e" stroke="#8b6914" stroke-width="1"/>
+      <!-- corne droite -->
+      <path d="M64,30 Q72,10 62,5 Q58,15 54,30 Z" fill="#c8a96e" stroke="#8b6914" stroke-width="1"/>
+      <!-- casque métal -->
+      <path d="M12,38 Q12,12 36,10 Q60,12 60,38 Z" fill="#888" stroke="#555" stroke-width="1.5"/>
+      <!-- nasal (barre du nez) -->
+      <rect x="32" y="28" width="8" height="18" rx="2" fill="#666" stroke="#444" stroke-width="1"/>
+      <!-- rivet déco -->
+      <circle cx="20" cy="28" r="2.5" fill="#aaa"/>
+      <circle cx="52" cy="28" r="2.5" fill="#aaa"/>
+      <circle cx="36" cy="16" r="2.5" fill="#aaa"/>
+    </g>`,
+
+  vampire: `
+    <!-- Collier de vampire + col de cape -->
+    <g>
+      <!-- col de cape relevé (côtés) -->
+      <path d="M0,55 L18,35 L22,72 Z" fill="#1a0a2e" stroke="#0d0018" stroke-width="1"/>
+      <path d="M72,55 L54,35 L50,72 Z" fill="#1a0a2e" stroke="#0d0018" stroke-width="1"/>
+      <!-- médaillon au cou -->
+      <circle cx="36" cy="60" r="7" fill="#1a0a2e" stroke="#8b0000" stroke-width="1.5"/>
+      <path d="M32,57 L36,52 L40,57 L38,63 L34,63 Z" fill="#8b0000"/>
+      <!-- cheveux noirs dramatiques -->
+      <path d="M8,38 Q6,20 12,10 Q18,30 22,38" fill="#111" stroke="#000" stroke-width="0.5"/>
+      <path d="M64,38 Q66,20 60,10 Q54,30 50,38" fill="#111" stroke="#000" stroke-width="0.5"/>
+    </g>`,
+
+  cowboy: `
+    <!-- Grand chapeau de cowboy -->
+    <g>
+      <!-- très large bord -->
+      <ellipse cx="36" cy="34" rx="34" ry="9" fill="#7a4f1e" stroke="#5c3d14" stroke-width="1.5"/>
+      <!-- calotte -->
+      <path d="M16,34 Q18,8 36,6 Q54,8 56,34 Z" fill="#8b5e2a" stroke="#5c3d14" stroke-width="1.5"/>
+      <!-- pli central de la calotte -->
+      <path d="M36,6 Q34,16 36,26 Q38,16 36,6" fill="#7a4f1e"/>
+      <!-- bande et boucle -->
+      <rect x="16" y="29" width="40" height="5" fill="#5c3d14"/>
+      <rect x="32" y="27.5" width="8" height="8" rx="1.5" fill="#c9a000" stroke="#f5c518" stroke-width="1"/>
+    </g>`,
+
+  hunter: `
+    <!-- Capuche de chasseuse + arc -->
+    <g>
+      <!-- capuche -->
+      <path d="M8,40 Q6,10 36,6 Q66,10 64,40 Q52,30 36,30 Q20,30 8,40 Z" fill="#4a7c2f" stroke="#2d5e1a" stroke-width="1.5"/>
+      <!-- plume dans capuche -->
+      <path d="M52,12 Q58,4 62,8 Q58,12 56,18 Q54,14 52,12 Z" fill="#d4c5a9" stroke="#b8a88a" stroke-width="0.5"/>
+      <!-- feuille déco -->
+      <path d="M16,20 Q20,10 28,16 Q22,22 16,20 Z" fill="#2d5e1a"/>
+    </g>`,
+
+  assassin: `
+    <!-- Capuche d'assassin avec ombre -->
+    <g>
+      <!-- capuche profonde -->
+      <path d="M4,45 Q4,4 36,2 Q68,4 68,45 Q54,28 36,28 Q18,28 4,45 Z" fill="#1a1a1a" stroke="#111" stroke-width="1.5"/>
+      <!-- ombre sur le visage (mystère) -->
+      <path d="M10,45 Q12,32 36,30 Q60,32 62,45 Q54,38 36,38 Q18,38 10,45 Z" fill="rgba(0,0,0,0.5)"/>
+      <!-- yeux qui brillent dans l'ombre -->
+      <ellipse cx="28" cy="42" rx="4" ry="2.5" fill="rgba(255,50,50,0.7)"/>
+      <ellipse cx="44" cy="42" rx="4" ry="2.5" fill="rgba(255,50,50,0.7)"/>
+    </g>`,
+
+  wizard: `
+    <!-- Chapeau de mage étoilé -->
+    <g>
+      <!-- très grand bord -->
+      <ellipse cx="36" cy="36" rx="28" ry="7" fill="#2d0b4e" stroke="#1a0030" stroke-width="1.5"/>
+      <!-- très long cône -->
+      <path d="M36,-4 L14,37 L58,37 Z" fill="#3d1269" stroke="#2d0b4e" stroke-width="1.5"/>
+      <!-- étoiles sur le chapeau -->
+      <polygon points="36,2 37,5 40,5 38,7 39,10 36,8 33,10 34,7 32,5 35,5" fill="#FFBE0B"/>
+      <circle cx="24" cy="20" r="2" fill="#a78bfa"/>
+      <circle cx="48" cy="16" r="1.5" fill="#60a5fa"/>
+      <circle cx="42" cy="28" r="1.5" fill="#f9a8d4"/>
+      <!-- bande déco -->
+      <rect x="14" y="31" width="44" height="6" rx="2" fill="#1a0030"/>
+      <circle cx="36" cy="34" rx="4" ry="4" fill="#c9a000"/>
+    </g>`,
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+
+function makeCurrentAvatar(char, size = 72) {
+  const url = avatarUrl(char.seed, char.skin)
+  const fsize = Math.round(size * 0.38)
+  return `
+    <div class="card" title="${char.label}">
+      <div class="avatar" style="width:${size}px;height:${size}px">
+        <img src="${url}" width="${size}" height="${size}" loading="lazy">
+        <span style="position:absolute;bottom:-2px;right:-2px;font-size:${fsize}px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))">${char.emoji}</span>
+      </div>
+      <span>${char.label}</span>
+    </div>`
+}
+
+function makeEnhancedAvatar(char, size = 72) {
+  const url = avatarUrl(char.seed, char.skin)
+  const costume = COSTUMES[char.costume] || ''
+  return `
+    <div class="card" title="${char.label}">
+      <div class="avatar" style="width:${size}px;height:${size}px">
+        <img src="${url}" width="${size}" height="${size}" loading="lazy">
+        <svg class="overlay" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+          ${costume}
+        </svg>
+      </div>
+      <span>${char.label}</span>
+    </div>`
+}
+
+// ── Populate ──────────────────────────────────────────────────────────────────
+
+document.getElementById('current').innerHTML  = CHARS.map(c => makeCurrentAvatar(c)).join('')
+document.getElementById('enhanced').innerHTML = CHARS.map(c => makeEnhancedAvatar(c)).join('')
+
+// Comparison: 2 personages côte à côte (Pirate + Ninja)
+const compareChars = CHARS.filter(c => ['Barbossa','Yuki','Texas','Merlin'].includes(c.seed))
+document.getElementById('compare').innerHTML = compareChars.map(char => `
+  <div class="compare-col">
+    <label>${char.label}</label>
+    <div style="display:flex;gap:16px;align-items:center">
+      <div>
+        <div style="font-size:10px;color:rgba(255,255,255,.3);text-align:center;margin-bottom:6px">Actuel</div>
+        ${makeCurrentAvatar(char, 80)}
+      </div>
+      <div style="font-size:20px;color:rgba(255,255,255,.2)">→</div>
+      <div>
+        <div style="font-size:10px;color:#FFBE0B;text-align:center;margin-bottom:6px">Amélioré</div>
+        ${makeEnhancedAvatar(char, 80)}
+      </div>
+    </div>
+  </div>`).join('')
+</script>
+</body>
+</html>

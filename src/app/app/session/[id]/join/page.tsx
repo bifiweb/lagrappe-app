@@ -3,15 +3,19 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
+import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import type { Session, Wine } from '@/types'
 
 export default function JoinSessionPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [wine, setWine] = useState<Wine | null>(null)
   const [pseudo, setPseudo] = useState('')
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+  const [editingAvatar, setEditingAvatar] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
   const [alreadyJoined, setAlreadyJoined] = useState(false)
+  const accent = '#8d323b'
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -52,6 +56,7 @@ export default function JoinSessionPage() {
         const { data: prof } = await supabase
           .from('profiles').select('*').eq('id', user.id).single()
         if (prof?.display_name) setPseudo(prof.display_name)
+        setSelectedAvatar(prof?.avatar ?? null)
       }
       setLoading(false)
     }
@@ -73,7 +78,7 @@ export default function JoinSessionPage() {
     })
 
     await supabase.from('profiles')
-      .update({ display_name: pseudo.trim() })
+      .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
       .eq('id', user.id)
 
     router.push(`/app/session/${sessionId}`)
@@ -110,6 +115,52 @@ export default function JoinSessionPage() {
               {wine?.type === 'rouge' ? 'Vin rouge' : wine?.type === 'blanc' ? 'Vin blanc' : wine?.type}
             </div>
           </div>
+        </div>
+
+        {/* Avatar */}
+        <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+          <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>
+            Ton personnage Wine Mode
+          </label>
+          {(() => {
+            const char = selectedAvatar ? getCharacter(selectedAvatar) : null
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: editingAvatar ? '16px' : 0 }}>
+                <div onClick={() => setEditingAvatar(v => !v)} style={{ position: 'relative', width: '60px', height: '60px', cursor: 'pointer', flexShrink: 0 }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: selectedAvatar ? 'transparent' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: `2px solid ${selectedAvatar ? accent : 'transparent'}` }}>
+                    {selectedAvatar
+                      ? <img src={avatarUrl(selectedAvatar, char?.skinColor)} width={60} height={60} alt={char?.label ?? selectedAvatar} style={{ objectFit: 'cover', display: 'block' }} />
+                      : <span style={{ fontSize: '22px', color: '#fff' }}>🎭</span>}
+                  </div>
+                  {char && <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '20px', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>{char.emoji}</span>}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
+                    {char ? char.label : 'Aucun personnage'}
+                  </div>
+                  <button onClick={() => setEditingAvatar(v => !v)} style={{ marginTop: '4px', padding: '4px 12px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
+                    {editingAvatar ? 'Fermer' : '✏️ Changer'}
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
+          {editingAvatar && (
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', justifyItems: 'center' }}>
+                {CHARACTERS.map(char => (
+                  <button key={char.seed} onClick={() => { setSelectedAvatar(char.seed); setEditingAvatar(false) }}
+                    title={char.label}
+                    style={{ position: 'relative', width: '50px', height: '50px', padding: 0, borderRadius: '50%', overflow: 'visible', border: selectedAvatar === char.seed ? `3px solid ${accent}` : '3px solid transparent', background: 'transparent', cursor: 'pointer' }}>
+                    <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: '#f5ede8' }}>
+                      <img src={avatarUrl(char.seed, char.skinColor)} width={50} height={50} alt={char.label} loading="lazy" style={{ display: 'block' }} />
+                    </div>
+                    <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '16px', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>{char.emoji}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>

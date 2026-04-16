@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, PRIX_OPTIONS, ELEVAGE_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
+import { CEPAGE_INFO } from '@/lib/cepage-info'
 import type { Session, Wine } from '@/types'
 
 
@@ -337,8 +338,16 @@ export default function TastingPage() {
         {/* ÉTAPE 0 : VUE */}
         {step === 0 && (
           <>
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666', lineHeight: 1.5 }}>
-              💡 Incline le verre sur fond blanc. La teinte au bord révèle l'âge du vin.
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
+              <img src="/gif-vue.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '1rem' }}>
+                <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
+                  Un simple coup d'œil peut déjà te révéler plein d'indices : l'âge du vin, sa douceur ou même le type de cépage.
+                </p>
+                <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
+                  💡 <strong>Astuce de pro :</strong> éclaire bien la pièce, place une feuille blanche derrière ton verre et incline-le légèrement… magie garantie ! ✨
+                </div>
+              </div>
             </div>
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>Un mot sur la robe ?</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginBottom: '1.25rem' }}>
@@ -371,8 +380,16 @@ export default function TastingPage() {
         {/* ÉTAPE 1 : NEZ */}
         {step === 1 && (
           <>
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666', lineHeight: 1.5 }}>
-              💡 Commence sans agiter, puis fais tourner. Tu perçois d'abord les arômes primaires.
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
+              <img src="/gif-nez.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '1rem' }}>
+                <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
+                  C'est ton nez qui va révéler toute la palette d'arômes du vin.
+                </p>
+                <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
+                  💡 <strong>Astuce :</strong> sens ton verre une première fois. Puis, fais-le tournoyer pour libérer ses arômes et sens-le à nouveau. Ce sont les fameux <strong>1er et 2ème nez</strong>.
+                </div>
+              </div>
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Intensité du nez</div>
@@ -440,8 +457,16 @@ export default function TastingPage() {
         {/* ÉTAPE 2 : BOUCHE */}
         {step === 2 && (
           <>
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1.25rem', fontSize: '13px', color: '#666', lineHeight: 1.5 }}>
-              💡 L'acidité picote les côtés de la langue, les tanins assèchent les gencives, le gras enrobe.
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem' }}>
+              <img src="/gif-bouche.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              <div style={{ padding: '1rem' }}>
+                <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
+                  C'est ici que tout s'anime : les saveurs (sucré, salé, acide, amer), mais aussi les sensations tactiles (alcool, fraîcheur, bulles, tanins). Après avoir avalé ou recraché, mesure la <strong>persistance</strong> : combien de temps le vin reste présent après la gorgée ? ⏳
+                </p>
+                <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
+                  💡 <strong>Astuce :</strong> teste la rétro-olfaction ! Aspire légèrement de l'air avec le vin en bouche… et laisse exploser les arômes. 🚀
+                </div>
+              </div>
             </div>
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '16px' }}>Structure en bouche</div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
@@ -523,11 +548,8 @@ export default function TastingPage() {
                 </div>
               )}
             </div>
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>Notes libres</div>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                placeholder="Décris ce que tu ressens... tanins soyeux, finale longue..."
-                style={{ width: '100%', border: 'none', outline: 'none', fontSize: '13px', color: '#444', resize: 'none', minHeight: '80px', fontFamily: 'system-ui, sans-serif', boxSizing: 'border-box' }} />
+            <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
+              💡 Tu pourras ajouter ton commentaire de dégustation une fois le vin révélé — quand tu sauras ce que tu avais dans le verre !
             </div>
           </>
         )}
@@ -541,7 +563,7 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>🍇 Cépage ?</div>
               <HintBanner used={hintCounts.cepage} onUse={() => useHint('cepage')} />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                 {content.cepages.map(c => {
                   const eliminated = eliminatedCepages.includes(c)
                   return (
@@ -552,6 +574,16 @@ export default function TastingPage() {
                   )
                 })}
               </div>
+              {cepage && CEPAGE_INFO[cepage] && (
+                <div style={{ background: bg, border: `0.5px solid ${accent}30`, borderRadius: '12px', padding: '12px 14px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '8px' }}>📚 {cepage} — indices</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '12px', color: '#444' }}>
+                    <div><span style={{ color: '#888', fontWeight: '500' }}>Robe · </span>{CEPAGE_INFO[cepage].robe}</div>
+                    <div><span style={{ color: '#888', fontWeight: '500' }}>Nez · </span>{CEPAGE_INFO[cepage].nez}</div>
+                    <div><span style={{ color: '#888', fontWeight: '500' }}>Bouche · </span>{CEPAGE_INFO[cepage].bouche}</div>
+                  </div>
+                </div>
+              )}
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>📍 Région ?</div>
