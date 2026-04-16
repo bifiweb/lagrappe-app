@@ -339,7 +339,7 @@ export default function TastingPage() {
         {step === 0 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
-              <img src="/gif-vue.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              <img src="/gif-vue.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                   Un simple coup d'œil peut déjà te révéler plein d'indices : l'âge du vin, sa douceur ou même le type de cépage.
@@ -381,7 +381,7 @@ export default function TastingPage() {
         {step === 1 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1rem' }}>
-              <img src="/gif-nez.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              <img src="/gif-nez.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                   C'est ton nez qui va révéler toute la palette d'arômes du vin.
@@ -458,7 +458,7 @@ export default function TastingPage() {
         {step === 2 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', marginBottom: '1.25rem' }}>
-              <img src="/gif-bouche.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', display: 'block' }} />
+              <img src="/gif-bouche.gif" alt="" onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} style={{ width: '100%', maxHeight: '180px', objectFit: 'cover', display: 'block' }} />
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                   C'est ici que tout s'anime : les saveurs (sucré, salé, acide, amer), mais aussi les sensations tactiles (alcool, fraîcheur, bulles, tanins). Après avoir avalé ou recraché, mesure la <strong>persistance</strong> : combien de temps le vin reste présent après la gorgée ? ⏳

@@ -107,6 +107,53 @@ export default function RevealPage() {
       ? `CHF ${notes.prix_chf}`
       : '—'
 
+  async function saveStarRating(newScore: number) {
+    if (!myTasting) return
+    setPostRevealScore(newScore)
+    setMyTasting({ ...myTasting, score_perso: newScore })
+    await supabase.from('tastings')
+      .update({ score_perso: newScore })
+      .eq('id', myTasting.id)
+  }
+
+  function StarRating({ score, onRate }: { score: number | null, onRate: (s: number) => void }) {
+    const stars = score !== null ? score / 2 : 0
+    return (
+      <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+        {[1,2,3,4,5].map(i => {
+          const gradId = `sg-${i}`
+          const isFull = stars >= i
+          const isHalf = !isFull && stars >= i - 0.5 && stars > 0
+          return (
+            <div key={i} style={{ position: 'relative', width: '28px', height: '28px' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" style={{ display: 'block' }}>
+                <defs>
+                  <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="50%" stopColor="#f0a000"/>
+                    <stop offset="50%" stopColor="#e0e0e0"/>
+                  </linearGradient>
+                </defs>
+                <polygon
+                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                  fill={isFull ? '#f0a000' : isHalf ? `url(#${gradId})` : '#e0e0e0'}
+                />
+              </svg>
+              {/* Left half → demi-étoile */}
+              <div onClick={() => onRate(i * 2 - 1)}
+                style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '100%', cursor: 'pointer' }} />
+              {/* Right half → étoile pleine */}
+              <div onClick={() => onRate(i * 2)}
+                style={{ position: 'absolute', right: 0, top: 0, width: '50%', height: '100%', cursor: 'pointer' }} />
+            </div>
+          )
+        })}
+        {score !== null && (
+          <span style={{ fontSize: '12px', color: '#888', marginLeft: '6px' }}>{score}/10</span>
+        )}
+      </div>
+    )
+  }
+
   function CompareRow({ label, mine, official, correct }: { label: string, mine: string | null, official: string | null, correct: boolean }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
@@ -167,6 +214,21 @@ export default function RevealPage() {
             {notes?.prix_exact && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>CHF {notes.prix_exact.toFixed(2)}</span>}
           </div>
         </div>
+
+        {/* Mon appréciation en étoiles */}
+        {myTasting && (
+          <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>
+              Ton appréciation
+            </div>
+            <StarRating score={postRevealScore} onRate={saveStarRating} />
+            {postRevealScore === null && (
+              <div style={{ fontSize: '11px', color: '#bbb', marginTop: '6px' }}>
+                Tape sur les étoiles pour noter ce vin
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Mon score */}
         {myTasting && (
