@@ -443,7 +443,7 @@ export default function SessionPage() {
                   { emoji: '👃', label: 'Arômes',    pts: '300 pts × nb joueurs même arôme · +300 si officiel' },
                   { emoji: '👄', label: 'Bouche',    pts: '300 si juste · 100 sinon' },
                   { emoji: '💰', label: 'Prix',      pts: '500 si exact · −50 pts/CHF d\'écart' },
-                  { emoji: '📅', label: 'Millésime', pts: '500 si juste · 100 sinon' },
+                  { emoji: '📅', label: 'Millésime', pts: '500 si juste · −100 pts par année d\'écart' },
                   { emoji: '🍇', label: 'Cépage',    pts: '1 000 si juste · 200 sinon' },
                   { emoji: '📍', label: 'Région',    pts: '500 si juste · 100 sinon' },
                   { emoji: '🪣', label: 'Élevage',   pts: '300 si juste · 100 sinon' },

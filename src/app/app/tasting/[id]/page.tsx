@@ -116,8 +116,8 @@ export default function TastingPage() {
   const [aromes, setAromes] = useState<string[]>([])
   const [boucheIndex, setBoucheIndex] = useState(1)
   const [accord, setAccord] = useState<string | null>(null)
-  const [prix, setPrix] = useState('')
-  const [millesime, setMillesime] = useState('')
+  const [prix, setPrix] = useState('25')
+  const [millesime, setMillesime] = useState('2025')
   const [cepage, setCepage] = useState<string | null>(null)
   const [region, setRegion] = useState<string | null>(null)
   const [scorePerso, setScorePerso] = useState<number | null>(null)
@@ -311,7 +311,7 @@ export default function TastingPage() {
                 { icon: '👄', label: 'Bouche', detail: '300 pts si juste · 100 pts sinon' },
                 { icon: '🍇', label: 'Cépage', detail: '1 000 pts si juste · 200 pts sinon' },
                 { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
-                { icon: '📅', label: 'Millésime', detail: '500 pts si juste · 100 pts sinon' },
+                { icon: '📅', label: 'Millésime', detail: '500 pts si juste · −100 pts par année d\'écart' },
                 { icon: '🪣', label: 'Élevage', detail: '300 pts si juste · 100 pts sinon' },
                 { icon: '💰', label: 'Prix', detail: '500 pts si exact · −50 pts par CHF d\'écart' },
                 { icon: '💡', label: 'Aide', detail: '−200 pts par aide utilisée' },
@@ -701,10 +701,10 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📅 Millésime ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · −100 pts par année d'écart</div>
               </div>
               <input type="number" value={millesime} onChange={e => setMillesime(e.target.value)}
-                placeholder="Ex: 2021" min={2000} max={2025}
+                placeholder="Ex: 2025" min={1990} max={2025}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
@@ -740,8 +740,8 @@ export default function TastingPage() {
                 type="number"
                 value={prix}
                 onChange={e => setPrix(e.target.value)}
-                placeholder="Ex: 24.50"
-                min={0}
+                placeholder="Ex: 25"
+                min={1}
                 step={0.5}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
               />
