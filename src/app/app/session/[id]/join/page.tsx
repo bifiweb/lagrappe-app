@@ -74,6 +74,7 @@ export default function JoinSessionPage() {
       session_id: sessionId,
       user_id: user.id,
       pseudo: pseudo.trim(),
+      avatar: selectedAvatar ?? null,
       is_chef: false,
     })
 

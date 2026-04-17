@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import type { Profile, Session, SessionPlayer } from '@/types'
+import { PlayerAvatar } from '@/components/PlayerAvatar'
 
 type ChifoumiMove = 'pierre' | 'feuille' | 'ciseaux'
 const CHIFOUMI_EMOJI: Record<ChifoumiMove, string> = { pierre: '✊', feuille: '🖐️', ciseaux: '✌️' }
@@ -391,9 +392,7 @@ export default function SessionPage() {
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               {players.map(p => (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '0.5px solid #f0f0f0' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '500', color: '#8d323b' }}>
-                    {p.pseudo[0].toUpperCase()}
-                  </div>
+                  <PlayerAvatar avatar={p.avatar} pseudo={p.pseudo} size={32} />
                   <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{p.pseudo}</div>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3B6D11' }}></div>
                 </div>
@@ -488,9 +487,7 @@ export default function SessionPage() {
                   <div key={p.id}
                     onClick={() => setMyVote(p.user_id)}
                     style={{ background: '#fff', border: myVote === p.user_id ? '2px solid #8d323b' : '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '500', color: '#8d323b' }}>
-                      {p.pseudo[0].toUpperCase()}
-                    </div>
+                    <PlayerAvatar avatar={p.avatar} pseudo={p.pseudo} size={38} />
                     <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{p.pseudo}</div>
                     {myVote === p.user_id && <div style={{ color: '#8d323b', fontSize: '18px' }}>✓</div>}
                   </div>

@@ -108,6 +108,7 @@ export interface SessionPlayer {
   evening_id: string | null
   user_id: string
   pseudo: string
+  avatar: string | null
   is_chef: boolean
   votes_received: number
   tasting_done: boolean

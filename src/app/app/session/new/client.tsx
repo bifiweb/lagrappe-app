@@ -65,6 +65,7 @@ export default function NewSessionClient() {
       session_id: session.id,
       user_id: user.id,
       pseudo: pseudo.trim(),
+      avatar: selectedAvatar ?? null,
       is_chef: true,
     })
 

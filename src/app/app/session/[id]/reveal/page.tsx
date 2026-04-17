@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import type { Session, Wine, GrappisteNotes, Tasting, SessionPlayer } from '@/types'
+import { PlayerAvatar } from '@/components/PlayerAvatar'
 
 export default function RevealPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -306,9 +307,7 @@ export default function RevealPage() {
               return (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '0.5px solid #f0f0f0' }}>
                   <div style={{ fontSize: '13px', fontWeight: '500', color: '#888', minWidth: '16px' }}>{i + 1}</div>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '500', color: accent }}>
-                    {p.pseudo[0].toUpperCase()}
-                  </div>
+                  <PlayerAvatar avatar={p.avatar} pseudo={p.pseudo} size={32} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
                       {p.pseudo} {i === 0 ? '👑' : ''}
@@ -462,7 +461,10 @@ export default function RevealPage() {
                 label="Prix"
                 mine={myTasting.prix_estime ? `CHF ${myTasting.prix_estime}` : null}
                 official={notes?.prix_exact != null ? `CHF ${notes.prix_exact.toFixed(2)}` : (notes?.prix_chf ? `CHF ${notes.prix_chf}` : null)}
-                correct={myTasting.pts_prix === 500}
+                correct={
+                  myTasting.prix_estime != null && notes?.prix_exact != null &&
+                  Math.abs(parseFloat(myTasting.prix_estime) - notes.prix_exact) < 0.01
+                }
               />
             </div>
           </div>
