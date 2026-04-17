@@ -417,6 +417,18 @@ export default function SessionPage() {
               </div>
             </div>
 
+            <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
+                👑 Le rôle du chef
+              </div>
+              <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
+                Le groupe vote pour désigner un chef parmi les joueurs. Ce rôle est purement cérémoniel : tout le monde joue sur un pied d'égalité et marque des points de la même façon.
+              </p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
+                <strong>Son seul privilège ?</strong> C'est lui — et lui seul — qui peut lancer la révélation du vin mystère une fois que tout le monde a soumis sa dégustation. 🍾
+              </p>
+            </div>
+
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>
                 📊 Barème des points
@@ -454,8 +466,10 @@ export default function SessionPage() {
         {phase === 'voting' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Qui sera le chef ?</div>
-              <div style={{ fontSize: '13px', color: '#888' }}>Le chef lancera la révélation du vin mystère</div>
+              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Qui sera le chef ? 👑</div>
+              <div style={{ fontSize: '13px', color: '#888', lineHeight: 1.5 }}>
+                Tout le monde joue à égalité — le chef sera simplement<br />celui qui appuiera sur le bouton de révélation 🍾
+              </div>
             </div>
 
             {hasVoted ? (

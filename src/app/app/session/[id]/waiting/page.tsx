@@ -212,23 +212,36 @@ export default function WaitingPage() {
             </div>
 
             {isChef && (
-              <button
-                onClick={startReveal}
-                disabled={!allDone}
-                style={{
-                  width: '100%', padding: '14px',
-                  background: allDone ? '#8d323b' : '#c0a0a0',
-                  color: '#fff', border: 'none',
-                  borderRadius: '12px', fontSize: '15px', fontWeight: '500',
-                  cursor: allDone ? 'pointer' : 'default',
-                }}>
-                {allDone ? 'Révéler le vin mystère ! 🍾' : `En attente... (${doneCount}/${players.length})`}
-              </button>
+              <>
+                {allDone && (
+                  <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '10px 14px', marginBottom: '12px', textAlign: 'center', fontSize: '12px', color: '#7a5020', lineHeight: 1.5 }}>
+                    👑 Tu es le chef — c'est toi qui lances la révélation !
+                  </div>
+                )}
+                <button
+                  onClick={startReveal}
+                  disabled={!allDone}
+                  style={{
+                    width: '100%', padding: '14px',
+                    background: allDone ? '#8d323b' : '#c0a0a0',
+                    color: '#fff', border: 'none',
+                    borderRadius: '12px', fontSize: '15px', fontWeight: '500',
+                    cursor: allDone ? 'pointer' : 'default',
+                  }}>
+                  {allDone ? 'Révéler le vin mystère ! 🍾' : `En attente... (${doneCount}/${players.length})`}
+                </button>
+              </>
             )}
 
             {!isChef && allDone && (
-              <div style={{ textAlign: 'center', fontSize: '13px', color: '#888', padding: '1rem' }}>
-                En attente que le chef révèle le vin...
+              <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '1rem 1.25rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>👑</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
+                  En attente du chef...
+                </div>
+                <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>
+                  Tout le monde a terminé ! C'est au chef de lancer<br />la révélation du vin mystère. 🍾
+                </div>
               </div>
             )}
 

@@ -246,6 +246,32 @@ export default function TastingPage() {
   const accent = wine.type === 'rouge' ? '#8d323b' : '#7a6a1a'
   const bg = wine.type === 'rouge' ? '#f5ede8' : '#f5f3e0'
 
+  // Validation par étape — tous les champs obligatoires
+  const stepValid = (() => {
+    if (step === 0) return robe !== null
+    if (step === 1) return aromes.length > 0
+    if (step === 3) return accord !== null
+    if (step === 4) return scorePerso !== null
+    if (step === 5) return cepage !== null && region !== null && millesime.trim() !== '' && prix.trim() !== ''
+    return true
+  })()
+
+  const stepMissing = (() => {
+    if (step === 0 && !robe) return 'Sélectionne une robe pour continuer'
+    if (step === 1 && aromes.length === 0) return 'Sélectionne au moins un arôme'
+    if (step === 3 && !accord) return 'Choisis un accord mets-vin'
+    if (step === 4 && scorePerso === null) return 'Donne une note pour continuer'
+    if (step === 5) {
+      const missing: string[] = []
+      if (!cepage) missing.push('cépage')
+      if (!region) missing.push('région')
+      if (!millesime.trim()) missing.push('millésime')
+      if (!prix.trim()) missing.push('prix')
+      if (missing.length > 0) return `Il manque : ${missing.join(', ')}`
+    }
+    return null
+  })()
+
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
@@ -729,6 +755,11 @@ export default function TastingPage() {
             💡 {hintsUsed} aide{hintsUsed > 1 ? 's' : ''} utilisée{hintsUsed > 1 ? 's' : ''} — malus : −{hintsUsed * 100} pts
           </div>
         )}
+        {stepMissing && (
+          <div style={{ maxWidth: '500px', margin: '0 auto 8px', textAlign: 'center', fontSize: '12px', color: '#c05020', background: '#fff5f0', border: '0.5px solid #f0c0a0', borderRadius: '8px', padding: '6px 0' }}>
+            ⚠️ {stepMissing}
+          </div>
+        )}
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', gap: '10px' }}>
           {step > 0 && (
             <button onClick={() => goStep(step - 1)}
@@ -737,13 +768,14 @@ export default function TastingPage() {
             </button>
           )}
           {step < steps.length - 1 ? (
-            <button onClick={() => goStep(step + 1)}
-              style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: accent, color: '#fff', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
+            <button onClick={() => { if (stepValid) goStep(step + 1) }}
+              disabled={!stepValid}
+              style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: stepValid ? accent : '#d0c0c0', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: stepValid ? 'pointer' : 'default', transition: 'background .2s' }}>
               Continuer →
             </button>
           ) : (
-            <button onClick={submitTasting} disabled={saving}
-              style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: saving ? '#c0a0a0' : accent, color: '#fff', fontSize: '14px', fontWeight: '500', cursor: saving ? 'default' : 'pointer' }}>
+            <button onClick={submitTasting} disabled={!stepValid || saving}
+              style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: (!stepValid || saving) ? '#c0a0a0' : accent, color: '#fff', fontSize: '14px', fontWeight: '500', cursor: (!stepValid || saving) ? 'default' : 'pointer', transition: 'background .2s' }}>
               {saving ? 'Envoi...' : 'Soumettre ma dégustation 🍷'}
             </button>
           )}
