@@ -370,7 +370,7 @@ export default function TastingPage() {
       )}
 
       <div style={{
-        maxWidth: '500px', margin: '0 auto', padding: '1.5rem 1.5rem 6rem',
+        maxWidth: '500px', margin: '0 auto', padding: `1.5rem 1.5rem ${6 + (hintsUsed > 0 ? 2.5 : 0) + (stepMissing ? 2.5 : 0)}rem`,
         opacity: animating ? 0 : 1,
         transform: animating ? `translateX(${slideDirection === 'left' ? '30px' : '-30px'})` : 'translateX(0)',
         transition: 'opacity .2s ease, transform .2s ease',
