@@ -40,7 +40,7 @@ function HintBanner({ used, onUse }: { used: number, onUse: () => void }) {
           Aide disponible {used > 0 ? `(${used}/2 utilisée)` : ''}
         </div>
         <div style={{ fontSize: '11px', color: '#a07820', lineHeight: 1.3 }}>
-          Élimine ~1/3 des mauvaises réponses · coûte <strong>100 pts</strong>
+          Élimine ~1/3 des mauvaises réponses · coûte <strong>200 pts</strong>
         </div>
       </div>
       <button onClick={onUse} style={{ padding: '6px 14px', background: '#f0a000', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -313,8 +313,8 @@ export default function TastingPage() {
                 { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
                 { icon: '📅', label: 'Millésime', detail: '500 pts si juste · 100 pts sinon' },
                 { icon: '🪣', label: 'Élevage', detail: '300 pts si juste · 100 pts sinon' },
-                { icon: '💰', label: 'Prix', detail: '1 000 pts si exact · −100 pts par CHF d\'écart' },
-                { icon: '💡', label: 'Aide', detail: '−100 pts par aide utilisée' },
+                { icon: '💰', label: 'Prix', detail: '500 pts si exact · −50 pts par CHF d\'écart' },
+                { icon: '💡', label: 'Aide', detail: '−200 pts par aide utilisée' },
               ].map(({ icon, label, detail }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ fontSize: '13px', flexShrink: 0 }}>{icon}</span>
@@ -734,7 +734,7 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>💰 Prix estimé ?</div>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-                1 000 pts si exact · −100 pts par CHF d'écart
+                500 pts si exact · −50 pts par CHF d'écart
               </div>
               <input
                 type="number"
@@ -755,7 +755,7 @@ export default function TastingPage() {
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '0.5px solid #e0e0e0', padding: '1rem 1.5rem' }}>
         {hintsUsed > 0 && (
           <div style={{ maxWidth: '500px', margin: '0 auto 8px', textAlign: 'center', fontSize: '11px', color: '#8a6000', background: '#fffbf0', borderRadius: '8px', padding: '4px 0' }}>
-            💡 {hintsUsed} aide{hintsUsed > 1 ? 's' : ''} utilisée{hintsUsed > 1 ? 's' : ''} — malus : −{hintsUsed * 100} pts
+            💡 {hintsUsed} aide{hintsUsed > 1 ? 's' : ''} utilisée{hintsUsed > 1 ? 's' : ''} — malus : −{hintsUsed * 200} pts
           </div>
         )}
         {stepMissing && (
