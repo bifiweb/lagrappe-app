@@ -28,7 +28,7 @@ export default function AdminProjectsPage() {
   const [projectImageUrl, setProjectImageUrl] = useState('')
   const [bottleCount, setBottleCount] = useState(6)
   const [memberIds, setMemberIds] = useState<string[]>([])
-  const [accessMode, setAccessMode] = useState<'all' | 'restricted'>('all')
+  const [accessMode, setAccessMode] = useState<'public' | 'link' | 'restricted'>('public')
 
   useEffect(() => {
     async function load() {
@@ -78,12 +78,13 @@ export default function AdminProjectsPage() {
     setSuccess(false)
     setActiveSection('info')
 
+    const mode = (project as any).access_mode ?? 'public'
+    setAccessMode(mode as 'public' | 'link' | 'restricted')
+
     supabase.from('project_members')
       .select('user_id').eq('project_id', project.id)
       .then(({ data }) => {
-        const ids = data?.map(m => m.user_id) ?? []
-        setMemberIds(ids)
-        setAccessMode(ids.length === 0 ? 'all' : 'restricted')
+        setMemberIds(data?.map(m => m.user_id) ?? [])
       })
 
     supabase.from('wines')
@@ -99,7 +100,7 @@ export default function AdminProjectsPage() {
     setProjectImageUrl('')
     setBottleCount(6)
     setMemberIds([])
-    setAccessMode('all')
+    setAccessMode('public')
     setSuccess(false)
     setActiveSection('info')
     setCreating(true)
@@ -122,6 +123,7 @@ export default function AdminProjectsPage() {
         description: projectDescription || null,
         slug,
         image_url: projectImageUrl || null,
+        access_mode: accessMode,
       }).eq('id', editingProject.id)
     } else {
       const { data: newProject } = await supabase.from('projects').insert({
@@ -131,6 +133,7 @@ export default function AdminProjectsPage() {
         image_url: projectImageUrl || null,
         created_by: user.id,
         active: true,
+        access_mode: accessMode,
       }).select().single()
       projectId = newProject?.id
 
@@ -149,7 +152,7 @@ export default function AdminProjectsPage() {
       await supabase.from('project_members').delete().eq('project_id', projectId)
       if (accessMode === 'restricted' && memberIds.length > 0) {
         await supabase.from('project_members').insert(
-          memberIds.map(uid => ({ project_id: projectId, user_id: uid }))
+          memberIds.map(uid => ({ project_id: projectId!, user_id: uid }))
         )
       }
     }
@@ -252,9 +255,13 @@ export default function AdminProjectsPage() {
                     <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>
                       🍾 {project.wine_count}
                     </span>
-                    <span style={{ fontSize: '11px', background: project.member_count === 0 ? '#e8f0e8' : '#edeaf8', color: project.member_count === 0 ? '#27500A' : '#3C3489', padding: '2px 8px', borderRadius: '6px' }}>
-                      {project.member_count === 0 ? '🌍 Public' : `👥 ${project.member_count}`}
-                    </span>
+                    {(project as any).access_mode === 'link' ? (
+                      <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '2px 8px', borderRadius: '6px' }}>🔗 Par lien</span>
+                    ) : (project as any).access_mode === 'restricted' ? (
+                      <span style={{ fontSize: '11px', background: '#edeaf8', color: '#3C3489', padding: '2px 8px', borderRadius: '6px' }}>👥 {project.member_count}</span>
+                    ) : (
+                      <span style={{ fontSize: '11px', background: '#e8f0e8', color: '#27500A', padding: '2px 8px', borderRadius: '6px' }}>🌍 Public</span>
+                    )}
                   </div>
                 </div>
                 <div style={{ marginTop: '8px' }}>
@@ -374,25 +381,45 @@ export default function AdminProjectsPage() {
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Visibilité</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div onClick={() => setAccessMode('all')}
-                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'all' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'all' ? '#fdf5f5' : '#fff' }}>
+                    <div onClick={() => setAccessMode('public')}
+                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'public' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'public' ? '#fdf5f5' : '#fff' }}>
                       <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🌍 Public</div>
-                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Tous les utilisateurs voient ce projet</div>
+                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Visible dans le dashboard pour tous les utilisateurs</div>
+                    </div>
+                    <div onClick={() => setAccessMode('link')}
+                      style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'link' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'link' ? '#fdf5f5' : '#fff' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🔗 Par lien</div>
+                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Non listé — accessible uniquement via le lien direct (idéal pour QR codes)</div>
                     </div>
                     <div onClick={() => setAccessMode('restricted')}
                       style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: accessMode === 'restricted' ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: accessMode === 'restricted' ? '#fdf5f5' : '#fff' }}>
                       <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🔒 Restreint</div>
-                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Uniquement les utilisateurs sélectionnés</div>
+                      <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Uniquement les utilisateurs sélectionnés ci-dessous</div>
                     </div>
                   </div>
                 </div>
+
+                {(accessMode === 'link' || accessMode === 'restricted') && editingProject && (
+                  <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px' }}>
+                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>🔗 Lien direct du projet</div>
+                    <div style={{ fontSize: '11px', color: accent, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '8px' }}>
+                      {typeof window !== 'undefined' ? `${window.location.origin}/app/start/${editingProject.slug}` : `/app/start/${editingProject.slug}`}
+                    </div>
+                    <button onClick={() => navigator.clipboard.writeText(
+                      `${window.location.origin}/app/start/${editingProject.slug}`
+                    )}
+                      style={{ fontSize: '12px', padding: '5px 10px', border: '0.5px solid #e0e0e0', borderRadius: '6px', background: '#fff', cursor: 'pointer', color: '#444' }}>
+                      📋 Copier le lien
+                    </button>
+                  </div>
+                )}
 
                 {accessMode === 'restricted' && (
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>
                       Utilisateurs autorisés <span style={{ fontWeight: '400', color: '#aaa' }}>({memberIds.length} sélectionnés)</span>
                     </label>
-                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '0.5px solid #e0e0e0', borderRadius: '8px', marginBottom: '12px' }}>
+                    <div style={{ maxHeight: '200px', overflowY: 'auto', border: '0.5px solid #e0e0e0', borderRadius: '8px' }}>
                       {users.filter(u => u.role !== 'admin').map(user => (
                         <div key={user.id}
                           onClick={() => toggleMember(user.id)}
@@ -410,20 +437,6 @@ export default function AdminProjectsPage() {
                         </div>
                       ))}
                     </div>
-                    {editingProject && (
-                      <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '10px 12px' }}>
-                        <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>🔗 Lien d'invitation</div>
-                        <div style={{ fontSize: '11px', color: accent, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '8px' }}>
-                          {typeof window !== 'undefined' ? `${window.location.origin}/app/join/${(editingProject as any).invite_token}` : ''}
-                        </div>
-                        <button onClick={() => navigator.clipboard.writeText(
-                          `${window.location.origin}/app/join/${(editingProject as any).invite_token}`
-                        )}
-                          style={{ fontSize: '12px', padding: '5px 10px', border: '0.5px solid #e0e0e0', borderRadius: '6px', background: '#fff', cursor: 'pointer', color: '#444' }}>
-                          📋 Copier le lien
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

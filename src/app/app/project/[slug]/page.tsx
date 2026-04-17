@@ -19,7 +19,7 @@ export default function ProjectPage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth/login'); return }
+      if (!user) { router.push(`/auth/login?redirect=${encodeURIComponent(`/app/project/${params.slug}`)}`); return }
 
       const { data: prof } = await supabase
         .from('profiles').select('*').eq('id', user.id).single()
