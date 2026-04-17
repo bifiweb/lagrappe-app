@@ -462,7 +462,7 @@ export default function RevealPage() {
                 label="Prix"
                 mine={myTasting.prix_estime ? `CHF ${myTasting.prix_estime}` : null}
                 official={notes?.prix_exact != null ? `CHF ${notes.prix_exact.toFixed(2)}` : (notes?.prix_chf ? `CHF ${notes.prix_chf}` : null)}
-                correct={myTasting.pts_prix === 1000}
+                correct={myTasting.pts_prix === 500}
               />
             </div>
           </div>
