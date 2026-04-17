@@ -116,8 +116,8 @@ export default function TastingPage() {
   const [aromes, setAromes] = useState<string[]>([])
   const [boucheIndex, setBoucheIndex] = useState(1)
   const [accord, setAccord] = useState<string | null>(null)
-  const [prix, setPrix] = useState('25')
-  const [millesime, setMillesime] = useState('2025')
+  const [prix, setPrix] = useState('')
+  const [millesime, setMillesime] = useState('')
   const [cepage, setCepage] = useState<string | null>(null)
   const [region, setRegion] = useState<string | null>(null)
   const [scorePerso, setScorePerso] = useState<number | null>(null)
@@ -703,9 +703,16 @@ export default function TastingPage() {
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📅 Millésime ?</div>
                 <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · −100 pts par année d'écart</div>
               </div>
-              <input type="number" value={millesime} onChange={e => setMillesime(e.target.value)}
-                placeholder="Ex: 2025" min={1990} max={2025}
-                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+              <div style={{ display: 'flex', alignItems: 'center', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <button onClick={() => { setMillesime(m => m === '' ? '2025' : String(Math.max(1990, parseInt(m) - 1))); haptic() }}
+                  style={{ padding: '10px 18px', background: '#f5f5f5', border: 'none', borderRight: '0.5px solid #e0e0e0', fontSize: '18px', cursor: 'pointer', color: '#666', lineHeight: 1 }}>−</button>
+                <input type="text" inputMode="numeric" value={millesime}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9]/g, ''); setMillesime(v) }}
+                  placeholder="—"
+                  style={{ flex: 1, border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: '500', color: '#1a1a1a', outline: 'none', padding: '10px 8px', background: '#fff' }} />
+                <button onClick={() => { setMillesime(m => m === '' ? '2025' : String(Math.min(2025, parseInt(m) + 1))); haptic() }}
+                  style={{ padding: '10px 18px', background: '#f5f5f5', border: 'none', borderLeft: '0.5px solid #e0e0e0', fontSize: '18px', cursor: 'pointer', color: '#666', lineHeight: 1 }}>+</button>
+              </div>
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
@@ -736,15 +743,16 @@ export default function TastingPage() {
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
                 500 pts si exact · −50 pts par CHF d'écart
               </div>
-              <input
-                type="number"
-                value={prix}
-                onChange={e => setPrix(e.target.value)}
-                placeholder="Ex: 25"
-                min={1}
-                step={0.5}
-                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+                <button onClick={() => { setPrix(p => p === '' ? '24.5' : String(Math.max(0.5, Math.round((parseFloat(p) - 0.5) * 2) / 2))); haptic() }}
+                  style={{ padding: '10px 18px', background: '#f5f5f5', border: 'none', borderRight: '0.5px solid #e0e0e0', fontSize: '18px', cursor: 'pointer', color: '#666', lineHeight: 1 }}>−</button>
+                <input type="text" inputMode="decimal" value={prix}
+                  onChange={e => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPrix(v) }}
+                  placeholder="—"
+                  style={{ flex: 1, border: 'none', textAlign: 'center', fontSize: '16px', fontWeight: '500', color: '#1a1a1a', outline: 'none', padding: '10px 8px', background: '#fff' }} />
+                <button onClick={() => { setPrix(p => p === '' ? '25' : String(Math.round((parseFloat(p) + 0.5) * 2) / 2)); haptic() }}
+                  style={{ padding: '10px 18px', background: '#f5f5f5', border: 'none', borderLeft: '0.5px solid #e0e0e0', fontSize: '18px', cursor: 'pointer', color: '#666', lineHeight: 1 }}>+</button>
+              </div>
             </div>
           </>
         )}
