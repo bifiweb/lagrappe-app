@@ -277,6 +277,7 @@ export default function RevealPage() {
                 { l: 'Millésime', v: myTasting.pts_millesime },
                 { l: 'Cépage', v: myTasting.pts_cepage },
                 { l: 'Région', v: myTasting.pts_region },
+                { l: 'Élevage', v: myTasting.pts_elevage },
               ].map(({ l, v }) => (
                 <div key={l} style={{ fontSize: '12px', opacity: .9 }}>
                   <span style={{ opacity: .7 }}>{l} </span>{v}

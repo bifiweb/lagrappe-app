@@ -148,6 +148,7 @@ export interface Tasting {
   pts_millesime: number
   pts_cepage: number
   pts_region: number
+  pts_elevage: number
   total_points: number
   hints_used: number
   submitted_at: string | null

@@ -252,7 +252,7 @@ export default function TastingPage() {
     if (step === 1) return aromes.length > 0
     if (step === 3) return accord !== null
     if (step === 4) return scorePerso !== null
-    if (step === 5) return cepage !== null && region !== null && millesime.trim() !== '' && prix.trim() !== ''
+    if (step === 5) return cepage !== null && region !== null && millesime.trim() !== '' && prix.trim() !== '' && elevage !== null
     return true
   })()
 
@@ -267,6 +267,7 @@ export default function TastingPage() {
       if (!region) missing.push('région')
       if (!millesime.trim()) missing.push('millésime')
       if (!prix.trim()) missing.push('prix')
+      if (!elevage) missing.push('élevage')
       if (missing.length > 0) return `Il manque : ${missing.join(', ')}`
     }
     return null
@@ -309,8 +310,9 @@ export default function TastingPage() {
                 { icon: '👃', label: 'Arômes', detail: '300 pts × nb joueurs même arôme · +300 pts si officiel' },
                 { icon: '👄', label: 'Bouche', detail: '300 pts si juste · 100 pts sinon' },
                 { icon: '🍇', label: 'Cépage', detail: '1 000 pts si juste · 200 pts sinon' },
-                { icon: '📍', label: 'Région', detail: '1 000 pts si juste · 200 pts sinon' },
-                { icon: '📅', label: 'Millésime', detail: '400 pts si juste · 100 pts sinon' },
+                { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
+                { icon: '📅', label: 'Millésime', detail: '500 pts si juste · 100 pts sinon' },
+                { icon: '🪣', label: 'Élevage', detail: '300 pts si juste · 100 pts sinon' },
                 { icon: '💰', label: 'Prix', detail: '1 000 pts si exact · −100 pts par CHF d\'écart' },
                 { icon: '💡', label: 'Aide', detail: '−100 pts par aide utilisée' },
               ].map(({ icon, label, detail }) => (
@@ -681,7 +683,7 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📍 Région ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 000 pts si juste · 200 pts sinon</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
               </div>
               <HintBanner used={hintCounts.region} onUse={() => useHint('region')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -699,15 +701,16 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📅 Millésime ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>400 pts si juste · 100 pts sinon</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
               </div>
               <input type="number" value={millesime} onChange={e => setMillesime(e.target.value)}
                 placeholder="Ex: 2021" min={2000} max={2025}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>
-                🪣 Élevage ?
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🪣 Élevage ?</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts si juste · 100 pts sinon</div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {ELEVAGE_OPTIONS.map(e => (

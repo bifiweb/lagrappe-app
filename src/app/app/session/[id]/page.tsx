@@ -400,18 +400,23 @@ export default function SessionPage() {
               ))}
             </div>
 
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>Invite tes amis à rejoindre</div>
-              <div style={{ fontSize: '11px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '10px' }}>
+            <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: '#8d323b', marginBottom: '4px' }}>
+                🎉 Invite tes amis !
+              </div>
+              <div style={{ fontSize: '12px', color: '#7a4030', marginBottom: '12px' }}>
+                Plus on est de fous, plus le jeu est fun — partage le lien pour qu'ils rejoignent la session.
+              </div>
+              <div style={{ fontSize: '11px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all', background: '#fff', border: '0.5px solid #d0a090', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px' }}>
                 {getShareUrl()}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={copyLink}
-                  style={{ flex: 1, padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: copied ? '#e8f0e8' : '#fff', color: copied ? '#27500A' : '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
-                  {copied ? '✓ Copié !' : '📋 Copier le lien'}
+                  style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', background: copied ? '#27500A' : '#8d323b', color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: '500', transition: 'background .2s' }}>
+                  {copied ? '✓ Copié !' : '📋 Copier'}
                 </button>
                 <button onClick={shareLink}
-                  style={{ flex: 1, padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
+                  style={{ flex: 1, padding: '10px', border: '0.5px solid #d0a090', borderRadius: '8px', background: '#fff', color: '#8d323b', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
                   💬 Partager
                 </button>
               </div>
@@ -439,9 +444,10 @@ export default function SessionPage() {
                   { emoji: '👃', label: 'Arômes',    pts: '300 pts × nb joueurs même arôme · +300 si officiel' },
                   { emoji: '👄', label: 'Bouche',    pts: '300 si juste · 100 sinon' },
                   { emoji: '💰', label: 'Prix',      pts: '1 000 si exact · −100/CHF d\'écart' },
-                  { emoji: '📅', label: 'Millésime', pts: '400 si juste · 100 sinon' },
+                  { emoji: '📅', label: 'Millésime', pts: '500 si juste · 100 sinon' },
                   { emoji: '🍇', label: 'Cépage',    pts: '1 000 si juste · 200 sinon' },
-                  { emoji: '📍', label: 'Région',    pts: '1 000 si juste · 200 sinon' },
+                  { emoji: '📍', label: 'Région',    pts: '500 si juste · 100 sinon' },
+                  { emoji: '🪣', label: 'Élevage',   pts: '300 si juste · 100 sinon' },
                   { emoji: '💡', label: 'Aide',      pts: '−100 pts par aide utilisée' },
                 ].map(({ emoji, label, pts }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
