@@ -91,7 +91,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => router.push('/app/cave')}
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-              🍷 Ma cave
+              🍷 Vins dégustés
             </button>
             <button onClick={() => router.push('/app/cave/pepites')}
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
