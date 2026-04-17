@@ -75,14 +75,22 @@ export default function CavePage() {
 
       const ratingWineIds = ratings?.map(r => r.wine_id) ?? []
 
-      // Tous les wine_ids combinés
+      // Vins du jeu
       const gameWineIds = sessions?.map(s => s.wine_id) ?? []
-      const allWineIds = [...new Set([...gameWineIds, ...ratingWineIds])]
 
-      if (!allWineIds.length) { setLoading(false); return }
+      // Vins du catalogue (pour les ratings manuels)
+      const { data: catalogWines } = ratingWineIds.length
+        ? await supabase.from('catalog_wines').select('*').in('id', ratingWineIds)
+        : { data: [] }
 
-      const { data: wines } = await supabase.from('wines').select('*').in('id', allWineIds)
-      const { data: allNotes } = await supabase.from('grappiste_notes').select('*').in('wine_id', allWineIds)
+      if (!gameWineIds.length && !ratingWineIds.length) { setLoading(false); return }
+
+      const { data: wines } = gameWineIds.length
+        ? await supabase.from('wines').select('*').in('id', gameWineIds)
+        : { data: [] }
+      const { data: allNotes } = gameWineIds.length
+        ? await supabase.from('grappiste_notes').select('*').in('wine_id', gameWineIds)
+        : { data: [] }
       const { data: allPlayers } = sessionIds.length
         ? await supabase.from('session_players').select('*').in('session_id', sessionIds)
         : { data: [] }
@@ -96,13 +104,9 @@ export default function CavePage() {
       }).filter(e => e.wine) as GameEntry[]
 
       const ratingEntries: RatingEntry[] = (ratings ?? []).map(r => {
-        const wine = wines?.find(w => w.id === r.wine_id)
-        if (!wine) return null
-        // ne pas doublon-ner un vin déjà dans le jeu
-        const alreadyInGame = gameEntries.some(e => e.wine.id === wine.id)
-        if (alreadyInGame) return null
-        const notes = allNotes?.find(n => n.wine_id === wine.id) ?? null
-        return { type: 'rating', date: r.updated_at, rating: r, wine, notes }
+        const catalogWine = catalogWines?.find(w => w.id === r.wine_id)
+        if (!catalogWine) return null
+        return { type: 'rating', date: r.updated_at, rating: r, wine: catalogWine as any, notes: null }
       }).filter(Boolean) as RatingEntry[]
 
       // Fusionner et trier par date

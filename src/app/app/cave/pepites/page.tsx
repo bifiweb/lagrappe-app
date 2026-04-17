@@ -3,14 +3,23 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { Profile } from '@/types'
+
+interface CatalogWine {
+  id: string
+  name: string
+  cepage: string | null
+  region: string | null
+  millesime: number | null
+  type: string
+  description: string | null
+  image_url: string | null
+  prix_chf: number | null
+  shopify_url: string | null
+}
 
 interface WineEntry {
-  wine: any
-  notes: any
+  wine: CatalogWine
   myRating: any | null
-  avgStars: number | null
-  ratingCount: number
 }
 
 const accent = '#8d323b'
@@ -21,12 +30,10 @@ function StarPicker({ value, onChange }: { value: number, onChange: (v: number) 
   return (
     <div style={{ display: 'flex', gap: '4px' }}>
       {[1, 2, 3, 4, 5].map(i => (
-        <button key={i}
-          onClick={() => onChange(i)}
-          onMouseEnter={() => setHover(i)}
-          onMouseLeave={() => setHover(null)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', fontSize: '24px', lineHeight: 1 }}>
-          {display >= i ? '★' : '☆'}
+        <button key={i} onClick={() => onChange(i)}
+          onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', fontSize: '26px', lineHeight: 1, color: display >= i ? '#f0a000' : '#ddd' }}>
+          ★
         </button>
       ))}
     </div>
@@ -35,16 +42,16 @@ function StarPicker({ value, onChange }: { value: number, onChange: (v: number) 
 
 function MiniStars({ stars }: { stars: number }) {
   return (
-    <div style={{ display: 'flex', gap: '1px' }}>
+    <div style={{ display: 'flex', gap: '1px', alignItems: 'center' }}>
       {[1, 2, 3, 4, 5].map(i => (
         <span key={i} style={{ fontSize: '12px', color: stars >= i ? '#f0a000' : '#ddd' }}>★</span>
       ))}
+      <span style={{ fontSize: '11px', color: '#888', marginLeft: '4px' }}>{stars}/5</span>
     </div>
   )
 }
 
 export default function CavePepitesPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
   const [entries, setEntries] = useState<WineEntry[]>([])
   const [filtered, setFiltered] = useState<WineEntry[]>([])
   const [search, setSearch] = useState('')
@@ -67,30 +74,18 @@ export default function CavePepitesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(prof)
-
       const { data: wines } = await supabase
-        .from('wines').select('*').eq('revealed', true)
+        .from('catalog_wines').select('*').eq('active', true).order('name')
 
-      if (!wines?.length) { setLoading(false); return }
+      const wineIds = (wines ?? []).map(w => w.id)
+      const { data: myRatings } = wineIds.length
+        ? await supabase.from('cave_ratings').select('*').eq('user_id', user.id).in('wine_id', wineIds)
+        : { data: [] }
 
-      const wineIds = wines.map(w => w.id)
-
-      const { data: allNotes } = await supabase
-        .from('grappiste_notes').select('*').in('wine_id', wineIds)
-
-      const { data: myRatings } = await supabase
-        .from('cave_ratings').select('*').eq('user_id', user.id).in('wine_id', wineIds)
-
-      const result: WineEntry[] = wines
-        .map(wine => {
-          const notes = allNotes?.find(n => n.wine_id === wine.id) ?? null
-          if (!notes) return null
-          const myRating = myRatings?.find(r => r.wine_id === wine.id) ?? null
-          return { wine, notes, myRating, avgStars: null, ratingCount: 0 }
-        })
-        .filter(Boolean) as WineEntry[]
+      const result: WineEntry[] = (wines ?? []).map(wine => ({
+        wine,
+        myRating: myRatings?.find(r => r.wine_id === wine.id) ?? null,
+      }))
 
       setEntries(result)
       setFiltered(result)
@@ -103,10 +98,10 @@ export default function CavePepitesPage() {
     if (!search.trim()) { setFiltered(entries); return }
     const q = search.toLowerCase()
     setFiltered(entries.filter(e =>
-      e.notes?.cepage?.toLowerCase().includes(q) ||
-      e.notes?.region?.toLowerCase().includes(q) ||
-      e.notes?.millesime?.toString().includes(q) ||
-      e.notes?.description?.toLowerCase().includes(q)
+      e.wine.name?.toLowerCase().includes(q) ||
+      e.wine.cepage?.toLowerCase().includes(q) ||
+      e.wine.region?.toLowerCase().includes(q) ||
+      e.wine.millesime?.toString().includes(q)
     ))
   }, [search, entries])
 
@@ -171,115 +166,98 @@ export default function CavePepitesPage() {
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1rem 1.5rem' }}>
 
-        {/* Search */}
         <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
           <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', color: '#aaa' }}>🔍</span>
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Cépage, région, millésime..."
-            style={{ width: '100%', padding: '10px 12px 10px 36px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
-          />
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Nom, cépage, région, millésime..."
+            style={{ width: '100%', padding: '10px 12px 10px 36px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
         </div>
 
-        {filtered.length === 0 ? (
+        {entries.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>💎</div>
+            <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>Le catalogue est vide</div>
+            <div style={{ fontSize: '13px', color: '#888' }}>L'admin ajoutera bientôt des vins ici</div>
+          </div>
+        ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#888' }}>
             <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔍</div>
-            <div>Aucun vin trouvé</div>
+            <div>Aucun vin trouvé pour "{search}"</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filtered.map(entry => {
-              const { wine, notes, myRating } = entry
+              const { wine, myRating } = entry
               const isOpen = expanded === wine.id
 
               return (
-                <div key={wine.id} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden', transition: 'border-color .2s' }}>
+                <div key={wine.id} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
 
-                  {/* Carte */}
                   <div onClick={() => openRating(entry)}
                     style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'center' }}>
-                    {notes?.image_url ? (
-                      <img src={notes.image_url} alt=""
+                    {wine.image_url ? (
+                      <img src={wine.image_url} alt={wine.name}
                         style={{ width: '44px', height: '66px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }} />
                     ) : (
-                      <div style={{ width: '44px', height: '66px', borderRadius: '8px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🍾</div>
+                      <div style={{ width: '44px', height: '66px', borderRadius: '8px', background: wine.type === 'rouge' ? '#f5ede8' : wine.type === 'blanc' ? '#f5f3e0' : '#f5e8ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🍾</div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '2px' }}>
-                        {notes?.cepage} {notes?.millesime}
+                      <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{wine.name}</div>
+                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>
+                        {[wine.cepage, wine.region, wine.millesime].filter(Boolean).join(' · ')}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>{notes?.region}</div>
-                      {myRating ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <MiniStars stars={myRating.stars} />
-                          <span style={{ fontSize: '11px', color: '#888' }}>{myRating.stars}/5</span>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '12px', color: '#aaa', fontStyle: 'italic' }}>Non noté — cliquer pour noter</span>
-                      )}
+                      {myRating
+                        ? <MiniStars stars={myRating.stars} />
+                        : <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>Pas encore noté</span>
+                      }
                     </div>
-                    <div style={{ fontSize: '16px', color: '#ccc' }}>{isOpen ? '▲' : '▼'}</div>
+                    <div style={{ fontSize: '16px', color: '#ccc', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</div>
                   </div>
 
-                  {/* Formulaire de rating */}
                   {isOpen && (
                     <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '1.25rem', background: '#fdf8f5' }}>
 
-                      {notes?.description && (
-                        <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', marginBottom: '1rem', lineHeight: '1.5' }}>
-                          {notes.description}
+                      {wine.description && (
+                        <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', marginBottom: '1rem', lineHeight: '1.6' }}>
+                          {wine.description}
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '1.25rem' }}>
-                        {notes?.cepage && <span style={{ fontSize: '12px', background: '#f5ede8', color: accent, padding: '3px 10px', borderRadius: '8px' }}>{notes.cepage}</span>}
-                        {notes?.region && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>{notes.region}</span>}
-                        {notes?.prix_chf && <span style={{ fontSize: '12px', background: '#e8f0e8', color: '#27500A', padding: '3px 10px', borderRadius: '8px' }}>CHF {notes.prix_chf}</span>}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '1.25rem' }}>
+                        {wine.type && <span style={{ fontSize: '12px', background: '#f5ede8', color: accent, padding: '3px 10px', borderRadius: '8px' }}>{wine.type}</span>}
+                        {wine.region && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>{wine.region}</span>}
+                        {wine.prix_chf && <span style={{ fontSize: '12px', background: '#e8f0e8', color: '#27500A', padding: '3px 10px', borderRadius: '8px' }}>CHF {wine.prix_chf}</span>}
                       </div>
 
-                      {/* Note globale */}
                       <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Note globale</label>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Note globale *</label>
                         <StarPicker value={formStars} onChange={setFormStars} />
                       </div>
 
-                      {/* Notes de dégustation */}
                       <div style={{ marginBottom: '1rem' }}>
                         <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Notes de dégustation</label>
                         <textarea value={formNotesDeg} onChange={e => setFormNotesDeg(e.target.value)}
-                          placeholder="Robe, arômes, bouche..."
+                          placeholder="Robe, arômes, bouche, longueur..."
                           style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', resize: 'none', minHeight: '72px', fontFamily: 'system-ui', outline: 'none', boxSizing: 'border-box', background: '#fff' }} />
                       </div>
 
-                      {/* Design & Valeur */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1rem' }}>
-                        <div>
-                          <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Design bouteille</label>
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            {[1, 2, 3, 4, 5].map(i => (
-                              <button key={i} onClick={() => setFormDesign(i)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '2px', lineHeight: 1 }}>
-                                {formDesign >= i ? '★' : '☆'}
-                              </button>
-                            ))}
+                        {[
+                          { label: 'Design bouteille', val: formDesign, set: setFormDesign },
+                          { label: 'Qualité / prix', val: formValeur, set: setFormValeur },
+                        ].map(({ label, val, set: setVal }) => (
+                          <div key={label}>
+                            <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{label}</label>
+                            <div style={{ display: 'flex', gap: '2px' }}>
+                              {[1, 2, 3, 4, 5].map(i => (
+                                <button key={i} onClick={() => setVal(i)}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '2px', lineHeight: 1, color: val >= i ? '#f0a000' : '#ddd' }}>★</button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Qualité/prix</label>
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            {[1, 2, 3, 4, 5].map(i => (
-                              <button key={i} onClick={() => setFormValeur(i)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '2px', lineHeight: 1 }}>
-                                {formValeur >= i ? '★' : '☆'}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        ))}
                       </div>
 
-                      {/* Rachèterait */}
                       <div style={{ marginBottom: '1.25rem' }}>
                         <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Tu le rachèterais ?</label>
                         <div style={{ display: 'flex', gap: '8px' }}>
@@ -292,11 +270,10 @@ export default function CavePepitesPage() {
                         </div>
                       </div>
 
-                      {/* Notes libres */}
                       <div style={{ marginBottom: '1.25rem' }}>
                         <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Commentaire libre</label>
                         <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)}
-                          placeholder="Accord mets, occasion parfaite..."
+                          placeholder="Accord parfait avec, occasion idéale..."
                           style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', resize: 'none', minHeight: '56px', fontFamily: 'system-ui', outline: 'none', boxSizing: 'border-box', background: '#fff' }} />
                       </div>
 
@@ -307,9 +284,16 @@ export default function CavePepitesPage() {
                         </button>
                         <button onClick={() => saveRating(wine.id)} disabled={saving || formStars === 0}
                           style={{ flex: 2, padding: '10px', border: 'none', borderRadius: '8px', background: saving || formStars === 0 ? '#c0a0a0' : accent, color: '#fff', fontSize: '13px', fontWeight: '500', cursor: saving || formStars === 0 ? 'default' : 'pointer' }}>
-                          {saving ? 'Sauvegarde...' : myRating ? 'Mettre à jour' : 'Enregistrer ma note'}
+                          {saving ? 'Sauvegarde...' : myRating ? 'Mettre à jour' : 'Enregistrer'}
                         </button>
                       </div>
+
+                      {wine.shopify_url && (
+                        <a href={wine.shopify_url} target="_blank" rel="noreferrer"
+                          style={{ display: 'block', textAlign: 'center', marginTop: '10px', fontSize: '13px', color: accent, textDecoration: 'none', fontWeight: '500' }}>
+                          Racheter ce vin →
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
