@@ -9,7 +9,6 @@ export default function StartProjectPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
-  const [joiningGuest, setJoiningGuest] = useState(false)
   const router = useRouter()
   const params = useParams()
   const slug = params.slug as string
@@ -35,11 +34,6 @@ export default function StartProjectPage() {
     load()
   }, [slug])
 
-  async function joinAsGuest() {
-    setJoiningGuest(true)
-    await supabase.auth.signInAnonymously()
-    router.replace(`/app/project/${slug}`)
-  }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -106,35 +100,19 @@ export default function StartProjectPage() {
           <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>
             Prêt à déguster ?
           </div>
-          {project?.guest_access ? (
-            <>
-              <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
-                Rejoins directement sans compte, ou connecte-toi pour sauvegarder ton historique.
-              </div>
-              <button
-                onClick={joinAsGuest}
-                disabled={joiningGuest}
-                style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: joiningGuest ? 'default' : 'pointer', marginBottom: '10px', opacity: joiningGuest ? 0.7 : 1 }}>
-                {joiningGuest ? 'Connexion...' : 'Rejoindre sans compte →'}
-              </button>
-              <button
-                onClick={() => router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`)}
-                style={{ width: '100%', padding: '12px', background: 'transparent', color: '#888', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '13px', cursor: 'pointer' }}>
-                J'ai un compte — se connecter
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
-                Connecte-toi ou crée un compte gratuit pour rejoindre ce projet.
-              </div>
-              <button
-                onClick={() => router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`)}
-                style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                Se connecter / Créer un compte
-              </button>
-            </>
-          )}
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
+            {project?.guest_access
+              ? 'Rejoins directement sans compte, ou connecte-toi pour sauvegarder ton historique.'
+              : 'Connecte-toi ou crée un compte gratuit pour rejoindre ce projet.'}
+          </div>
+          <button
+            onClick={() => {
+              const guestParam = project?.guest_access ? '&guest=1' : ''
+              router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}${guestParam}`)
+            }}
+            style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+            Rejoindre la dégustation →
+          </button>
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>

@@ -14,6 +14,7 @@ export default function LoginClient() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [redirect, setRedirect] = useState<string | null>(null)
+  const [guestAllowed, setGuestAllowed] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -21,7 +22,16 @@ export default function LoginClient() {
   useEffect(() => {
     const r = searchParams.get('redirect')
     if (r) setRedirect(r)
+    setGuestAllowed(searchParams.get('guest') === '1')
   }, [])
+
+  async function handleGuestLogin() {
+    setLoading(true)
+    setError(null)
+    const { error } = await supabase.auth.signInAnonymously()
+    if (error) { setError('Impossible de rejoindre en invité.'); setLoading(false); return }
+    router.push(redirect ?? '/app/dashboard')
+  }
 
   async function handleGoogleLogin() {
     setLoading(true)
@@ -233,6 +243,24 @@ export default function LoginClient() {
                 </svg>
                 Continuer avec Google
               </button>
+
+              {guestAllowed && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1rem 0' }}>
+                    <div style={{ flex: 1, height: '0.5px', background: '#e0e0e0' }} />
+                    <span style={{ fontSize: '12px', color: '#aaa' }}>ou</span>
+                    <div style={{ flex: 1, height: '0.5px', background: '#e0e0e0' }} />
+                  </div>
+                  <button onClick={handleGuestLogin} disabled={loading} style={{
+                    width: '100%', padding: '11px',
+                    background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px',
+                    fontSize: '14px', fontWeight: '500', color: '#555',
+                    cursor: loading ? 'default' : 'pointer',
+                  }}>
+                    👤 Rejoindre en invité
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
