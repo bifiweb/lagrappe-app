@@ -313,7 +313,7 @@ export default function AdminProjectsPage() {
                       setProjectName(e.target.value)
                       if (!editingProject) setProjectSlug(generateSlug(e.target.value))
                     }}
-                    placeholder="ex: Swiss Wine Challenge 2026"
+                    placeholder="ex: Travelise Wine Experience 2026"
                     style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
                 <div style={{ marginBottom: '12px' }}>

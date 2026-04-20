@@ -4,8 +4,8 @@ import WineMode from '@/components/WineMode'
 import './wine-mode.css'
 
 export const metadata: Metadata = {
-  title: 'La Grappe — Dégustation à l\'aveugle',
-  description: 'Swiss Wine Challenge — Déguste et découvre les vins suisses',
+  title: 'La grAPP — Dégustation de vins suisses à l\'aveugle',
+  description: 'Déguste et découvre les vins suisses à l\'aveugle',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

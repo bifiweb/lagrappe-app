@@ -113,7 +113,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>
-          Swiss Wine Challenge — La Grappe © 2025
+          La grAPP — Dégustation de vins suisses à l'aveugle
         </p>
       </div>
     </div>
