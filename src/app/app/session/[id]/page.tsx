@@ -46,6 +46,8 @@ export default function SessionPage() {
   // Tirage au sort (égalité 3+)
   const [tirageWinner, setTirageWinner] = useState<SessionPlayer | null>(null)
   const [tirageReason, setTirageReason] = useState<string | null>(null)
+  const [wheelRotation, setWheelRotation] = useState(0)
+  const [wheelDone, setWheelDone] = useState(false)
 
   // Refs pour les callbacks broadcast (évite les closures périmées)
   const tiedPlayerIdsRef = useRef<string[]>([])
@@ -224,6 +226,19 @@ export default function SessionPage() {
     return () => { supabase.removeChannel(channel) }
   }, [phase, chifoumiRound, profile])
 
+  // Animation roue tirage
+  useEffect(() => {
+    if (phase !== 'tirage' || tiedPlayerIds.length < 3 || !tirageWinner) return
+    const N = tiedPlayerIds.length
+    const sliceAngle = 360 / N
+    const winnerIdx = tiedPlayerIds.indexOf(tirageWinner.user_id)
+    const landingAngle = (360 - (winnerIdx + 0.5) * sliceAngle + 360) % 360
+    const target = landingAngle + 6 * 360
+    const spin = setTimeout(() => setWheelRotation(target), 100)
+    const done = setTimeout(() => setWheelDone(true), 4500)
+    return () => { clearTimeout(spin); clearTimeout(done) }
+  }, [phase, tirageWinner?.user_id])
+
   async function launchVote() {
     await supabase.from('sessions')
       .update({ status: 'voting' })
@@ -328,7 +343,7 @@ export default function SessionPage() {
     }
 
     if (winners.length > 2) {
-      // Égalité à 3+ → tirage au sort
+      // Égalité à 3+ → roue de la fortune
       const winnerId = winners[Math.floor(Math.random() * winners.length)]
       const winnerPlayer = currentPlayers.find(p => p.user_id === winnerId)
       const reasons = [
@@ -336,15 +351,18 @@ export default function SessionPage() {
         `Après analyse des ondes vibratoires du groupe, "${winnerPlayer?.pseudo}" émet la fréquence la plus proche du Pinot Noir.`,
         `Le hasard a parlé — et visiblement il avait très envie que "${winnerPlayer?.pseudo}" tienne le tire-bouchon.`,
         `"${winnerPlayer?.pseudo}" a été désigné par les astres, la physique quantique, et une légère intuition de l'IA.`,
-        `Égalité parfaite entre ${winners.length} grands esprits. Le sort a tranché : "${winnerPlayer?.pseudo}" est le chef du soir.`,
+        `Égalité parfaite entre ${winners.length} grands esprits. La roue a tranché : "${winnerPlayer?.pseudo}" est le chef du soir.`,
       ]
       const reason = reasons[Math.floor(Math.random() * reasons.length)]
+      setTiedPlayerIds(winners)
       setTirageWinner(winnerPlayer ?? null)
       setTirageReason(reason)
+      setWheelRotation(0)
+      setWheelDone(false)
       setPhase('tirage')
       setTimeout(async () => {
         await assignChef(winnerId, currentPlayers)
-      }, 4000)
+      }, 7000)
       return
     }
 
@@ -551,29 +569,69 @@ export default function SessionPage() {
           </>
         )}
 
-        {/* TIRAGE AU SORT (égalité 3+) */}
-        {phase === 'tirage' && (
-          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>Égalité à {tiedPlayerIds.length > 0 ? tiedPlayerIds.length : ''}+ joueurs</div>
-            <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '1.5rem' }}>
-              Tirage au sort 🎲
-            </div>
-            <div style={{ fontSize: '56px', marginBottom: '1rem' }}>🎰</div>
-            {tirageWinner && (
-              <div style={{ fontSize: '28px', fontWeight: '600', color: '#8d323b', marginBottom: '1rem' }}>
-                {tirageWinner.pseudo} !
+        {/* TIRAGE AU SORT — roue (égalité 3+) */}
+        {phase === 'tirage' && (() => {
+          const WHEEL_COLORS = ['#8d323b','#c17a2a','#2a6e3a','#1a4a8a','#6a2a8a','#8a6a1a','#2a6a7a','#7a3a5a']
+          const N = tiedPlayerIds.length
+          const cx = 150, cy = 150, r = 130
+          const sliceAngle = 360 / N
+          const slices = tiedPlayerIds.map((userId, i) => {
+            const startRad = (i * sliceAngle - 90) * Math.PI / 180
+            const endRad = ((i + 1) * sliceAngle - 90) * Math.PI / 180
+            const x1 = cx + r * Math.cos(startRad), y1 = cy + r * Math.sin(startRad)
+            const x2 = cx + r * Math.cos(endRad),   y2 = cy + r * Math.sin(endRad)
+            const path = `M ${cx} ${cy} L ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 ${sliceAngle > 180 ? 1 : 0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)} Z`
+            const midRad = ((i + 0.5) * sliceAngle - 90) * Math.PI / 180
+            const tr = r * 0.62
+            const tx = cx + tr * Math.cos(midRad), ty = cy + tr * Math.sin(midRad)
+            const textRot = (i + 0.5) * sliceAngle
+            const pseudo = players.find(p => p.user_id === userId)?.pseudo ?? ''
+            return { path, color: WHEEL_COLORS[i % WHEEL_COLORS.length], tx, ty, textRot, pseudo }
+          })
+          const fontSize = N <= 4 ? 13 : N <= 6 ? 11 : 9
+          return (
+            <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+              <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>Égalité à {N} joueurs</div>
+              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '1.5rem' }}>
+                La roue décide ! 🎡
               </div>
-            )}
-            {tirageReason && (
-              <div style={{ background: '#faeeda', borderRadius: '16px', padding: '1.25rem', margin: '0 auto', maxWidth: '340px', fontSize: '14px', color: '#633806', lineHeight: 1.6 }}>
-                {tirageReason}
+
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                {/* Pointeur */}
+                <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '13px solid transparent', borderRight: '13px solid transparent', borderTop: '22px solid #8d323b', zIndex: 10 }} />
+                {/* Roue SVG */}
+                <svg width="300" height="300" viewBox="0 0 300 300"
+                  style={{ display: 'block', transform: `rotate(${wheelRotation}deg)`, transition: wheelRotation > 0 ? 'transform 4s cubic-bezier(0.17, 0.67, 0.1, 0.99)' : 'none' }}>
+                  {slices.map(({ path, color, tx, ty, textRot, pseudo }, i) => (
+                    <g key={i}>
+                      <path d={path} fill={color} stroke="#fff" strokeWidth="2" />
+                      <text x={tx} y={ty} fill="#fff" fontSize={fontSize} fontWeight="600"
+                        textAnchor="middle" dominantBaseline="middle"
+                        transform={`rotate(${textRot}, ${tx.toFixed(1)}, ${ty.toFixed(1)})`}>
+                        {pseudo.length > 9 ? pseudo.slice(0, 8) + '…' : pseudo}
+                      </text>
+                    </g>
+                  ))}
+                  <circle cx={cx} cy={cy} r={22} fill="#fff" />
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="18">🍷</text>
+                </svg>
               </div>
-            )}
-            <div style={{ fontSize: '13px', color: '#aaa', marginTop: '1.5rem' }}>
-              La dégustation commence dans quelques secondes...
+
+              {wheelDone && tirageWinner && (
+                <div style={{ marginTop: '1.5rem' }}>
+                  <div style={{ fontSize: '26px', fontWeight: '700', color: '#8d323b', marginBottom: '8px' }}>
+                    👑 {tirageWinner.pseudo} !
+                  </div>
+                  {tirageReason && (
+                    <div style={{ background: '#faeeda', borderRadius: '16px', padding: '1rem 1.25rem', margin: '0 auto', maxWidth: '320px', fontSize: '13px', color: '#633806', lineHeight: 1.6 }}>
+                      {tirageReason}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* CHIFOUMI */}
         {phase === 'chifoumi' && (
