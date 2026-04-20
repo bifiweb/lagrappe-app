@@ -26,7 +26,7 @@ export default function SessionPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<SessionPlayer[]>([])
-  const [phase, setPhase] = useState<'lobby' | 'voting' | 'chifoumi' | 'countdown'>('lobby')
+  const [phase, setPhase] = useState<'lobby' | 'voting' | 'chifoumi' | 'tirage' | 'countdown'>('lobby')
   const [myVote, setMyVote] = useState<string | null>(null)
   const [votesIn, setVotesIn] = useState(0)
   const [hasVoted, setHasVoted] = useState(false)
@@ -42,6 +42,10 @@ export default function SessionPage() {
   const [chifoumiMoves, setChifoumiMoves] = useState<Record<string, ChifoumiMove>>({})
   const [chifoumiRound, setChifoumiRound] = useState(1)
   const [chifoumiResult, setChifoumiResult] = useState<string | null>(null)
+
+  // Tirage au sort (égalité 3+)
+  const [tirageWinner, setTirageWinner] = useState<SessionPlayer | null>(null)
+  const [tirageReason, setTirageReason] = useState<string | null>(null)
 
   // Refs pour les callbacks broadcast (évite les closures périmées)
   const tiedPlayerIdsRef = useRef<string[]>([])
@@ -310,8 +314,8 @@ export default function SessionPage() {
     const maxVotes = Math.max(...Object.values(tally))
     const winners = Object.entries(tally).filter(([, v]) => v === maxVotes).map(([id]) => id)
 
-    if (winners.length > 1) {
-      // Égalité → chifoumi !
+    if (winners.length === 2) {
+      // Égalité à 2 → chifoumi !
       tiedPlayerIdsRef.current = winners
       chifoumiMovesRef.current = {}
       chifoumiRoundRef.current = 1
@@ -320,6 +324,27 @@ export default function SessionPage() {
       setChifoumiRound(1)
       setMyChifoumiMove(null)
       setPhase('chifoumi')
+      return
+    }
+
+    if (winners.length > 2) {
+      // Égalité à 3+ → tirage au sort
+      const winnerId = winners[Math.floor(Math.random() * winners.length)]
+      const winnerPlayer = currentPlayers.find(p => p.user_id === winnerId)
+      const reasons = [
+        `L'algorithme a détecté que "${winnerPlayer?.pseudo}" contient exactement le bon nombre de lettres pour commander un grand cru.`,
+        `Après analyse des ondes vibratoires du groupe, "${winnerPlayer?.pseudo}" émet la fréquence la plus proche du Pinot Noir.`,
+        `Le hasard a parlé — et visiblement il avait très envie que "${winnerPlayer?.pseudo}" tienne le tire-bouchon.`,
+        `"${winnerPlayer?.pseudo}" a été désigné par les astres, la physique quantique, et une légère intuition de l'IA.`,
+        `Égalité parfaite entre ${winners.length} grands esprits. Le sort a tranché : "${winnerPlayer?.pseudo}" est le chef du soir.`,
+      ]
+      const reason = reasons[Math.floor(Math.random() * reasons.length)]
+      setTirageWinner(winnerPlayer ?? null)
+      setTirageReason(reason)
+      setPhase('tirage')
+      setTimeout(async () => {
+        await assignChef(winnerId, currentPlayers)
+      }, 4000)
       return
     }
 
@@ -524,6 +549,30 @@ export default function SessionPage() {
               {votesIn} / {players.length} votes
             </div>
           </>
+        )}
+
+        {/* TIRAGE AU SORT (égalité 3+) */}
+        {phase === 'tirage' && (
+          <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>Égalité à {tiedPlayerIds.length > 0 ? tiedPlayerIds.length : ''}+ joueurs</div>
+            <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '1.5rem' }}>
+              Tirage au sort 🎲
+            </div>
+            <div style={{ fontSize: '56px', marginBottom: '1rem' }}>🎰</div>
+            {tirageWinner && (
+              <div style={{ fontSize: '28px', fontWeight: '600', color: '#8d323b', marginBottom: '1rem' }}>
+                {tirageWinner.pseudo} !
+              </div>
+            )}
+            {tirageReason && (
+              <div style={{ background: '#faeeda', borderRadius: '16px', padding: '1.25rem', margin: '0 auto', maxWidth: '340px', fontSize: '14px', color: '#633806', lineHeight: 1.6 }}>
+                {tirageReason}
+              </div>
+            )}
+            <div style={{ fontSize: '13px', color: '#aaa', marginTop: '1.5rem' }}>
+              La dégustation commence dans quelques secondes...
+            </div>
+          </div>
         )}
 
         {/* CHIFOUMI */}
