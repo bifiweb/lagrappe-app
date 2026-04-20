@@ -9,12 +9,13 @@ import type { Session, Wine } from '@/types'
 export default function JoinSessionPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [wine, setWine] = useState<Wine | null>(null)
+  const [guestAccess, setGuestAccess] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [pseudo, setPseudo] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
   const [editingAvatar, setEditingAvatar] = useState(false)
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(false)
-  const [alreadyJoined, setAlreadyJoined] = useState(false)
   const accent = '#8d323b'
   const router = useRouter()
   const params = useParams()
@@ -24,10 +25,6 @@ export default function JoinSessionPage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push(`/auth/login?redirect=/app/session/${sessionId}/join`)
-        return
-      }
 
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
@@ -38,26 +35,36 @@ export default function JoinSessionPage() {
           .from('wines').select('*').eq('id', sess.wine_id).single()
         setWine(w)
 
-        // Vérifier si déjà dans la session
+        const { data: proj } = await supabase
+          .from('projects').select('guest_access').eq('id', sess.project_id).single()
+        setGuestAccess(proj?.guest_access ?? false)
+
+        if (!user) {
+          if (!proj?.guest_access) {
+            router.push(`/auth/login?redirect=/app/session/${sessionId}/join`)
+            return
+          }
+          setLoading(false)
+          return
+        }
+
+        setIsLoggedIn(true)
+
         const { data: existing } = await supabase
           .from('session_players')
-          .select('*')
-          .eq('session_id', sessionId)
-          .eq('user_id', user.id)
-          .single()
+          .select('*').eq('session_id', sessionId).eq('user_id', user.id).single()
 
         if (existing) {
-          setAlreadyJoined(true)
           router.push(`/app/session/${sessionId}`)
           return
         }
 
-        // Pré-remplir avec le display_name
         const { data: prof } = await supabase
           .from('profiles').select('*').eq('id', user.id).single()
         if (prof?.display_name) setPseudo(prof.display_name)
         setSelectedAvatar(prof?.avatar ?? null)
       }
+
       setLoading(false)
     }
     load()
@@ -67,20 +74,33 @@ export default function JoinSessionPage() {
     if (!pseudo.trim()) return
     setJoining(true)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    let userId: string | undefined
+
+    if (!isLoggedIn) {
+      // Connexion anonyme
+      const { data, error } = await supabase.auth.signInAnonymously()
+      if (error || !data.user) { setJoining(false); return }
+      userId = data.user.id
+      // Le trigger DB crée le profil — on le met à jour avec le pseudo
+      await supabase.from('profiles')
+        .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
+        .eq('id', userId)
+    } else {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setJoining(false); return }
+      userId = user.id
+      await supabase.from('profiles')
+        .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
+        .eq('id', userId)
+    }
 
     await supabase.from('session_players').insert({
       session_id: sessionId,
-      user_id: user.id,
+      user_id: userId,
       pseudo: pseudo.trim(),
       avatar: selectedAvatar ?? null,
       is_chef: false,
     })
-
-    await supabase.from('profiles')
-      .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
-      .eq('id', user.id)
 
     router.push(`/app/session/${sessionId}`)
     setJoining(false)
@@ -104,6 +124,13 @@ export default function JoinSessionPage() {
       </div>
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+        {/* Badge invité */}
+        {!isLoggedIn && guestAccess && (
+          <div style={{ background: '#faeeda', border: '0.5px solid #e0c080', borderRadius: '10px', padding: '10px 14px', marginBottom: '1.5rem', fontSize: '13px', color: '#633806' }}>
+            👤 Tu rejoins en tant qu'<strong>invité</strong> — pas besoin de compte !
+          </div>
+        )}
 
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: wine?.type === 'rouge' ? '#f5ede8' : '#f5f3e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', flexShrink: 0 }}>
@@ -199,6 +226,15 @@ export default function JoinSessionPage() {
           }}>
           {joining ? 'Connexion...' : 'Rejoindre la dégustation →'}
         </button>
+
+        {/* Option créer un compte si invité */}
+        {!isLoggedIn && guestAccess && (
+          <button
+            onClick={() => router.push(`/auth/login?redirect=/app/session/${sessionId}/join`)}
+            style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#888', border: '0.5px solid #e0e0e0', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>
+            J'ai un compte — se connecter
+          </button>
+        )}
       </div>
     </div>
   )

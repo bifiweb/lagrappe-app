@@ -29,6 +29,7 @@ export default function AdminProjectsPage() {
   const [bottleCount, setBottleCount] = useState(6)
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [accessMode, setAccessMode] = useState<'public' | 'link' | 'restricted'>('public')
+  const [guestAccess, setGuestAccess] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -80,6 +81,7 @@ export default function AdminProjectsPage() {
 
     const mode = (project as any).access_mode ?? 'public'
     setAccessMode(mode as 'public' | 'link' | 'restricted')
+    setGuestAccess((project as any).guest_access ?? false)
 
     supabase.from('project_members')
       .select('user_id').eq('project_id', project.id)
@@ -101,6 +103,7 @@ export default function AdminProjectsPage() {
     setBottleCount(6)
     setMemberIds([])
     setAccessMode('public')
+    setGuestAccess(false)
     setSuccess(false)
     setActiveSection('info')
     setCreating(true)
@@ -124,6 +127,7 @@ export default function AdminProjectsPage() {
         slug,
         image_url: projectImageUrl || null,
         access_mode: accessMode,
+        guest_access: guestAccess,
       }).eq('id', editingProject.id)
     } else {
       const { data: newProject } = await supabase.from('projects').insert({
@@ -134,6 +138,7 @@ export default function AdminProjectsPage() {
         created_by: user.id,
         active: true,
         access_mode: accessMode,
+        guest_access: guestAccess,
       }).select().single()
       projectId = newProject?.id
 
@@ -396,6 +401,18 @@ export default function AdminProjectsPage() {
                       <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>🔒 Restreint</div>
                       <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Uniquement les utilisateurs sélectionnés ci-dessous</div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Toggle accès invités */}
+                <div style={{ marginTop: '12px', padding: '12px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>👤 Accès invités</div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>Les joueurs peuvent rejoindre sans créer de compte</div>
+                  </div>
+                  <div onClick={() => setGuestAccess(v => !v)}
+                    style={{ width: '44px', height: '24px', borderRadius: '12px', background: guestAccess ? accent : '#ddd', position: 'relative', cursor: 'pointer', transition: 'background .2s', flexShrink: 0 }}>
+                    <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#fff', position: 'absolute', top: '2px', left: guestAccess ? '22px' : '2px', transition: 'left .2s' }} />
                   </div>
                 </div>
 

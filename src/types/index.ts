@@ -27,6 +27,7 @@ export interface Project {
   description: string | null
   image_url: string | null
   active: boolean
+  guest_access: boolean
   created_by: string
   created_at: string
 }
