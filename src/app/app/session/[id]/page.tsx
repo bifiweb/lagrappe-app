@@ -227,6 +227,16 @@ export default function SessionPage() {
     setPhase('voting')
   }
 
+  async function leaveSession() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('session_players')
+      .delete()
+      .eq('session_id', sessionId)
+      .eq('user_id', user.id)
+    router.push('/app/dashboard')
+  }
+
   function getShareUrl() {
     if (typeof window === 'undefined') return ''
     return `${window.location.origin}/app/session/${sessionId}/join`
@@ -464,6 +474,13 @@ export default function SessionPage() {
               style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
               Lancer le vote du chef →
             </button>
+
+            {profile?.role === 'admin' && (
+              <button onClick={leaveSession}
+                style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#aaa', border: '0.5px solid #e0e0e0', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>
+                Quitter la session
+              </button>
+            )}
           </>
         )}
 
