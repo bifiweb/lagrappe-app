@@ -194,7 +194,7 @@ export default function AdminCatalogPage() {
     let count = 0
     for (const p of toImport) {
       const prix = p.prix_chf && divideBy6 ? Math.round(p.prix_chf / 6 * 100) / 100 : p.prix_chf
-      const { error } = await supabase.from('catalog_wines').upsert({
+      const payload = {
         name: p.name,
         cave: p.cave || null,
         cepage: p.cepage || null,
@@ -206,7 +206,13 @@ export default function AdminCatalogPage() {
         prix_chf: prix || null,
         shopify_url: p.shopify_url,
         active: true,
-      }, { onConflict: 'shopify_url' })
+      }
+      // Vérifie si le vin existe déjà (par shopify_url)
+      const { data: existing } = await supabase
+        .from('catalog_wines').select('id').eq('shopify_url', p.shopify_url).maybeSingle()
+      const { error } = existing
+        ? await supabase.from('catalog_wines').update(payload).eq('id', existing.id)
+        : await supabase.from('catalog_wines').insert(payload)
       if (error) errors.push(`${p.name}: ${error.message}`)
       else count++
     }
