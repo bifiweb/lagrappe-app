@@ -241,22 +241,36 @@ export default function CavePepitesPage() {
                           style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', resize: 'none', minHeight: '72px', fontFamily: 'system-ui', outline: 'none', boxSizing: 'border-box', background: '#fff' }} />
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1rem' }}>
-                        {([
-                          { label: 'Design bouteille', labels5: ['Moche','Pas très joli','Moyen','Joli','Magnifique'], val: formDesign, set: setFormDesign },
-                          { label: 'Rapport qualité/prix', labels5: ['Pas assez cher du tout','Pas assez cher','Bon prix','Trop cher','Beaucoup trop cher'], val: formValeur, set: setFormValeur },
-                        ] as const).map(({ label, labels5, val, set: setVal }) => (
-                          <div key={label}>
-                            <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>{label}</label>
-                            <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
-                              {[1, 2, 3, 4, 5].map(i => (
-                                <button key={i} onClick={() => setVal(i)}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '2px', lineHeight: 1, color: val >= i ? '#f0a000' : '#ddd' }}>★</button>
-                              ))}
-                            </div>
-                            {val > 0 && <div style={{ fontSize: '10px', color: '#888' }}>{labels5[val - 1]}</div>}
-                          </div>
-                        ))}
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Design bouteille</label>
+                        <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <button key={i} onClick={() => setFormDesign(i)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '2px', lineHeight: 1, color: formDesign >= i ? '#f0a000' : '#ddd' }}>★</button>
+                          ))}
+                        </div>
+                        {formDesign > 0 && <div style={{ fontSize: '10px', color: '#888' }}>{['Moche','Pas très joli','Moyen','Joli','Magnifique'][formDesign - 1]}</div>}
+                      </div>
+
+                      <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Prix</label>
+                        <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                          {[1,2,3,4,5].map(i => {
+                            const colors = ['#3B82F6','#6EBA70','#27500A','#f0a000','#e53e3e']
+                            const isSelected = formValeur === i
+                            return (
+                              <button key={i} onClick={() => setFormValeur(i)}
+                                style={{ flex: 1, height: '28px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: isSelected ? colors[i-1] : '#e8e8e8', transition: 'background .15s' }} />
+                            )
+                          })}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '10px', color: '#888' }}>Pas assez cher</span>
+                          <span style={{ fontSize: '10px', color: formValeur ? '#555' : '#bbb', fontWeight: formValeur ? '500' : '400' }}>
+                            {formValeur ? ['Bradé','Abordable','Juste prix','Cher','Trop cher'][formValeur - 1] : '—'}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#888' }}>Trop cher</span>
+                        </div>
                       </div>
 
                       <div style={{ marginBottom: '1.25rem' }}>

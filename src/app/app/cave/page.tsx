@@ -336,8 +336,8 @@ export default function CavePage() {
                             )}
                             {ratingEntry.rating.valeur_rating && (
                               <div style={{ flex: 1, background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: accent }}>{ratingEntry.rating.valeur_rating}/5</div>
-                                <div style={{ fontSize: '10px', color: '#888' }}>Qualité/prix</div>
+                                <div style={{ fontSize: '13px', fontWeight: '500', color: accent }}>{['Bradé','Abordable','Juste prix','Cher','Trop cher'][ratingEntry.rating.valeur_rating - 1]}</div>
+                                <div style={{ fontSize: '10px', color: '#888' }}>Prix</div>
                               </div>
                             )}
                             {ratingEntry.rating.racheterait !== null && (
