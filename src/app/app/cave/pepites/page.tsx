@@ -69,10 +69,13 @@ function MiniStars({ score }: { score: number }) {
   )
 }
 
+type FilterTab = 'all' | 'rated' | 'unrated'
+
 export default function CavePepitesPage() {
   const [entries, setEntries] = useState<WineEntry[]>([])
   const [filtered, setFiltered] = useState<WineEntry[]>([])
   const [search, setSearch] = useState('')
+  const [filterTab, setFilterTab] = useState<FilterTab>('all')
   const [expanded, setExpanded] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -113,15 +116,20 @@ export default function CavePepitesPage() {
   }, [])
 
   useEffect(() => {
-    if (!search.trim()) { setFiltered(entries); return }
-    const q = search.toLowerCase()
-    setFiltered(entries.filter(e =>
-      e.wine.name?.toLowerCase().includes(q) ||
-      e.wine.cepage?.toLowerCase().includes(q) ||
-      e.wine.region?.toLowerCase().includes(q) ||
-      e.wine.millesime?.toString().includes(q)
-    ))
-  }, [search, entries])
+    let result = entries
+    if (filterTab === 'rated') result = result.filter(e => e.myRating?.stars != null)
+    if (filterTab === 'unrated') result = result.filter(e => !e.myRating?.stars)
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(e =>
+        e.wine.name?.toLowerCase().includes(q) ||
+        e.wine.cepage?.toLowerCase().includes(q) ||
+        e.wine.region?.toLowerCase().includes(q) ||
+        e.wine.millesime?.toString().includes(q)
+      )
+    }
+    setFiltered(result)
+  }, [search, filterTab, entries])
 
   function openRating(entry: WineEntry) {
     const id = entry.wine.id
@@ -179,11 +187,23 @@ export default function CavePepitesPage() {
           <button onClick={() => router.push('/app/cave')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>La cave à pépites</span>
-          <span style={{ fontSize: '12px', color: '#888' }}>{ratedCount}/{entries.length} notés</span>
+          <button onClick={() => router.push('/app/cave')}
+            style={{ fontSize: '12px', color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: '500', whiteSpace: 'nowrap' }}>
+            🍷 Mes dégustations
+          </button>
         </div>
       </div>
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1rem 1.5rem' }}>
+
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem' }}>
+          {([['all','Tous'], ['rated','✓ Notés'], ['unrated','Non notés']] as [FilterTab, string][]).map(([val, label]) => (
+            <button key={val} onClick={() => setFilterTab(val)}
+              style={{ padding: '5px 12px', borderRadius: '20px', border: filterTab === val ? 'none' : '0.5px solid #e0e0e0', background: filterTab === val ? accent : '#fff', color: filterTab === val ? '#fff' : '#666', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>
+              {label}{val === 'all' ? ` (${entries.length})` : val === 'rated' ? ` (${ratedCount})` : ` (${entries.length - ratedCount})`}
+            </button>
+          ))}
+        </div>
 
         <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
           <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', color: '#aaa' }}>🔍</span>
@@ -210,10 +230,16 @@ export default function CavePepitesPage() {
               const isOpen = expanded === wine.id
 
               return (
-                <div key={wine.id} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
+                <div key={wine.id} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : myRating?.stars != null ? '#b8d4b0' : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
 
                   <div onClick={() => openRating(entry)}
-                    style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'center', position: 'relative' }}>
+                    {myRating?.stars != null && (
+                      <div style={{ position: 'absolute', top: '10px', right: '10px', background: accent, color: '#fff', borderRadius: '10px', fontSize: '11px', fontWeight: '600', padding: '2px 7px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <span>{SCORE_EMOJIS[myRating.stars]}</span>
+                        <span>{myRating.stars}/10</span>
+                      </div>
+                    )}
                     {wine.image_url ? (
                       <img src={wine.image_url} alt={wine.name}
                         style={{ width: '44px', height: '66px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }} />
@@ -230,7 +256,7 @@ export default function CavePepitesPage() {
                         : <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>Pas encore noté</span>
                       }
                     </div>
-                    <div style={{ fontSize: '16px', color: '#ccc', flexShrink: 0 }}>{isOpen ? '▲' : '▼'}</div>
+                    <div style={{ fontSize: '16px', color: '#ccc', flexShrink: 0, marginTop: myRating?.stars != null ? '16px' : '0' }}>{isOpen ? '▲' : '▼'}</div>
                   </div>
 
                   {isOpen && (

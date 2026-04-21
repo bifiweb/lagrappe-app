@@ -85,15 +85,19 @@ export default function RevealPage() {
   async function savePostReveal() {
     if (!myTasting) return
     setSavingPostReveal(true)
-    await supabase.from('tastings').update({
+    const { error } = await supabase.from('tastings').update({
       score_perso: postRevealScore,
       notes_degustation: postRevealNotesDeg.trim() || null,
       design_rating: postRevealDesign,
       valeur_rating: postRevealValeur,
       racheterait: postRevealRachete,
     }).eq('id', myTasting.id)
-    setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_degustation: postRevealNotesDeg.trim() || null, design_rating: postRevealDesign, valeur_rating: postRevealValeur, racheterait: postRevealRachete })
     setSavingPostReveal(false)
+    if (error) {
+      alert(`Erreur lors de la sauvegarde : ${error.message}\n\nSi le problème persiste, la migration 017 doit être appliquée en production.`)
+      return
+    }
+    setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_degustation: postRevealNotesDeg.trim() || null, design_rating: postRevealDesign, valeur_rating: postRevealValeur, racheterait: postRevealRachete })
     setPostRevealSaved(true)
     const fromCave = new URLSearchParams(window.location.search).get('from') === 'cave'
     if (fromCave) {
