@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useWineMode } from '@/store/wineMode'
 import WineModeGame from './WineModeGame'
 
@@ -27,6 +28,9 @@ export default function WineMode() {
   const [particles, setParticles] = useState<Particle[]>([])
   const [mounted, setMounted] = useState(false)
   const [gameOpen, setGameOpen] = useState(false)
+  const pathname = usePathname()
+  // Toggle visible sur la page waiting, ou partout si wine mode déjà actif (pour pouvoir l'éteindre)
+  const showToggle = wineMode || pathname?.includes('/waiting')
 
   useEffect(() => { setMounted(true); setParticles(generateParticles()) }, [])
 
@@ -89,8 +93,8 @@ export default function WineMode() {
         </div>
       )}
 
-      {/* Toggle flottant */}
-      <div style={{
+      {/* Toggle flottant — visible sur /waiting ou si wine mode actif */}
+      {showToggle && <div style={{
         position: 'fixed', right: 0, top: '50%', transform: 'translateY(-50%)',
         zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
       }}>
@@ -143,7 +147,7 @@ export default function WineMode() {
             {wineMode ? 'ON' : 'OFF'}
           </span>
         </button>
-      </div>
+      </div>}
     </>
   )
 }
