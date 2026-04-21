@@ -9,7 +9,7 @@ const GQL_QUERY = `{
     edges { node {
       id handle
       millesime: metafield(namespace: "custom", key: "millesime") { value }
-      region: metafield(namespace: "custom", key: "region") { value }
+      region: metafield(namespace: "shopify", key: "region") { value }
     }}
   }
 }`
