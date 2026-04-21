@@ -68,6 +68,7 @@ export async function GET() {
       return {
         shopify_id: String(p.id),
         name: p.title,
+        _debug_millesime: { raw: meta.millesime, parsed: millesime, fromTitle: extractMillesime(p.title) },
         cave: p.vendor || null,
         cepage: p.product_type || null,
         millesime: millesime || null,
