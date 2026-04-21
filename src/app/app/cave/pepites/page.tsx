@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 interface CatalogWine {
   id: string
   name: string
+  cave: string | null
   cepage: string | null
   region: string | null
   millesime: number | null
@@ -248,7 +249,9 @@ export default function CavePepitesPage() {
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: '500', fontSize: '14px', color: '#1a1a1a', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{wine.name}</div>
-                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>
+                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '2px' }}>
+                        {wine.cave && <span style={{ fontWeight: '500' }}>{wine.cave}</span>}
+                        {wine.cave && (wine.cepage || wine.region || wine.millesime) && ' · '}
                         {[wine.cepage, wine.region, wine.millesime].filter(Boolean).join(' · ')}
                       </div>
                       {myRating?.stars != null
@@ -270,6 +273,7 @@ export default function CavePepitesPage() {
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '1.25rem' }}>
                         {wine.type && <span style={{ fontSize: '12px', background: '#f5ede8', color: accent, padding: '3px 10px', borderRadius: '8px' }}>{wine.type}</span>}
+                        {wine.cave && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>🏠 {wine.cave}</span>}
                         {wine.region && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>{wine.region}</span>}
                         {wine.prix_chf && <span style={{ fontSize: '12px', background: '#e8f0e8', color: '#27500A', padding: '3px 10px', borderRadius: '8px' }}>CHF {wine.prix_chf}</span>}
                       </div>

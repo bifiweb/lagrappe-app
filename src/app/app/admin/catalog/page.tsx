@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 interface CatalogWine {
   id: string
   name: string
+  cave: string | null
   cepage: string | null
   region: string | null
   millesime: number | null
@@ -18,8 +19,23 @@ interface CatalogWine {
   active: boolean
 }
 
+interface ShopifyProduct {
+  shopify_id: string
+  name: string
+  cave: string | null
+  cepage: string | null
+  region: string | null
+  millesime: number | null
+  type: string
+  description: string | null
+  image_url: string | null
+  prix_chf: number | null
+  shopify_url: string
+  tags: string[]
+}
+
 const accent = '#8d323b'
-const EMPTY: Partial<CatalogWine> = { name: '', cepage: '', region: '', millesime: null, type: 'rouge', description: '', image_url: '', prix_chf: null, shopify_url: '', active: true }
+const EMPTY: Partial<CatalogWine> = { name: '', cave: '', cepage: '', region: '', millesime: null, type: 'rouge', description: '', image_url: '', prix_chf: null, shopify_url: '', active: true }
 
 export default function AdminCatalogPage() {
   const [wines, setWines] = useState<CatalogWine[]>([])
@@ -29,6 +45,17 @@ export default function AdminCatalogPage() {
   const [form, setForm] = useState<Partial<CatalogWine>>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  // Import Shopify
+  const [showImport, setShowImport] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [shopifyProducts, setShopifyProducts] = useState<ShopifyProduct[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [overrides, setOverrides] = useState<Record<string, Partial<ShopifyProduct>>>({})
+  const [importing, setImporting] = useState(false)
+  const [importDone, setImportDone] = useState(0)
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -70,6 +97,7 @@ export default function AdminCatalogPage() {
 
     const payload = {
       name: form.name!.trim(),
+      cave: form.cave?.trim() || null,
       cepage: form.cepage?.trim() || null,
       region: form.region?.trim() || null,
       millesime: form.millesime || null,
@@ -102,6 +130,79 @@ export default function AdminCatalogPage() {
     close()
   }
 
+  async function fetchShopifyProducts() {
+    setImportLoading(true)
+    setImportError(null)
+    setImportDone(0)
+    try {
+      const res = await fetch('/api/shopify/products')
+      const json = await res.json()
+      if (!res.ok) { setImportError(json.error ?? 'Erreur inconnue'); return }
+      setShopifyProducts(json.products)
+      // Pré-sélectionner tous les produits pas encore dans le catalogue
+      const existingUrls = new Set(wines.map(w => w.shopify_url).filter(Boolean))
+      const newIds = new Set(json.products
+        .filter((p: ShopifyProduct) => !existingUrls.has(p.shopify_url))
+        .map((p: ShopifyProduct) => p.shopify_id))
+      setSelected(newIds)
+      setOverrides({})
+    } catch (e: any) {
+      setImportError(e.message)
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
+  function openImport() {
+    setShowImport(true)
+    fetchShopifyProducts()
+  }
+
+  function toggleSelect(id: string) {
+    setSelected(prev => {
+      const s = new Set(prev)
+      s.has(id) ? s.delete(id) : s.add(id)
+      return s
+    })
+  }
+
+  function setOverride(shopifyId: string, key: string, value: any) {
+    setOverrides(prev => ({ ...prev, [shopifyId]: { ...prev[shopifyId], [key]: value } }))
+  }
+
+  function merged(p: ShopifyProduct): ShopifyProduct {
+    return { ...p, ...(overrides[p.shopify_id] ?? {}) }
+  }
+
+  async function runImport() {
+    const toImport = shopifyProducts.filter(p => selected.has(p.shopify_id)).map(merged)
+    if (toImport.length === 0) return
+    setImporting(true)
+
+    let count = 0
+    for (const p of toImport) {
+      await supabase.from('catalog_wines').upsert({
+        name: p.name,
+        cave: p.cave || null,
+        cepage: p.cepage || null,
+        region: p.region || 'Valais',
+        millesime: p.millesime || null,
+        type: p.type,
+        description: p.description || null,
+        image_url: p.image_url || null,
+        prix_chf: p.prix_chf || null,
+        shopify_url: p.shopify_url,
+        active: true,
+      }, { onConflict: 'shopify_url' })
+      count++
+    }
+
+    const { data } = await supabase.from('catalog_wines').select('*').order('created_at', { ascending: false })
+    setWines(data ?? [])
+    setImporting(false)
+    setImportDone(count)
+  }
+
   const showForm = creating || editing !== null
   const f = (k: keyof CatalogWine) => (form as any)[k] ?? ''
   const set = (k: keyof CatalogWine, v: any) => setForm(p => ({ ...p, [k]: v }))
@@ -120,6 +221,10 @@ export default function AdminCatalogPage() {
           <button onClick={() => router.push('/app/dashboard')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Cave à pépites — Catalogue</span>
+          <button onClick={openImport}
+            style={{ padding: '7px 14px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🛍</span> Importer Shopify
+          </button>
           <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>Admin</span>
         </div>
       </div>
@@ -134,7 +239,7 @@ export default function AdminCatalogPage() {
             </div>
             <button onClick={openCreate}
               style={{ padding: '7px 14px', background: accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-              + Ajouter un vin
+              + Ajouter manuellement
             </button>
           </div>
 
@@ -147,7 +252,7 @@ export default function AdminCatalogPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {wines.length === 0 ? (
               <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '2rem', textAlign: 'center', color: '#888', fontSize: '14px' }}>
-                Aucun vin dans le catalogue.<br />Ajoute le premier !
+                Aucun vin dans le catalogue.<br />Importe depuis Shopify ou ajoute manuellement !
               </div>
             ) : wines.map(w => (
               <div key={w.id} onClick={() => openEdit(w)}
@@ -159,7 +264,9 @@ export default function AdminCatalogPage() {
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.name}</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>{[w.cepage, w.region, w.millesime].filter(Boolean).join(' · ')}</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>
+                    {[w.cave, w.cepage, w.region, w.millesime].filter(Boolean).join(' · ')}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                   <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{w.type}</span>
@@ -183,6 +290,13 @@ export default function AdminCatalogPage() {
                 <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Nom *</label>
                 <input value={f('name')} onChange={e => set('name', e.target.value)}
                   placeholder="ex: Gamay de Fully 2022"
+                  style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Cave / Producteur</label>
+                <input value={f('cave')} onChange={e => set('cave', e.target.value)}
+                  placeholder="ex: Domaine du Mont d'Or"
                   style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
 
@@ -283,6 +397,140 @@ export default function AdminCatalogPage() {
           </div>
         )}
       </div>
+
+      {/* Modal import Shopify */}
+      {showImport && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowImport(false) }}>
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '720px', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+            {/* Header modal */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '0.5px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+              <span style={{ fontSize: '18px' }}>🛍</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a' }}>Importer depuis Shopify</div>
+                {!importLoading && shopifyProducts.length > 0 && (
+                  <div style={{ fontSize: '12px', color: '#888' }}>
+                    {shopifyProducts.length} produits trouvés · {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+              <button onClick={() => setShowImport(false)}
+                style={{ background: '#f5f5f5', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', color: '#666', cursor: 'pointer' }}>
+                Fermer
+              </button>
+            </div>
+
+            {/* Contenu */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem' }}>
+              {importLoading && (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#888', fontSize: '14px' }}>
+                  Connexion à Shopify...
+                </div>
+              )}
+
+              {importError && (
+                <div style={{ background: '#fef2f2', border: '0.5px solid #fca5a5', borderRadius: '10px', padding: '1rem', color: '#dc2626', fontSize: '13px' }}>
+                  <strong>Erreur :</strong> {importError}
+                  <br /><br />
+                  Vérifie que <code>SHOPIFY_ADMIN_API_TOKEN</code> est bien dans ton <code>.env.local</code>.
+                </div>
+              )}
+
+              {importDone > 0 && (
+                <div style={{ background: '#e8f0e8', border: '0.5px solid #b8d4b0', borderRadius: '10px', padding: '1rem', color: '#27500A', fontSize: '14px', marginBottom: '1rem', textAlign: 'center' }}>
+                  ✅ {importDone} vin{importDone > 1 ? 's' : ''} importé{importDone > 1 ? 's' : ''} avec succès !
+                </div>
+              )}
+
+              {!importLoading && !importError && shopifyProducts.length > 0 && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <button onClick={() => setSelected(new Set(shopifyProducts.map(p => p.shopify_id)))}
+                      style={{ fontSize: '12px', color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      Tout sélectionner
+                    </button>
+                    <button onClick={() => setSelected(new Set())}
+                      style={{ fontSize: '12px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      Tout décocher
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {shopifyProducts.map(p => {
+                      const m = merged(p)
+                      const isSelected = selected.has(p.shopify_id)
+                      const alreadyIn = wines.some(w => w.shopify_url === p.shopify_url)
+                      return (
+                        <div key={p.shopify_id}
+                          style={{ border: isSelected ? `1.5px solid ${accent}` : '0.5px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden', background: isSelected ? '#fdf8f5' : '#fff', opacity: 1 }}>
+
+                          {/* Ligne principale cliquable */}
+                          <div onClick={() => toggleSelect(p.shopify_id)}
+                            style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                            <input type="checkbox" checked={isSelected} onChange={() => {}} style={{ width: '16px', height: '16px', accentColor: accent, flexShrink: 0 }} />
+                            {p.image_url
+                              ? <img src={p.image_url} alt={p.name} style={{ width: '36px', height: '54px', objectFit: 'contain', borderRadius: '4px', flexShrink: 0 }} />
+                              : <div style={{ width: '36px', height: '54px', background: '#f5ede8', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>🍾</div>
+                            }
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {m.name}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#888' }}>
+                                {[m.cave, m.cepage, m.region, m.millesime].filter(Boolean).join(' · ')}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
+                              {alreadyIn && <span style={{ fontSize: '10px', background: '#e8f0e8', color: '#27500A', padding: '2px 6px', borderRadius: '4px' }}>déjà importé</span>}
+                              <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{m.type}</span>
+                              {m.prix_chf && <span style={{ fontSize: '11px', color: '#888' }}>CHF {m.prix_chf}</span>}
+                            </div>
+                          </div>
+
+                          {/* Champs éditables si sélectionné */}
+                          {isSelected && (
+                            <div style={{ padding: '0 14px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                              <div>
+                                <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Région</label>
+                                <input value={m.region ?? 'Valais'} onChange={e => setOverride(p.shopify_id, 'region', e.target.value)}
+                                  style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Type</label>
+                                <select value={m.type} onChange={e => setOverride(p.shopify_id, 'type', e.target.value)}
+                                  style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }}>
+                                  {['rouge', 'blanc', 'rose', 'petillant'].map(t => <option key={t}>{t}</option>)}
+                                </select>
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Millésime</label>
+                                <input type="number" value={m.millesime ?? ''} onChange={e => setOverride(p.shopify_id, 'millesime', parseInt(e.target.value) || null)}
+                                  placeholder="2022"
+                                  style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Footer modal */}
+            {!importLoading && !importError && selected.size > 0 && (
+              <div style={{ padding: '1rem 1.5rem', borderTop: '0.5px solid #e0e0e0', flexShrink: 0 }}>
+                <button onClick={runImport} disabled={importing}
+                  style={{ width: '100%', padding: '13px', background: importing ? '#c0a0a0' : accent, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '500', cursor: importing ? 'default' : 'pointer' }}>
+                  {importing ? 'Import en cours...' : `Importer ${selected.size} vin${selected.size > 1 ? 's' : ''} →`}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
