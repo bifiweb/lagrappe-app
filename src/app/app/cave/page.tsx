@@ -178,8 +178,13 @@ export default function CavePage() {
   useEffect(() => {
     load()
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load() }
     document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    window.addEventListener('pageshow', onPageShow)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('pageshow', onPageShow)
+    }
   }, [])
 
   const totalPts = entries.filter(e => e.type === 'game').reduce((sum, e) => sum + ((e as GameEntry).tasting.total_points ?? 0), 0)
@@ -348,7 +353,7 @@ export default function CavePage() {
                             valeur={gameEntry.tasting.valeur_rating}
                             racheterait={gameEntry.tasting.racheterait}
                           />
-                          <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal`)}
+                          <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal?from=cave`)}
                             style={{ width: '100%', padding: '10px', border: `0.5px solid ${accent}`, borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: '8px' }}>
                             Modifier ma note →
                           </button>

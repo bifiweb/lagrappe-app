@@ -95,8 +95,12 @@ export default function RevealPage() {
     setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_degustation: postRevealNotesDeg.trim() || null, design_rating: postRevealDesign, valeur_rating: postRevealValeur, racheterait: postRevealRachete })
     setSavingPostReveal(false)
     setPostRevealSaved(true)
-    setTimeout(() => setPostRevealSaved(false), 3000)
-    router.refresh()
+    const fromCave = new URLSearchParams(window.location.search).get('from') === 'cave'
+    if (fromCave) {
+      setTimeout(() => { window.location.href = '/app/cave' }, 1200)
+    } else {
+      setTimeout(() => setPostRevealSaved(false), 3000)
+    }
   }
 
   function getAromeCounts() {
