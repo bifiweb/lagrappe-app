@@ -96,6 +96,7 @@ export default function RevealPage() {
     setSavingPostReveal(false)
     setPostRevealSaved(true)
     setTimeout(() => setPostRevealSaved(false), 3000)
+    router.refresh()
   }
 
   function getAromeCounts() {

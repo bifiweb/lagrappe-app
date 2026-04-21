@@ -26,6 +26,10 @@ interface RatingEntry {
 type CaveEntry = GameEntry | RatingEntry
 
 const accent = '#8d323b'
+const SCORE_EMOJIS = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
+const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
+const DESIGN_LABELS = ['Moche','Pas très joli','Moyen','Joli','Magnifique']
+const PRICE_LABELS = ['Bradé','Abordable','Juste prix','Cher','Trop cher']
 
 function MiniStars({ score, outOf10 = false }: { score: number | null, outOf10?: boolean }) {
   if (score === null) return <span style={{ fontSize: '12px', color: '#bbb' }}>Non noté</span>
@@ -38,6 +42,56 @@ function MiniStars({ score, outOf10 = false }: { score: number | null, outOf10?:
       <span style={{ fontSize: '11px', color: '#888', marginLeft: '2px' }}>
         {outOf10 ? `${score}/10` : `${score}/5`}
       </span>
+    </div>
+  )
+}
+
+function AppreciationBlock({ score, notesDeg, design, valeur, racheterait }: {
+  score: number | null, notesDeg: string | null,
+  design: number | null, valeur: number | null, racheterait: boolean | null
+}) {
+  const hasAny = score !== null || notesDeg || design || valeur || racheterait !== null
+  if (!hasAny) return (
+    <div style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic', marginBottom: '12px' }}>Aucune appréciation enregistrée</div>
+  )
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      {score !== null && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '32px', lineHeight: 1 }}>{SCORE_EMOJIS[score]}</span>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{score}/10</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>{SCORE_LABELS[score]}</div>
+          </div>
+        </div>
+      )}
+      {notesDeg && (
+        <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', background: '#fff', borderRadius: '8px', padding: '8px 10px', marginBottom: '8px' }}>
+          "{notesDeg}"
+        </div>
+      )}
+      {(design || valeur || racheterait !== null) && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {design && (
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: '12px', fontWeight: '500', color: accent }}>{'★'.repeat(design)}{'☆'.repeat(5 - design)}</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>{DESIGN_LABELS[design - 1]}</div>
+            </div>
+          )}
+          {valeur && (
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: '12px', fontWeight: '500', color: accent }}>{PRICE_LABELS[valeur - 1]}</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>Prix</div>
+            </div>
+          )}
+          {racheterait !== null && (
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: '16px' }}>{racheterait ? '✅' : '❌'}</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>Racheter</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -282,9 +336,28 @@ export default function CavePage() {
 
                       {isGame && gameEntry ? (
                         <>
-                          <div style={{ marginBottom: '1rem' }}>
+                          {/* Appréciation */}
+                          <AppreciationBlock
+                            score={gameEntry.tasting.score_perso}
+                            notesDeg={gameEntry.tasting.notes_degustation}
+                            design={gameEntry.tasting.design_rating}
+                            valeur={gameEntry.tasting.valeur_rating}
+                            racheterait={gameEntry.tasting.racheterait}
+                          />
+                          <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal`)}
+                            style={{ width: '100%', padding: '10px', border: `0.5px solid ${accent}`, borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: '8px' }}>
+                            Modifier ma note →
+                          </button>
+                          {gameEntry.wine?.shopify_url && (
+                            <a href={gameEntry.wine.shopify_url} target="_blank" rel="noreferrer"
+                              style={{ display: 'block', width: '100%', padding: '10px', background: accent, color: '#fff', borderRadius: '8px', fontSize: '13px', fontWeight: '500', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box', marginBottom: '12px' }}>
+                              Acheter ce vin →
+                            </a>
+                          )}
+                          {/* Bloc jeu */}
+                          <div style={{ borderTop: '0.5px solid #e8e8e8', paddingTop: '12px' }}>
                             <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Points du jeu</div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                               {[
                                 { l: 'Robe', v: gameEntry.tasting.pts_robe },
                                 { l: 'Arômes', v: gameEntry.tasting.pts_aromes },
@@ -300,57 +373,23 @@ export default function CavePage() {
                                 </div>
                               ))}
                             </div>
+                            <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal`)}
+                              style={{ width: '100%', padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
+                              Voir le reveal →
+                            </button>
                           </div>
-                          {gameEntry.tasting.notes_libres && (
-                            <div style={{ marginBottom: '1rem', fontSize: '13px', color: '#666', fontStyle: 'italic', background: '#fff', borderRadius: '8px', padding: '10px 12px' }}>
-                              "{gameEntry.tasting.notes_libres}"
-                            </div>
-                          )}
-                          <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal`)}
-                            style={{ width: '100%', padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: gameEntry.wine?.shopify_url ? '8px' : 0 }}>
-                            Voir le reveal →
-                          </button>
-                          {gameEntry.wine?.shopify_url && (
-                            <a href={gameEntry.wine.shopify_url} target="_blank" rel="noreferrer"
-                              style={{ display: 'block', width: '100%', padding: '10px', background: accent, color: '#fff', borderRadius: '8px', fontSize: '13px', fontWeight: '500', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>
-                              Acheter ce vin →
-                            </a>
-                          )}
                         </>
                       ) : ratingEntry ? (
                         <>
-                          {ratingEntry.rating.notes_degustation && (
-                            <div style={{ marginBottom: '1rem', fontSize: '13px', color: '#666', fontStyle: 'italic', background: '#fff', borderRadius: '8px', padding: '10px 12px' }}>
-                              "{ratingEntry.rating.notes_degustation}"
-                            </div>
-                          )}
-                          <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem' }}>
-                            {ratingEntry.rating.design_rating && (
-                              <div style={{ flex: 1, background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: accent }}>{ratingEntry.rating.design_rating}/5</div>
-                                <div style={{ fontSize: '10px', color: '#888' }}>Design</div>
-                              </div>
-                            )}
-                            {ratingEntry.rating.valeur_rating && (
-                              <div style={{ flex: 1, background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: accent }}>{['Bradé','Abordable','Juste prix','Cher','Trop cher'][ratingEntry.rating.valeur_rating - 1]}</div>
-                                <div style={{ fontSize: '10px', color: '#888' }}>Prix</div>
-                              </div>
-                            )}
-                            {ratingEntry.rating.racheterait !== null && (
-                              <div style={{ flex: 1, background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '16px' }}>{ratingEntry.rating.racheterait ? '✅' : '❌'}</div>
-                                <div style={{ fontSize: '10px', color: '#888' }}>Racheter</div>
-                              </div>
-                            )}
-                          </div>
-                          {ratingEntry.rating.notes_libres && (
-                            <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', background: '#fff', borderRadius: '8px', padding: '10px 12px', marginBottom: '1rem' }}>
-                              "{ratingEntry.rating.notes_libres}"
-                            </div>
-                          )}
+                          <AppreciationBlock
+                            score={ratingEntry.rating.stars}
+                            notesDeg={ratingEntry.rating.notes_degustation}
+                            design={ratingEntry.rating.design_rating}
+                            valeur={ratingEntry.rating.valeur_rating}
+                            racheterait={ratingEntry.rating.racheterait}
+                          />
                           <button onClick={() => router.push('/app/cave/pepites')}
-                            style={{ width: '100%', padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: ratingEntry.wine?.shopify_url ? '8px' : 0 }}>
+                            style={{ width: '100%', padding: '10px', border: `0.5px solid ${accent}`, borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: ratingEntry.wine?.shopify_url ? '8px' : 0 }}>
                             Modifier ma note →
                           </button>
                           {ratingEntry.wine?.shopify_url && (
