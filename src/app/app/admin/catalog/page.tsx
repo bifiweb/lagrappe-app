@@ -35,6 +35,15 @@ interface ShopifyProduct {
 }
 
 const accent = '#8d323b'
+
+function detectWineType(tags: string[]): string {
+  const t = tags.map(s => s.toLowerCase())
+  if (t.some(s => s.includes('blanc') || s === 'white')) return 'blanc'
+  if (t.some(s => s.includes('ros'))) return 'rose'
+  if (t.some(s => s.includes('pétillant') || s.includes('petillant') || s.includes('mousseux') || s.includes('sparkling'))) return 'petillant'
+  return 'rouge'
+}
+
 const EMPTY: Partial<CatalogWine> = { name: '', cave: '', cepage: '', region: '', millesime: null, type: 'rouge', description: '', image_url: '', prix_chf: null, shopify_url: '', active: true }
 
 export default function AdminCatalogPage() {
@@ -135,20 +144,50 @@ export default function AdminCatalogPage() {
     setImportError(null)
     setImportDone(0)
     try {
-      const res = await fetch('/api/shopify/products')
-      let json: any
-      try { json = await res.json() } catch {
-        setImportError(`Réponse invalide du serveur (HTTP ${res.status}). Vérifie les logs Next.js.`)
-        return
-      }
-      if (!res.ok) { setImportError(json?.error ?? `Erreur HTTP ${res.status}`); return }
-      setShopifyProducts(json.products)
-      // Pré-sélectionner tous les produits pas encore dans le catalogue
+      const domain = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN!
+      const token = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN!
+      const query = `{
+        products(first: 100, sortKey: TITLE) {
+          edges { node {
+            id title vendor productType handle description
+            images(first: 1) { edges { node { url } } }
+            priceRange { minVariantPrice { amount } }
+            tags
+            nom_du_vin: metafield(namespace: "custom", key: "nom_du_vin") { value }
+            millesime: metafield(namespace: "custom", key: "millesime") { value }
+            region: metafield(namespace: "custom", key: "region") { value }
+          }}
+        }
+      }`
+
+      const res = await fetch(`https://${domain}/api/2024-01/graphql.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': token },
+        body: JSON.stringify({ query }),
+      })
+
+      const json = await res.json()
+      if (json.errors) { setImportError(json.errors.map((e: any) => e.message).join(', ')); return }
+
+      const edges = json?.data?.products?.edges ?? []
+      const products: ShopifyProduct[] = edges.map(({ node }: any) => ({
+        shopify_id: node.id,
+        name: node.nom_du_vin?.value || node.title,
+        cave: node.vendor || null,
+        cepage: node.productType || null,
+        millesime: node.millesime?.value ? parseInt(node.millesime.value) : null,
+        region: node.region?.value || null,
+        type: detectWineType(node.tags ?? []),
+        description: node.description || null,
+        image_url: node.images?.edges?.[0]?.node?.url ?? null,
+        prix_chf: node.priceRange?.minVariantPrice?.amount ? parseFloat(node.priceRange.minVariantPrice.amount) : null,
+        shopify_url: `https://${domain}/products/${node.handle}`,
+        tags: node.tags ?? [],
+      }))
+
+      setShopifyProducts(products)
       const existingUrls = new Set(wines.map(w => w.shopify_url).filter(Boolean))
-      const newIds = new Set(json.products
-        .filter((p: ShopifyProduct) => !existingUrls.has(p.shopify_url))
-        .map((p: ShopifyProduct) => p.shopify_id))
-      setSelected(newIds)
+      setSelected(new Set(products.filter(p => !existingUrls.has(p.shopify_url)).map(p => p.shopify_id)))
       setOverrides({})
     } catch (e: any) {
       setImportError(e.message)
