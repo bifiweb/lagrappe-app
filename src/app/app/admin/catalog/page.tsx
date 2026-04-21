@@ -25,7 +25,6 @@ interface ShopifyProduct {
   cave: string | null
   cepage: string | null
   region: string | null
-  millesime: number | null
   type: string
   description: string | null
   image_url: string | null
@@ -65,6 +64,7 @@ export default function AdminCatalogPage() {
   const [importing, setImporting] = useState(false)
   const [importDone, setImportDone] = useState(0)
   const [divideBy6, setDivideBy6] = useState(true)
+  const [importSearch, setImportSearch] = useState('')
 
   const router = useRouter()
   const supabase = createClient()
@@ -199,7 +199,6 @@ export default function AdminCatalogPage() {
         cave: p.cave || null,
         cepage: p.cepage || null,
         region: p.region || 'Valais',
-        millesime: p.millesime || null,
         type: p.type,
         description: p.description || null,
         image_url: p.image_url || null,
@@ -476,6 +475,14 @@ export default function AdminCatalogPage() {
 
               {!importLoading && !importError && shopifyProducts.length > 0 && (
                 <>
+                  <div style={{ marginBottom: '10px' }}>
+                    <input
+                      value={importSearch}
+                      onChange={e => setImportSearch(e.target.value)}
+                      placeholder="Rechercher un produit..."
+                      style={{ width: '100%', padding: '8px 12px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+                    />
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <button onClick={() => setSelected(new Set(shopifyProducts.map(p => p.shopify_id)))}
                       style={{ fontSize: '12px', color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -488,7 +495,11 @@ export default function AdminCatalogPage() {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {shopifyProducts.map(p => {
+                    {shopifyProducts.filter(p => {
+                      if (!importSearch.trim()) return true
+                      const q = importSearch.toLowerCase()
+                      return p.name.toLowerCase().includes(q) || (p.cave ?? '').toLowerCase().includes(q) || (p.cepage ?? '').toLowerCase().includes(q)
+                    }).map(p => {
                       const m = merged(p)
                       const isSelected = selected.has(p.shopify_id)
                       const alreadyIn = wines.some(w => w.shopify_url === p.shopify_url)
@@ -509,7 +520,7 @@ export default function AdminCatalogPage() {
                                 {m.name}
                               </div>
                               <div style={{ fontSize: '11px', color: '#888' }}>
-                                {[m.cave, m.cepage, m.region, m.millesime].filter(Boolean).join(' · ')}
+                                {[m.cave, m.cepage, m.region].filter(Boolean).join(' · ')}
                               </div>
                             </div>
                             <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center', flexDirection: 'column' }}>
@@ -528,10 +539,7 @@ export default function AdminCatalogPage() {
 
                           {/* Champs éditables si sélectionné */}
                           {isSelected && (
-                            <div style={{ padding: '0 14px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
-                              <div style={{ gridColumn: '1 / -1', fontSize: '10px', background: '#f0f4ff', color: '#333', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                                DEBUG — millésime metafield: "{(p as any)._debug_millesime?.raw ?? 'null'}" | titre: "{p.name}" | extrait: {(p as any)._debug_millesime?.fromTitle ?? 'null'}
-                              </div>
+                            <div style={{ padding: '0 14px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                               <div>
                                 <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Région</label>
                                 <input value={m.region ?? 'Valais'} onChange={e => setOverride(p.shopify_id, 'region', e.target.value)}
@@ -543,12 +551,6 @@ export default function AdminCatalogPage() {
                                   style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }}>
                                   {['rouge', 'blanc', 'rose', 'petillant'].map(t => <option key={t}>{t}</option>)}
                                 </select>
-                              </div>
-                              <div>
-                                <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Millésime</label>
-                                <input type="number" value={m.millesime ?? ''} onChange={e => setOverride(p.shopify_id, 'millesime', parseInt(e.target.value) || null)}
-                                  placeholder="2022"
-                                  style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
                               </div>
                               {m.description && (
                                 <div style={{ gridColumn: '1 / -1' }}>

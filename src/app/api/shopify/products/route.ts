@@ -3,13 +3,12 @@ import { NextResponse } from 'next/server'
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 
-// Requête Storefront GraphQL pour les metafields (millésime, région) si token disponible
+// Requête Storefront GraphQL pour les metafields (région) si token disponible
 const GQL_QUERY = `{
   products(first: 250, sortKey: TITLE) {
     edges { node {
       id handle
       metafields(identifiers: [
-        {namespace: "custom", key: "millesime"},
         {namespace: "shopify", key: "region"}
       ]) { namespace key value }
     }}
@@ -24,17 +23,6 @@ function detectWineType(tags: string[], productType: string): string {
   return 'rouge'
 }
 
-function extractMillesime(title: string, tags: string[]): number | null {
-  // 1. Cherche dans les tags (ex: tag "2021" ou "millesime:2021")
-  for (const tag of tags) {
-    const t = tag.trim()
-    const tagYear = t.match(/^(?:millesime[:\s]*)?(19[5-9]\d|20[0-3]\d)$/)
-    if (tagYear) return parseInt(tagYear[1])
-  }
-  // 2. Cherche dans le titre
-  const match = title.match(/\b(19[5-9]\d|20[0-3]\d)\b/)
-  return match ? parseInt(match[1]) : null
-}
 
 export async function GET() {
   try {
@@ -50,7 +38,7 @@ export async function GET() {
     const raw: any[] = json?.products ?? []
 
     // 2. Metafields via Storefront API si token disponible
-    const metaByHandle: Record<string, { millesime?: string, region?: string }> = {}
+    const metaByHandle: Record<string, { region?: string }> = {}
     if (STOREFRONT_TOKEN) {
       try {
         const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
@@ -63,7 +51,6 @@ export async function GET() {
           for (const { node } of gql?.data?.products?.edges ?? []) {
             const mfs: any[] = node.metafields ?? []
             metaByHandle[node.handle] = {
-              millesime: mfs.find(m => m?.namespace === 'custom' && m?.key === 'millesime')?.value,
               region: mfs.find(m => m?.namespace === 'shopify' && m?.key === 'region')?.value,
             }
           }
@@ -74,14 +61,11 @@ export async function GET() {
     const products = raw.map((p: any) => {
       const tags: string[] = Array.isArray(p.tags) ? p.tags : (p.tags ? String(p.tags).split(', ') : [])
       const meta = metaByHandle[p.handle] ?? {}
-      const millesime = meta.millesime ? parseInt(meta.millesime) : extractMillesime(p.title, tags)
       return {
         shopify_id: String(p.id),
         name: p.title,
-        _debug_millesime: { raw: meta.millesime, parsed: millesime, fromTitle: extractMillesime(p.title, []), tags },
         cave: p.vendor || null,
         cepage: p.product_type || null,
-        millesime: millesime || null,
         region: meta.region || null,
         type: detectWineType(tags, p.product_type ?? ''),
         description: p.body_html ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600) || null : null,
