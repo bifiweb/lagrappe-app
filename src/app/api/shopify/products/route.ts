@@ -34,7 +34,7 @@ function detectType(tags: string[]): string {
   return 'rouge'
 }
 
-export async function GET() {
+export async function GET() { try {
   const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -86,4 +86,6 @@ export async function GET() {
   }))
 
   return NextResponse.json({ products })
-}
+} catch (e: any) {
+  return NextResponse.json({ error: e.message ?? 'Erreur serveur' }, { status: 500 })
+}}

@@ -136,8 +136,12 @@ export default function AdminCatalogPage() {
     setImportDone(0)
     try {
       const res = await fetch('/api/shopify/products')
-      const json = await res.json()
-      if (!res.ok) { setImportError(json.error ?? 'Erreur inconnue'); return }
+      let json: any
+      try { json = await res.json() } catch {
+        setImportError(`Réponse invalide du serveur (HTTP ${res.status}). Vérifie les logs Next.js.`)
+        return
+      }
+      if (!res.ok) { setImportError(json?.error ?? `Erreur HTTP ${res.status}`); return }
       setShopifyProducts(json.products)
       // Pré-sélectionner tous les produits pas encore dans le catalogue
       const existingUrls = new Set(wines.map(w => w.shopify_url).filter(Boolean))
@@ -433,7 +437,7 @@ export default function AdminCatalogPage() {
                 <div style={{ background: '#fef2f2', border: '0.5px solid #fca5a5', borderRadius: '10px', padding: '1rem', color: '#dc2626', fontSize: '13px' }}>
                   <strong>Erreur :</strong> {importError}
                   <br /><br />
-                  Vérifie que <code>SHOPIFY_ADMIN_API_TOKEN</code> est bien dans ton <code>.env.local</code>.
+                  Vérifie que les métachamps Shopify ont bien l'accès Storefront API activé (Admin Shopify → Paramètres → Données personnalisées → Produits).
                 </div>
               )}
 
