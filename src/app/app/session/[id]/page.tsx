@@ -513,6 +513,18 @@ export default function SessionPage() {
               </div>
             </div>
 
+            <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+              <span style={{ fontSize: '18px', flexShrink: 0 }}>⏳</span>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: '600', color: '#3C3489', marginBottom: '2px' }}>
+                  Attends que tout le monde soit là !
+                </div>
+                <div style={{ fontSize: '12px', color: '#534AB7', lineHeight: 1.5 }}>
+                  Prends le temps de lire les règles ci-dessus, puis lance le vote quand tous les joueurs sont connectés.
+                </div>
+              </div>
+            </div>
+
             <button onClick={launchVote}
               style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
               Lancer le vote du chef →
