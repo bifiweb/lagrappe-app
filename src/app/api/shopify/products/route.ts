@@ -65,6 +65,8 @@ export async function GET() {
 
     return NextResponse.json({ products })
   } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Erreur serveur' }, { status: 500 })
+    return NextResponse.json({
+      error: `${e.message ?? 'Erreur serveur'} — domaine utilisé : "${SHOPIFY_DOMAIN}"`
+    }, { status: 500 })
   }
 }
