@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'lagrappe.myshopify.com'
+const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
 
 function detectWineType(tags: string[], productType: string): string {
   const haystack = [...tags, productType].map(s => s.toLowerCase()).join(' ')
