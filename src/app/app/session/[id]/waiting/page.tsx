@@ -214,7 +214,7 @@ export default function WaitingPage() {
               <>
                 {allDone && (
                   <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '10px 14px', marginBottom: '12px', textAlign: 'center', fontSize: '12px', color: '#7a5020', lineHeight: 1.5 }}>
-                    👑 Tu es le chef — c'est toi qui lances la révélation !
+                    👑 Tu es le·la chef·fe — c'est toi qui lances la révélation !
                   </div>
                 )}
                 <button
@@ -236,10 +236,10 @@ export default function WaitingPage() {
               <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '1rem 1.25rem', textAlign: 'center' }}>
                 <div style={{ fontSize: '28px', marginBottom: '8px' }}>👑</div>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                  En attente du chef...
+                  En attente du·de la chef·fe...
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>
-                  Tout le monde a terminé ! C'est au chef de lancer<br />la révélation du vin mystère. 🍾
+                  Tout le monde a terminé ! C'est au·à la chef·fe de lancer<br />la révélation du vin mystère. 🍾
                 </div>
               </div>
             )}

@@ -185,7 +185,7 @@ export default function SessionPage() {
       const loserIds = ids.filter(id => id !== winnerId)
       const winMove = moves[winnerId]
       const loseMove = moves[loserIds[0]]
-      setChifoumiResult(`${CHIFOUMI_EMOJI[winMove]} bat ${CHIFOUMI_EMOJI[loseMove]} — ${winnerPlayer?.pseudo} est le chef !`)
+      setChifoumiResult(`${CHIFOUMI_EMOJI[winMove]} bat ${CHIFOUMI_EMOJI[loseMove]} — ${winnerPlayer?.pseudo} est le·la chef·fe !`)
       // Seul le premier tied player écrit en DB pour éviter les doublons
       if (profile?.id === ids[0]) {
         setTimeout(async () => {
@@ -351,7 +351,7 @@ export default function SessionPage() {
         `Après analyse des ondes vibratoires du groupe, "${winnerPlayer?.pseudo}" émet la fréquence la plus proche du Pinot Noir.`,
         `Le hasard a parlé — et visiblement il avait très envie que "${winnerPlayer?.pseudo}" tienne le tire-bouchon.`,
         `"${winnerPlayer?.pseudo}" a été désigné par les astres, la physique quantique, et une légère intuition de l'IA.`,
-        `Égalité parfaite entre ${winners.length} grands esprits. La roue a tranché : "${winnerPlayer?.pseudo}" est le chef du soir.`,
+        `Égalité parfaite entre ${winners.length} grands esprits. La roue a tranché : "${winnerPlayer?.pseudo}" est le·la chef·fe du soir.`,
       ]
       const reason = reasons[Math.floor(Math.random() * reasons.length)]
       setTiedPlayerIds(winners)
@@ -476,13 +476,13 @@ export default function SessionPage() {
 
             <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
-                👑 Le rôle du chef
+                👑 Le rôle du·de la chef·fe
               </div>
               <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                Le groupe vote pour désigner un chef parmi les joueurs. Ce rôle est purement cérémoniel : tout le monde joue sur un pied d'égalité et marque des points de la même façon.
+                Le groupe vote pour désigner un·e chef·fe parmi les joueurs. Ce rôle est purement cérémoniel : tout le monde joue sur un pied d'égalité et marque des points de la même façon.
               </p>
               <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                <strong>Son seul privilège ?</strong> C'est lui — et lui seul — qui peut lancer la révélation du vin mystère une fois que tout le monde a soumis sa dégustation. 🍾
+                <strong>Son seul privilège ?</strong> C'est lui·elle — et lui·elle seul·e — qui peut lancer la révélation du vin mystère une fois que tout le monde a soumis sa dégustation. 🍾
               </p>
             </div>
 
@@ -527,7 +527,7 @@ export default function SessionPage() {
 
             <button onClick={launchVote}
               style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-              Lancer le vote du chef →
+              Lancer le vote du·de la chef·fe →
             </button>
 
             {profile?.role === 'admin' && (
@@ -543,9 +543,9 @@ export default function SessionPage() {
         {phase === 'voting' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Qui sera le chef ? 👑</div>
+              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Qui sera le·la chef·fe ? 👑</div>
               <div style={{ fontSize: '13px', color: '#888', lineHeight: 1.5 }}>
-                Tout le monde joue à égalité — le chef sera simplement<br />celui qui appuiera sur le bouton de révélation 🍾
+                Tout le monde joue à égalité — le·la chef·fe sera simplement<br />celui·celle qui appuiera sur le bouton de révélation 🍾
               </div>
             </div>
 
@@ -571,7 +571,7 @@ export default function SessionPage() {
               <button onClick={submitVote}
                 disabled={!myVote && players.length > 1}
                 style={{ width: '100%', padding: '14px', background: (!myVote && players.length > 1) ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: (!myVote && players.length > 1) ? 'default' : 'pointer' }}>
-                {players.length === 1 ? 'Je suis le chef, on commence ! →' : 'Confirmer mon vote'}
+                {players.length === 1 ? 'Je suis le·la chef·fe, on commence ! →' : 'Confirmer mon vote'}
               </button>
             )}
 
@@ -656,7 +656,7 @@ export default function SessionPage() {
             </div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '2rem' }}>
               {amInTiebreak
-                ? 'Choisis ton coup pour devenir chef !'
+                ? 'Choisis ton coup pour devenir chef·fe !'
                 : `Duel en cours entre ${tiedPlayerIds.map(id => players.find(p => p.user_id === id)?.pseudo).join(' et ')}...`}
             </div>
 
@@ -715,13 +715,13 @@ export default function SessionPage() {
         {/* COUNTDOWN */}
         {phase === 'countdown' && (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>Chef désigné</div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>Chef·fe désigné·e</div>
             <div style={{ fontSize: '48px', marginBottom: '.25rem' }}>👑</div>
             <div style={{ fontSize: '36px', fontWeight: '500', color: '#8d323b', marginBottom: '.5rem' }}>
               {chef?.pseudo}
             </div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
-              élu chef par le groupe
+              élu·e chef·fe par le groupe
             </div>
             <div style={{ fontSize: '72px', fontWeight: '500', color: '#8d323b', lineHeight: 1, margin: '1.5rem 0' }}>
               {countdown <= 0 ? '🍷' : countdown}
