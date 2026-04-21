@@ -24,7 +24,14 @@ function detectWineType(tags: string[], productType: string): string {
   return 'rouge'
 }
 
-function extractMillesime(title: string): number | null {
+function extractMillesime(title: string, tags: string[]): number | null {
+  // 1. Cherche dans les tags (ex: tag "2021" ou "millesime:2021")
+  for (const tag of tags) {
+    const t = tag.trim()
+    const tagYear = t.match(/^(?:millesime[:\s]*)?(19[5-9]\d|20[0-3]\d)$/)
+    if (tagYear) return parseInt(tagYear[1])
+  }
+  // 2. Cherche dans le titre
   const match = title.match(/\b(19[5-9]\d|20[0-3]\d)\b/)
   return match ? parseInt(match[1]) : null
 }
@@ -67,11 +74,11 @@ export async function GET() {
     const products = raw.map((p: any) => {
       const tags: string[] = Array.isArray(p.tags) ? p.tags : (p.tags ? String(p.tags).split(', ') : [])
       const meta = metaByHandle[p.handle] ?? {}
-      const millesime = meta.millesime ? parseInt(meta.millesime) : extractMillesime(p.title)
+      const millesime = meta.millesime ? parseInt(meta.millesime) : extractMillesime(p.title, tags)
       return {
         shopify_id: String(p.id),
         name: p.title,
-        _debug_millesime: { raw: meta.millesime, parsed: millesime, fromTitle: extractMillesime(p.title) },
+        _debug_millesime: { raw: meta.millesime, parsed: millesime, fromTitle: extractMillesime(p.title, []), tags },
         cave: p.vendor || null,
         cepage: p.product_type || null,
         millesime: millesime || null,
