@@ -8,8 +8,10 @@ const GQL_QUERY = `{
   products(first: 250, sortKey: TITLE) {
     edges { node {
       id handle
-      millesime: metafield(namespace: "custom", key: "millesime") { value }
-      region: metafield(namespace: "shopify", key: "region") { value }
+      metafields(identifiers: [
+        {namespace: "custom", key: "millesime"},
+        {namespace: "shopify", key: "region"}
+      ]) { namespace key value }
     }}
   }
 }`
@@ -52,9 +54,10 @@ export async function GET() {
         if (gqlRes.ok) {
           const gql = await gqlRes.json()
           for (const { node } of gql?.data?.products?.edges ?? []) {
+            const mfs: any[] = node.metafields ?? []
             metaByHandle[node.handle] = {
-              millesime: node.millesime?.value,
-              region: node.region?.value,
+              millesime: mfs.find(m => m?.namespace === 'custom' && m?.key === 'millesime')?.value,
+              region: mfs.find(m => m?.namespace === 'shopify' && m?.key === 'region')?.value,
             }
           }
         }
