@@ -26,6 +26,12 @@ function detectWineType(tags: string[]): string {
 }
 
 export async function GET() {
+  if (!SHOPIFY_DOMAIN || !STOREFRONT_TOKEN) {
+    return NextResponse.json({
+      error: `Variables manquantes dans .env.local — NEXT_PUBLIC_SHOPIFY_DOMAIN: "${SHOPIFY_DOMAIN}", token défini: ${!!STOREFRONT_TOKEN}`
+    }, { status: 500 })
+  }
+
   try {
     const res = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
       method: 'POST',
