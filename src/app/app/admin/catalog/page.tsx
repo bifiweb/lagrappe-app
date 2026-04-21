@@ -529,6 +529,9 @@ export default function AdminCatalogPage() {
                           {/* Champs éditables si sélectionné */}
                           {isSelected && (
                             <div style={{ padding: '0 14px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                              <div style={{ gridColumn: '1 / -1', fontSize: '10px', background: '#f0f4ff', color: '#333', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                                DEBUG — millésime metafield: "{(p as any)._debug_millesime?.raw ?? 'null'}" | titre: "{p.name}" | extrait: {(p as any)._debug_millesime?.fromTitle ?? 'null'}
+                              </div>
                               <div>
                                 <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Région</label>
                                 <input value={m.region ?? 'Valais'} onChange={e => setOverride(p.shopify_id, 'region', e.target.value)}
