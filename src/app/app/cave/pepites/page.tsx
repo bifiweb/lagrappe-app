@@ -24,29 +24,47 @@ interface WineEntry {
 
 const accent = '#8d323b'
 
-function StarPicker({ value, onChange }: { value: number, onChange: (v: number) => void }) {
-  const [hover, setHover] = useState<number | null>(null)
-  const display = hover ?? value
+const SCORE_EMOJIS = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
+const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
+
+function ScorePicker({ score, onRate }: { score: number | null, onRate: (s: number) => void }) {
+  const stars = score !== null ? score / 2 : 0
   return (
-    <div style={{ display: 'flex', gap: '4px' }}>
-      {[1, 2, 3, 4, 5].map(i => (
-        <button key={i} onClick={() => onChange(i)}
-          onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', fontSize: '26px', lineHeight: 1, color: display >= i ? '#f0a000' : '#ddd' }}>
-          ★
-        </button>
-      ))}
+    <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+      {[1,2,3,4,5].map(i => {
+        const gradId = `sgc-${i}`
+        const isFull = stars >= i
+        const isHalf = !isFull && stars >= i - 0.5 && stars > 0
+        return (
+          <div key={i} style={{ position: 'relative', width: '28px', height: '28px' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" style={{ display: 'block' }}>
+              <defs>
+                <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="50%" stopColor="#f0a000"/>
+                  <stop offset="50%" stopColor="#e0e0e0"/>
+                </linearGradient>
+              </defs>
+              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                fill={isFull ? '#f0a000' : isHalf ? `url(#${gradId})` : '#e0e0e0'} />
+            </svg>
+            <div onClick={() => onRate(i * 2 - 1)} style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '100%', cursor: 'pointer' }} />
+            <div onClick={() => onRate(i * 2)} style={{ position: 'absolute', right: 0, top: 0, width: '50%', height: '100%', cursor: 'pointer' }} />
+          </div>
+        )
+      })}
+      {score !== null && <span style={{ fontSize: '12px', color: '#888', marginLeft: '6px' }}>{score}/10</span>}
     </div>
   )
 }
 
-function MiniStars({ stars }: { stars: number }) {
+function MiniStars({ score }: { score: number }) {
+  const stars = score / 2
   return (
     <div style={{ display: 'flex', gap: '1px', alignItems: 'center' }}>
       {[1, 2, 3, 4, 5].map(i => (
         <span key={i} style={{ fontSize: '12px', color: stars >= i ? '#f0a000' : '#ddd' }}>★</span>
       ))}
-      <span style={{ fontSize: '11px', color: '#888', marginLeft: '4px' }}>{stars}/5</span>
+      <span style={{ fontSize: '11px', color: '#888', marginLeft: '4px' }}>{score}/10</span>
     </div>
   )
 }
@@ -59,7 +77,7 @@ export default function CavePepitesPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const [formStars, setFormStars] = useState(0)
+  const [formScore, setFormScore] = useState<number | null>(null)
   const [formNotesDeg, setFormNotesDeg] = useState('')
   const [formDesign, setFormDesign] = useState(0)
   const [formValeur, setFormValeur] = useState(0)
@@ -110,7 +128,7 @@ export default function CavePepitesPage() {
     if (expanded === id) { setExpanded(null); return }
     setExpanded(id)
     const r = entry.myRating
-    setFormStars(r?.stars ?? 0)
+    setFormScore(r?.stars ?? null)
     setFormNotesDeg(r?.notes_degustation ?? '')
     setFormDesign(r?.design_rating ?? 0)
     setFormValeur(r?.valeur_rating ?? 0)
@@ -126,7 +144,7 @@ export default function CavePepitesPage() {
     await supabase.from('cave_ratings').upsert({
       wine_id: wineId,
       user_id: user.id,
-      stars: formStars,
+      stars: formScore,
       notes_degustation: formNotesDeg || null,
       design_rating: formDesign || null,
       valeur_rating: formValeur || null,
@@ -137,7 +155,7 @@ export default function CavePepitesPage() {
 
     setEntries(prev => prev.map(e => e.wine.id === wineId ? {
       ...e,
-      myRating: { stars: formStars, notes_degustation: formNotesDeg, design_rating: formDesign, valeur_rating: formValeur, racheterait: formRachete, notes_libres: formNotes }
+      myRating: { stars: formScore, notes_degustation: formNotesDeg, design_rating: formDesign, valeur_rating: formValeur, racheterait: formRachete }
     } : e))
 
     setSaving(false)
@@ -206,8 +224,8 @@ export default function CavePepitesPage() {
                       <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>
                         {[wine.cepage, wine.region, wine.millesime].filter(Boolean).join(' · ')}
                       </div>
-                      {myRating
-                        ? <MiniStars stars={myRating.stars} />
+                      {myRating?.stars != null
+                        ? <MiniStars score={myRating.stars} />
                         : <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>Pas encore noté</span>
                       }
                     </div>
@@ -230,8 +248,27 @@ export default function CavePepitesPage() {
                       </div>
 
                       <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Note globale *</label>
-                        <StarPicker value={formStars} onChange={setFormStars} />
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Note *</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '40px', lineHeight: 1, flexShrink: 0 }}>
+                            {formScore !== null ? SCORE_EMOJIS[formScore] : '🤔'}
+                          </span>
+                          <div>
+                            <ScorePicker score={formScore} onRate={setFormScore} />
+                            {formScore !== null
+                              ? <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>{formScore}/10 · {SCORE_LABELS[formScore]}</div>
+                              : <div style={{ fontSize: '11px', color: '#bbb', marginTop: '4px' }}>Tape sur les étoiles pour noter</div>
+                            }
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                            <button key={n} onClick={() => setFormScore(n)}
+                              style={{ width: '28px', height: '28px', borderRadius: '50%', fontSize: '11px', fontWeight: '500', cursor: 'pointer', border: formScore === n ? 'none' : '0.5px solid #e0e0e0', background: formScore === n ? '#8d323b' : formScore !== null && n < formScore ? '#f5ede8' : '#fff', color: formScore === n ? '#fff' : formScore !== null && n < formScore ? '#8d323b' : '#666', transition: 'all .1s' }}>
+                              {n}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       <div style={{ marginBottom: '1rem' }}>
@@ -290,8 +327,8 @@ export default function CavePepitesPage() {
                           style={{ flex: 1, padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
                           Annuler
                         </button>
-                        <button onClick={() => saveRating(wine.id)} disabled={saving || formStars === 0}
-                          style={{ flex: 2, padding: '10px', border: 'none', borderRadius: '8px', background: saving || formStars === 0 ? '#c0a0a0' : accent, color: '#fff', fontSize: '13px', fontWeight: '500', cursor: saving || formStars === 0 ? 'default' : 'pointer' }}>
+                        <button onClick={() => saveRating(wine.id)} disabled={saving || formScore === null}
+                          style={{ flex: 2, padding: '10px', border: 'none', borderRadius: '8px', background: saving || formScore === null ? '#c0a0a0' : accent, color: '#fff', fontSize: '13px', fontWeight: '500', cursor: saving || formScore === null ? 'default' : 'pointer' }}>
                           {saving ? 'Sauvegarde...' : myRating ? 'Mettre à jour' : 'Enregistrer'}
                         </button>
                       </div>

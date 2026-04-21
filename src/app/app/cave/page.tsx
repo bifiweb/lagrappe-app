@@ -266,10 +266,7 @@ export default function CavePage() {
                       )}
 
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        {isGame
-                          ? <MiniStars score={gameEntry?.tasting.score_perso ?? null} outOf10 />
-                          : <MiniStars score={ratingEntry?.rating.stars ?? null} />
-                        }
+                        <MiniStars score={isGame ? (gameEntry?.tasting.score_perso ?? null) : (ratingEntry?.rating.stars ?? null)} outOf10 />
                         {isGame && (
                           <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>
                             {gameEntry?.tasting.total_points.toLocaleString()} pts
