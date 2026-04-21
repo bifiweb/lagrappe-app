@@ -64,6 +64,7 @@ export default function AdminCatalogPage() {
   const [overrides, setOverrides] = useState<Record<string, Partial<ShopifyProduct>>>({})
   const [importing, setImporting] = useState(false)
   const [importDone, setImportDone] = useState(0)
+  const [divideBy6, setDivideBy6] = useState(true)
 
   const router = useRouter()
   const supabase = createClient()
@@ -191,6 +192,7 @@ export default function AdminCatalogPage() {
 
     let count = 0
     for (const p of toImport) {
+      const prix = p.prix_chf && divideBy6 ? Math.round(p.prix_chf / 6 * 100) / 100 : p.prix_chf
       await supabase.from('catalog_wines').upsert({
         name: p.name,
         cave: p.cave || null,
@@ -200,7 +202,7 @@ export default function AdminCatalogPage() {
         type: p.type,
         description: p.description || null,
         image_url: p.image_url || null,
-        prix_chf: p.prix_chf || null,
+        prix_chf: prix || null,
         shopify_url: p.shopify_url,
         active: true,
       }, { onConflict: 'shopify_url' })
@@ -421,9 +423,16 @@ export default function AdminCatalogPage() {
                 <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a' }}>Importer depuis Shopify</div>
                 {!importLoading && shopifyProducts.length > 0 && (
                   <div style={{ fontSize: '12px', color: '#888' }}>
-                    {shopifyProducts.length} produits trouvés · {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
+                    {shopifyProducts.length} produits · {selected.size} sélectionné{selected.size > 1 ? 's' : ''}
                   </div>
                 )}
+              </div>
+              <div onClick={() => setDivideBy6(v => !v)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', flexShrink: 0 }}>
+                <div style={{ width: '32px', height: '18px', borderRadius: '9px', background: divideBy6 ? accent : '#ddd', position: 'relative', transition: 'background .2s' }}>
+                  <div style={{ position: 'absolute', top: '2px', left: divideBy6 ? '16px' : '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#fff', transition: 'left .2s' }} />
+                </div>
+                <span style={{ fontSize: '12px', color: '#666' }}>Prix ÷ 6</span>
               </div>
               <button onClick={() => setShowImport(false)}
                 style={{ background: '#f5f5f5', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', color: '#666', cursor: 'pointer' }}>
@@ -491,10 +500,17 @@ export default function AdminCatalogPage() {
                                 {[m.cave, m.cepage, m.region, m.millesime].filter(Boolean).join(' · ')}
                               </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
-                              {alreadyIn && <span style={{ fontSize: '10px', background: '#e8f0e8', color: '#27500A', padding: '2px 6px', borderRadius: '4px' }}>déjà importé</span>}
-                              <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{m.type}</span>
-                              {m.prix_chf && <span style={{ fontSize: '11px', color: '#888' }}>CHF {m.prix_chf}</span>}
+                            <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center', flexDirection: 'column' }}>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                {alreadyIn && <span style={{ fontSize: '10px', background: '#e8f0e8', color: '#27500A', padding: '2px 6px', borderRadius: '4px' }}>déjà importé</span>}
+                                <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{m.type}</span>
+                              </div>
+                              {m.prix_chf && (
+                                <span style={{ fontSize: '11px', color: '#555', fontWeight: '500' }}>
+                                  CHF {divideBy6 ? Math.round(m.prix_chf / 6 * 100) / 100 : m.prix_chf}
+                                  {divideBy6 && <span style={{ color: '#aaa', fontWeight: '400' }}> /btl</span>}
+                                </span>
+                              )}
                             </div>
                           </div>
 
@@ -519,6 +535,14 @@ export default function AdminCatalogPage() {
                                   placeholder="2022"
                                   style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
                               </div>
+                              {m.description && (
+                                <div style={{ gridColumn: '1 / -1' }}>
+                                  <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Description (depuis Shopify)</label>
+                                  <div style={{ fontSize: '11px', color: '#666', background: '#f9f9f9', borderRadius: '6px', padding: '6px 8px', lineHeight: 1.5, maxHeight: '60px', overflow: 'hidden' }}>
+                                    {m.description}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
