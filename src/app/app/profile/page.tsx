@@ -258,11 +258,12 @@ export default function ProfilePage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button onClick={() => router.push('/app/cave')}
             style={{ width: '100%', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '10px', background: '#fff', color: '#444', fontSize: '14px', cursor: 'pointer', textAlign: 'left' }}>
-            🍷 Ma cave →
+            🍷 Mes dégustations →
           </button>
+          <div style={{ height: '1px', background: '#f0f0f0', margin: '4px 0' }} />
           <button onClick={handleLogout}
             style={{ width: '100%', padding: '12px', border: '0.5px solid #fca5a5', borderRadius: '10px', background: '#fff', color: '#dc2626', fontSize: '14px', cursor: 'pointer', textAlign: 'left' }}>
-            Déconnexion →
+            Se déconnecter →
           </button>
         </div>
 

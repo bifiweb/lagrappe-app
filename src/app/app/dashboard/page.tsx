@@ -38,11 +38,6 @@ export default function DashboardPage() {
     load()
   }, [])
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/auth/login')
-  }
-
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
@@ -65,14 +60,16 @@ export default function DashboardPage() {
             </div>
             <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>La Grappe</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {profile?.role === 'admin' && (
               <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>
                 Admin
               </span>
             )}
-            <button onClick={handleLogout} style={{ fontSize: '13px', color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Déconnexion
+            <button onClick={() => router.push('/app/profile')}
+              style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#8d323b', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '600', color: '#fff', flexShrink: 0 }}
+              title="Mon profil">
+              {(profile?.display_name ?? profile?.email ?? '?')[0].toUpperCase()}
             </button>
           </div>
         </div>
