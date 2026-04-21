@@ -109,8 +109,7 @@ export default function CavePage() {
   const router = useRouter()
   const supabase = createClient()
 
-  useEffect(() => {
-    async function load() {
+  async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
@@ -174,8 +173,13 @@ export default function CavePage() {
 
       setEntries(all)
       setLoading(false)
-    }
+  }
+
+  useEffect(() => {
     load()
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   const totalPts = entries.filter(e => e.type === 'game').reduce((sum, e) => sum + ((e as GameEntry).tasting.total_points ?? 0), 0)
