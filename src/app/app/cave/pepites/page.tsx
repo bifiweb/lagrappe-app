@@ -237,23 +237,24 @@ export default function CavePepitesPage() {
                       <div style={{ marginBottom: '1rem' }}>
                         <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Notes de dégustation</label>
                         <textarea value={formNotesDeg} onChange={e => setFormNotesDeg(e.target.value)}
-                          placeholder="Robe, arômes, bouche, longueur..."
+                          placeholder="Robe, arôme, texture, longueur..."
                           style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', resize: 'none', minHeight: '72px', fontFamily: 'system-ui', outline: 'none', boxSizing: 'border-box', background: '#fff' }} />
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '1rem' }}>
-                        {[
-                          { label: 'Design bouteille', val: formDesign, set: setFormDesign },
-                          { label: 'Qualité / prix', val: formValeur, set: setFormValeur },
-                        ].map(({ label, val, set: setVal }) => (
+                        {([
+                          { label: 'Design bouteille', labels5: ['Moche','Pas très joli','Moyen','Joli','Magnifique'], val: formDesign, set: setFormDesign },
+                          { label: 'Rapport qualité/prix', labels5: ['Pas assez cher du tout','Pas assez cher','Bon prix','Trop cher','Beaucoup trop cher'], val: formValeur, set: setFormValeur },
+                        ] as const).map(({ label, labels5, val, set: setVal }) => (
                           <div key={label}>
-                            <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{label}</label>
-                            <div style={{ display: 'flex', gap: '2px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>{label}</label>
+                            <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
                               {[1, 2, 3, 4, 5].map(i => (
                                 <button key={i} onClick={() => setVal(i)}
                                   style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '2px', lineHeight: 1, color: val >= i ? '#f0a000' : '#ddd' }}>★</button>
                               ))}
                             </div>
+                            {val > 0 && <div style={{ fontSize: '10px', color: '#888' }}>{labels5[val - 1]}</div>}
                           </div>
                         ))}
                       </div>
@@ -268,13 +269,6 @@ export default function CavePepitesPage() {
                             </button>
                           ))}
                         </div>
-                      </div>
-
-                      <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Commentaire libre</label>
-                        <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)}
-                          placeholder="Accord parfait avec, occasion idéale..."
-                          style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', resize: 'none', minHeight: '56px', fontFamily: 'system-ui', outline: 'none', boxSizing: 'border-box', background: '#fff' }} />
                       </div>
 
                       <div style={{ display: 'flex', gap: '8px' }}>

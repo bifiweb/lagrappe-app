@@ -142,6 +142,10 @@ export interface Tasting {
   // Notes perso
   score_perso: number | null
   notes_libres: string | null
+  notes_degustation: string | null
+  design_rating: number | null
+  valeur_rating: number | null
+  racheterait: boolean | null
   // Scoring
   pts_robe: number
   pts_aromes: number

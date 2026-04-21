@@ -16,7 +16,10 @@ export default function RevealPage() {
   const [activeTab, setActiveTab] = useState<'groupe' | 'aromes' | 'moi' | 'vin'>('groupe')
   const [loading, setLoading] = useState(true)
   const [postRevealScore, setPostRevealScore] = useState<number | null>(null)
-  const [postRevealNotes, setPostRevealNotes] = useState('')
+  const [postRevealNotesDeg, setPostRevealNotesDeg] = useState('')
+  const [postRevealDesign, setPostRevealDesign] = useState<number | null>(null)
+  const [postRevealValeur, setPostRevealValeur] = useState<number | null>(null)
+  const [postRevealRachete, setPostRevealRachete] = useState<boolean | null>(null)
   const [savingPostReveal, setSavingPostReveal] = useState(false)
   const [postRevealSaved, setPostRevealSaved] = useState(false)
 
@@ -55,7 +58,10 @@ export default function RevealPage() {
         setMyTasting(myT ?? null)
         if (myT) {
           setPostRevealScore(myT.score_perso ?? null)
-          setPostRevealNotes(myT.notes_libres ?? '')
+          setPostRevealNotesDeg(myT.notes_degustation ?? '')
+          setPostRevealDesign(myT.design_rating ?? null)
+          setPostRevealValeur(myT.valeur_rating ?? null)
+          setPostRevealRachete(myT.racheterait ?? null)
         }
 
         const { data: pl } = await supabase
@@ -70,16 +76,23 @@ export default function RevealPage() {
 
   const isDirty = myTasting !== null && (
     postRevealScore !== myTasting.score_perso ||
-    postRevealNotes !== (myTasting.notes_libres ?? '')
+    postRevealNotesDeg !== (myTasting.notes_degustation ?? '') ||
+    postRevealDesign !== myTasting.design_rating ||
+    postRevealValeur !== myTasting.valeur_rating ||
+    postRevealRachete !== myTasting.racheterait
   )
 
   async function savePostReveal() {
     if (!myTasting) return
     setSavingPostReveal(true)
-    await supabase.from('tastings')
-      .update({ score_perso: postRevealScore, notes_libres: postRevealNotes.trim() || null })
-      .eq('id', myTasting.id)
-    setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_libres: postRevealNotes.trim() || null })
+    await supabase.from('tastings').update({
+      score_perso: postRevealScore,
+      notes_degustation: postRevealNotesDeg.trim() || null,
+      design_rating: postRevealDesign,
+      valeur_rating: postRevealValeur,
+      racheterait: postRevealRachete,
+    }).eq('id', myTasting.id)
+    setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_degustation: postRevealNotesDeg.trim() || null, design_rating: postRevealDesign, valeur_rating: postRevealValeur, racheterait: postRevealRachete })
     setSavingPostReveal(false)
     setPostRevealSaved(true)
     setTimeout(() => setPostRevealSaved(false), 3000)
@@ -210,15 +223,15 @@ export default function RevealPage() {
           </div>
         </div>
 
-        {/* Mon appréciation — note + commentaire */}
+        {/* Mon appréciation */}
         {myTasting && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
             <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '14px' }}>
               Ton appréciation
             </div>
 
-            {/* Emoji + étoiles */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '12px' }}>
+            {/* Note /10 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '10px' }}>
               <span style={{ fontSize: '44px', lineHeight: 1, flexShrink: 0 }}>
                 {postRevealScore !== null ? SCORE_EMOJIS_R[postRevealScore] : '🤔'}
               </span>
@@ -229,14 +242,10 @@ export default function RevealPage() {
                     {postRevealScore}/10 · {SCORE_LABELS_R[postRevealScore]}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '11px', color: '#bbb', marginTop: '5px' }}>
-                    Tape sur les étoiles pour noter
-                  </div>
+                  <div style={{ fontSize: '11px', color: '#bbb', marginTop: '5px' }}>Tape sur les étoiles pour noter</div>
                 )}
               </div>
             </div>
-
-            {/* Sélecteur précis 0–10 */}
             <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '14px' }}>
               {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
                 <button key={n} onClick={() => setPostRevealScore(n)}
@@ -246,15 +255,49 @@ export default function RevealPage() {
               ))}
             </div>
 
-            {/* Commentaire libre */}
-            <textarea value={postRevealNotes} onChange={e => setPostRevealNotes(e.target.value)}
-              placeholder="Tanins soyeux, belle longueur en bouche, accords parfaits avec du gibier…"
-              style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#444', resize: 'none', minHeight: '72px', fontFamily: 'system-ui, sans-serif', boxSizing: 'border-box', outline: 'none' }} />
+            {/* Notes de dégustation */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Notes de dégustation</label>
+              <textarea value={postRevealNotesDeg} onChange={e => setPostRevealNotesDeg(e.target.value)}
+                placeholder="Robe, arôme, texture, longueur..."
+                style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#444', resize: 'none', minHeight: '68px', fontFamily: 'system-ui, sans-serif', boxSizing: 'border-box', outline: 'none' }} />
+            </div>
 
-            {/* Bouton sauvegarder — visible seulement si changement */}
+            {/* Design bouteille + Valeur/prix */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+              {([
+                { label: 'Design bouteille', labels5: ['Moche','Pas très joli','Moyen','Joli','Magnifique'], val: postRevealDesign, set: setPostRevealDesign },
+                { label: 'Rapport qualité/prix', labels5: ['Pas assez cher du tout','Pas assez cher','Bon prix','Trop cher','Beaucoup trop cher'], val: postRevealValeur, set: setPostRevealValeur },
+              ] as const).map(({ label, labels5, val, set }) => (
+                <div key={label}>
+                  <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>{label}</label>
+                  <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
+                    {[1,2,3,4,5].map(i => (
+                      <button key={i} onClick={() => set(i)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '1px', lineHeight: 1, color: (val ?? 0) >= i ? '#f0a000' : '#ddd' }}>★</button>
+                    ))}
+                  </div>
+                  {val && <div style={{ fontSize: '10px', color: '#888' }}>{labels5[val - 1]}</div>}
+                </div>
+              ))}
+            </div>
+
+            {/* Tu le rachèterais ? */}
+            <div style={{ marginBottom: '14px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Tu le rachèterais ?</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {([{ v: true, l: '✅ Oui' }, { v: false, l: '❌ Non' }] as const).map(({ v, l }) => (
+                  <button key={String(v)} onClick={() => setPostRevealRachete(v)}
+                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: postRevealRachete === v ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: postRevealRachete === v ? '#fdf5f5' : '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {isDirty && (
               <button onClick={savePostReveal} disabled={savingPostReveal}
-                style={{ marginTop: '10px', width: '100%', padding: '10px', background: savingPostReveal ? '#c0a0a0' : accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: savingPostReveal ? 'default' : 'pointer' }}>
+                style={{ width: '100%', padding: '10px', background: savingPostReveal ? '#c0a0a0' : accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: savingPostReveal ? 'default' : 'pointer' }}>
                 {savingPostReveal ? 'Enregistrement…' : '✓ Sauvegarder mon appréciation'}
               </button>
             )}
