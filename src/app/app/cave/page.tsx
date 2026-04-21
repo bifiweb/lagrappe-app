@@ -236,8 +236,8 @@ export default function CavePage() {
                   <div onClick={() => setExpanded(isOpen ? null : entryId)}
                     style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
 
-                    {notes?.image_url ? (
-                      <img src={notes.image_url} alt=""
+                    {(notes?.image_url ?? (wine as any)?.image_url) ? (
+                      <img src={(notes?.image_url ?? (wine as any).image_url)!} alt=""
                         style={{ width: '48px', height: '72px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }} />
                     ) : (
                       <div style={{ width: '48px', height: '72px', borderRadius: '8px', background: wine?.type === 'rouge' ? '#f5ede8' : '#f5f3e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🍾</div>

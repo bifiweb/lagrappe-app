@@ -160,6 +160,7 @@ export default function CavePepitesPage() {
 
     setSaving(false)
     setExpanded(null)
+    router.refresh()
   }
 
   if (loading) return (
