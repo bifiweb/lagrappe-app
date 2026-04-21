@@ -190,10 +190,11 @@ export default function AdminCatalogPage() {
     if (toImport.length === 0) return
     setImporting(true)
 
+    const errors: string[] = []
     let count = 0
     for (const p of toImport) {
       const prix = p.prix_chf && divideBy6 ? Math.round(p.prix_chf / 6 * 100) / 100 : p.prix_chf
-      await supabase.from('catalog_wines').upsert({
+      const { error } = await supabase.from('catalog_wines').upsert({
         name: p.name,
         cave: p.cave || null,
         cepage: p.cepage || null,
@@ -206,7 +207,12 @@ export default function AdminCatalogPage() {
         shopify_url: p.shopify_url,
         active: true,
       }, { onConflict: 'shopify_url' })
-      count++
+      if (error) errors.push(`${p.name}: ${error.message}`)
+      else count++
+    }
+
+    if (errors.length > 0) {
+      setImportError(`Erreurs d'import :\n${errors.join('\n')}`)
     }
 
     const { data } = await supabase.from('catalog_wines').select('*').order('created_at', { ascending: false })
