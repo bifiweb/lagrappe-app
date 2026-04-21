@@ -1,78 +1,47 @@
 import { NextResponse } from 'next/server'
 
-const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN!
-const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN!
+const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'lagrappe.myshopify.com'
 
-const QUERY = `{
-  products(first: 100, sortKey: TITLE) {
-    edges { node {
-      id title vendor productType handle description
-      images(first: 1) { edges { node { url } } }
-      priceRange { minVariantPrice { amount } }
-      tags
-      nom_du_vin: metafield(namespace: "custom", key: "nom_du_vin") { value }
-      millesime: metafield(namespace: "custom", key: "millesime") { value }
-      region: metafield(namespace: "custom", key: "region") { value }
-    }}
-  }
-}`
-
-function detectWineType(tags: string[]): string {
-  const t = tags.map(s => s.toLowerCase())
-  if (t.some(s => s.includes('blanc') || s === 'white')) return 'blanc'
-  if (t.some(s => s.includes('ros'))) return 'rose'
-  if (t.some(s => s.includes('pétillant') || s.includes('petillant') || s.includes('mousseux'))) return 'petillant'
+function detectWineType(tags: string[], productType: string): string {
+  const haystack = [...tags, productType].map(s => s.toLowerCase()).join(' ')
+  if (haystack.includes('blanc') || haystack.includes('white')) return 'blanc'
+  if (haystack.includes('ros')) return 'rose'
+  if (haystack.includes('pétillant') || haystack.includes('petillant') || haystack.includes('mousseux') || haystack.includes('sparkling')) return 'petillant'
   return 'rouge'
 }
 
 export async function GET() {
-  if (!SHOPIFY_DOMAIN || !STOREFRONT_TOKEN) {
-    return NextResponse.json({
-      error: `Variables manquantes dans .env.local — NEXT_PUBLIC_SHOPIFY_DOMAIN: "${SHOPIFY_DOMAIN}", token défini: ${!!STOREFRONT_TOKEN}`
-    }, { status: 500 })
-  }
-
   try {
-    const res = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
-      },
-      body: JSON.stringify({ query: QUERY }),
-    })
+    // API JSON publique Shopify — aucun token requis
+    const res = await fetch(
+      `https://${SHOPIFY_DOMAIN}/products.json?limit=250`,
+      { headers: { 'Accept': 'application/json' }, next: { revalidate: 0 } }
+    )
 
     if (!res.ok) {
-      const text = await res.text()
-      return NextResponse.json({ error: `Shopify ${res.status}: ${text.slice(0, 200)}` }, { status: 502 })
+      return NextResponse.json({ error: `Shopify ${res.status} — vérifie le domaine (${SHOPIFY_DOMAIN})` }, { status: 502 })
     }
 
     const json = await res.json()
-    if (json.errors) {
-      return NextResponse.json({ error: json.errors.map((e: any) => e.message).join(', ') }, { status: 502 })
-    }
+    const raw = json?.products ?? []
 
-    const edges = json?.data?.products?.edges ?? []
-    const products = edges.map(({ node }: any) => ({
-      shopify_id: node.id,
-      name: node.nom_du_vin?.value || node.title,
-      cave: node.vendor || null,
-      cepage: node.productType || null,
-      millesime: node.millesime?.value ? parseInt(node.millesime.value) : null,
-      region: node.region?.value || null,
-      type: detectWineType(node.tags ?? []),
-      description: node.description || null,
-      image_url: node.images?.edges?.[0]?.node?.url ?? null,
-      prix_chf: node.priceRange?.minVariantPrice?.amount
-        ? parseFloat(node.priceRange.minVariantPrice.amount) : null,
-      shopify_url: `https://${SHOPIFY_DOMAIN}/products/${node.handle}`,
-      tags: node.tags ?? [],
+    const products = raw.map((p: any) => ({
+      shopify_id: String(p.id),
+      name: p.title,
+      cave: p.vendor || null,
+      cepage: p.product_type || null,
+      millesime: null,
+      region: null,
+      type: detectWineType(p.tags ? p.tags.split(', ') : [], p.product_type ?? ''),
+      description: p.body_html ? p.body_html.replace(/<[^>]+>/g, '').trim().slice(0, 500) || null : null,
+      image_url: p.images?.[0]?.src ?? null,
+      prix_chf: p.variants?.[0]?.price ? parseFloat(p.variants[0].price) : null,
+      shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
+      tags: p.tags ? p.tags.split(', ') : [],
     }))
 
     return NextResponse.json({ products })
   } catch (e: any) {
-    return NextResponse.json({
-      error: `${e.message ?? 'Erreur serveur'} — domaine utilisé : "${SHOPIFY_DOMAIN}"`
-    }, { status: 500 })
+    return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }
 }
