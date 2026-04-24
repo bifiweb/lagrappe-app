@@ -5,26 +5,25 @@ import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 export default function PushBanner() {
   const { state, subscribe } = usePushNotifications()
-  const [dismissed, setDismissed] = useState(true)
+  const [ready, setReady] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    if (state === 'unsubscribed') {
-      const key = 'push-banner-dismissed'
-      if (!sessionStorage.getItem(key)) setDismissed(false)
-    }
-  }, [state])
-
-  function dismiss() {
-    sessionStorage.setItem('push-banner-dismissed', '1')
-    setDismissed(true)
-  }
+    if (sessionStorage.getItem('push-banner-dismissed')) setDismissed(true)
+    setReady(true)
+  }, [])
 
   async function handleSubscribe() {
     await subscribe()
     dismiss()
   }
 
-  if (dismissed || state !== 'unsubscribed') return null
+  function dismiss() {
+    sessionStorage.setItem('push-banner-dismissed', '1')
+    setDismissed(true)
+  }
+
+  if (!ready || dismissed || state === 'loading' || state === 'unsupported' || state === 'denied' || state === 'subscribed') return null
 
   return (
     <div style={{

@@ -19,9 +19,9 @@ export function usePushNotifications() {
       setState('denied')
       return
     }
-    getCurrentSubscription().then((sub) => {
-      setState(sub ? 'subscribed' : 'unsubscribed')
-    })
+    getCurrentSubscription()
+      .then((sub) => setState(sub ? 'subscribed' : 'unsubscribed'))
+      .catch(() => setState('unsubscribed'))
   }, [])
 
   async function subscribe() {
