@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Project } from '@/types'
 import { avatarUrl, getCharacter } from '@/lib/gameCharacters'
+import PushBanner from '@/components/PushBanner'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -88,6 +89,8 @@ export default function DashboardPage() {
       </div>
 
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+        <PushBanner />
 
         {/* Salutation */}
         <div style={{ marginBottom: '2rem' }}>
@@ -183,6 +186,10 @@ export default function DashboardPage() {
               <button onClick={() => router.push('/app/admin/catalog')}
                 style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
                 💎 Cave à pépites
+              </button>
+              <button onClick={() => router.push('/app/admin/notifications')}
+                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
+                🔔 Notifications
               </button>
             </div>
           </div>

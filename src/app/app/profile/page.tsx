@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Tasting } from '@/types'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
+  const { state: pushState, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications()
 
   useEffect(() => {
     async function load() {
@@ -253,6 +255,46 @@ export default function ProfilePage() {
             </div>
           ) : null
         })()}
+
+        {/* Notifications */}
+        {pushState !== 'unsupported' && (
+          <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>
+              Notifications
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>Annonces La Grappe</div>
+                <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+                  {pushState === 'denied'
+                    ? 'Bloqué dans les paramètres du navigateur'
+                    : 'Nouveaux jeux, vins à noter, suggestions…'}
+                </div>
+              </div>
+              {pushState === 'denied' ? (
+                <span style={{ fontSize: '12px', color: '#aaa' }}>Bloqué</span>
+              ) : (
+                <button
+                  onClick={() => pushState === 'subscribed' ? pushUnsubscribe() : pushSubscribe()}
+                  disabled={pushState === 'loading'}
+                  style={{
+                    position: 'relative', width: '44px', height: '26px', borderRadius: '13px',
+                    border: 'none', cursor: pushState === 'loading' ? 'default' : 'pointer',
+                    background: pushState === 'subscribed' ? '#8d323b' : '#e0e0e0',
+                    transition: 'background .2s', flexShrink: 0,
+                  }}>
+                  <span style={{
+                    position: 'absolute', top: '3px',
+                    left: pushState === 'subscribed' ? '21px' : '3px',
+                    width: '20px', height: '20px', borderRadius: '50%',
+                    background: '#fff', transition: 'left .2s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                  }} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
