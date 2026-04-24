@@ -4,57 +4,57 @@ import { useEffect, useState } from 'react'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 export default function PushBanner() {
-  const { state, subscribe } = usePushNotifications()
+  const { state, subscribe, unsubscribe } = usePushNotifications()
   const [ready, setReady] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
 
-  useEffect(() => {
-    if (sessionStorage.getItem('push-banner-dismissed')) setDismissed(true)
-    setReady(true)
-  }, [])
+  useEffect(() => { setReady(true) }, [])
 
-  async function handleSubscribe() {
-    await subscribe()
-    dismiss()
-  }
+  if (!ready || state === 'loading' || state === 'unsupported') return null
 
-  function dismiss() {
-    sessionStorage.setItem('push-banner-dismissed', '1')
-    setDismissed(true)
-  }
-
-  if (!ready || dismissed || state === 'loading' || state === 'unsupported' || state === 'denied' || state === 'subscribed') return null
+  const isOn = state === 'subscribed'
+  const isDenied = state === 'denied'
 
   return (
     <div style={{
       margin: '0 0 1rem',
       background: '#fff',
-      border: '0.5px solid #e0d4cc',
+      border: '0.5px solid #e0e0e0',
       borderRadius: '12px',
-      padding: '14px 16px',
+      padding: '12px 16px',
       display: 'flex',
       alignItems: 'center',
       gap: '12px',
     }}>
-      <span style={{ fontSize: '22px' }}>🔔</span>
+      <span style={{ fontSize: '20px' }}>🔔</span>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', marginBottom: '2px' }}>
-          Recevoir les annonces La Grappe
+        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
+          Notifications La Grappe
         </div>
-        <div style={{ fontSize: '12px', color: '#888' }}>
-          Nouveaux jeux, vins à noter, suggestions…
+        <div style={{ fontSize: '12px', color: '#888', marginTop: '1px' }}>
+          {isDenied ? 'Bloqué dans les paramètres du navigateur' : 'Annonces, nouveaux jeux, suggestions…'}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-        <button onClick={dismiss}
-          style={{ padding: '6px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
-          Plus tard
+      {isDenied ? (
+        <span style={{ fontSize: '12px', color: '#aaa' }}>Bloqué</span>
+      ) : (
+        <button
+          onClick={() => isOn ? unsubscribe() : subscribe()}
+          disabled={state === 'loading'}
+          style={{
+            position: 'relative', width: '44px', height: '26px', borderRadius: '13px',
+            border: 'none', cursor: 'pointer', flexShrink: 0,
+            background: isOn ? '#8d323b' : '#e0e0e0',
+            transition: 'background .2s',
+          }}>
+          <span style={{
+            position: 'absolute', top: '3px',
+            left: isOn ? '21px' : '3px',
+            width: '20px', height: '20px', borderRadius: '50%',
+            background: '#fff', transition: 'left .2s',
+            boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+          }} />
         </button>
-        <button onClick={handleSubscribe}
-          style={{ padding: '6px 12px', border: 'none', borderRadius: '8px', background: '#8d323b', color: '#fff', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>
-          Activer
-        </button>
-      </div>
+      )}
     </div>
   )
 }
