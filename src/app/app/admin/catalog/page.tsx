@@ -53,6 +53,15 @@ export default function AdminCatalogPage() {
   const [form, setForm] = useState<Partial<CatalogWine>>(EMPTY)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  function copyQrUrl(e: React.MouseEvent, wineId: string) {
+    e.stopPropagation()
+    const url = `${window.location.origin}/app/cave/pepites?wine=${wineId}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(wineId)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   // Import Shopify
   const [showImport, setShowImport] = useState(false)
@@ -287,13 +296,20 @@ export default function AdminCatalogPage() {
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{w.name}</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '3px' }}>
                     {[w.cave, w.cepage, w.region, w.millesime].filter(Boolean).join(' · ')}
                   </div>
+                  <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'monospace' }}>{w.id}</div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{w.type}</span>
-                  {!w.active && <span style={{ fontSize: '11px', background: '#f5f5f5', color: '#aaa', padding: '2px 8px', borderRadius: '6px' }}>inactif</span>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, alignItems: 'flex-end' }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{w.type}</span>
+                    {!w.active && <span style={{ fontSize: '11px', background: '#f5f5f5', color: '#aaa', padding: '2px 8px', borderRadius: '6px' }}>inactif</span>}
+                  </div>
+                  <button onClick={e => copyQrUrl(e, w.id)}
+                    style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', border: '0.5px solid #e0e0e0', background: copiedId === w.id ? '#e8f0e8' : '#fff', color: copiedId === w.id ? '#27500A' : '#888', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {copiedId === w.id ? '✓ Copié !' : '📋 URL QR'}
+                  </button>
                 </div>
               </div>
             ))}
