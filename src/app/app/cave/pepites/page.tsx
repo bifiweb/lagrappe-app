@@ -291,6 +291,15 @@ function CavePepitesContent() {
                         </div>
                       )}
 
+                      {wine.pdf_url && (
+                        <a href={wine.pdf_url} target="_blank" rel="noreferrer"
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '13px', color: '#444', textDecoration: 'none', fontWeight: '500', marginBottom: '1rem' }}>
+                          <span style={{ fontSize: '18px' }}>📄</span>
+                          <span>Voir la fiche du vin</span>
+                          <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#bbb' }}>PDF →</span>
+                        </a>
+                      )}
+
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '1.25rem' }}>
                         {wine.type && <span style={{ fontSize: '12px', background: '#f5ede8', color: accent, padding: '3px 10px', borderRadius: '8px' }}>{wine.type}</span>}
                         {wine.cave && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>🏠 {wine.cave}</span>}
@@ -384,20 +393,12 @@ function CavePepitesContent() {
                         </button>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                        {wine.pdf_url && (
-                          <a href={wine.pdf_url} target="_blank" rel="noreferrer"
-                            style={{ flex: 1, display: 'block', textAlign: 'center', padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#444', textDecoration: 'none', fontWeight: '500' }}>
-                            📄 Fiche PDF
-                          </a>
-                        )}
-                        {wine.shopify_url && (
-                          <a href={wine.shopify_url} target="_blank" rel="noreferrer"
-                            style={{ flex: 1, display: 'block', textAlign: 'center', padding: '9px', background: accent, borderRadius: '8px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: '500' }}>
-                            Racheter →
-                          </a>
-                        )}
-                      </div>
+                      {wine.shopify_url && (
+                        <a href={wine.shopify_url} target="_blank" rel="noreferrer"
+                          style={{ display: 'block', textAlign: 'center', marginTop: '10px', fontSize: '13px', color: accent, textDecoration: 'none', fontWeight: '500' }}>
+                          Racheter ce vin →
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
