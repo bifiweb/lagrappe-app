@@ -70,7 +70,7 @@ export async function GET() {
         cepage: p.product_type || null,
         region: meta.region || null,
         type: detectWineType(tags, p.product_type ?? ''),
-        description: p.body_html ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600) || null : null,
+        description: p.body_html ? (() => { const t = p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 600 ? t.slice(0, 600) + '…' : t || null })() : null,
         image_url: p.images?.[0]?.src ?? null,
         prix_chf: p.variants?.[0]?.price ? parseFloat(p.variants[0].price) : null,
         shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
