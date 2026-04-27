@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface CatalogWine {
   id: string
@@ -72,7 +72,7 @@ function MiniStars({ score }: { score: number }) {
 
 type FilterTab = 'all' | 'rated' | 'unrated'
 
-export default function CavePepitesPage() {
+function CavePepitesContent() {
   const [entries, setEntries] = useState<WineEntry[]>([])
   const [filtered, setFiltered] = useState<WineEntry[]>([])
   const [search, setSearch] = useState('')
@@ -89,7 +89,19 @@ export default function CavePepitesPage() {
   const [formNotes, setFormNotes] = useState('')
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const targetWineId = searchParams.get('wine')
   const supabase = createClient()
+
+  useEffect(() => {
+    if (loading || !targetWineId) return
+    const entry = entries.find(e => e.wine.id === targetWineId)
+    if (!entry) return
+    openRating(entry)
+    setTimeout(() => {
+      document.getElementById(`wine-${targetWineId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+  }, [loading, targetWineId])
 
   useEffect(() => {
     async function load() {
@@ -184,6 +196,7 @@ export default function CavePepitesPage() {
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem', position: 'sticky', top: 0, zIndex: 10 }}>
+
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <button onClick={() => router.push('/app/cave')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
@@ -231,7 +244,7 @@ export default function CavePepitesPage() {
               const isOpen = expanded === wine.id
 
               return (
-                <div key={wine.id} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : myRating?.stars != null ? '#b8d4b0' : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
+                <div key={wine.id} id={`wine-${wine.id}`} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : myRating?.stars != null ? '#b8d4b0' : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
 
                   <div onClick={() => openRating(entry)}
                     style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'center', position: 'relative' }}>
@@ -379,5 +392,13 @@ export default function CavePepitesPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CavePepitesPage() {
+  return (
+    <Suspense>
+      <CavePepitesContent />
+    </Suspense>
   )
 }
