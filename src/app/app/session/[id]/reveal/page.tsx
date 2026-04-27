@@ -22,6 +22,10 @@ export default function RevealPage() {
   const [postRevealRachete, setPostRevealRachete] = useState<boolean | null>(null)
   const [savingPostReveal, setSavingPostReveal] = useState(false)
   const [postRevealSaved, setPostRevealSaved] = useState(false)
+  const [catalogWineId, setCatalogWineId] = useState<string | null>(null)
+  const [alreadyInCave, setAlreadyInCave] = useState(false)
+  const [addingToCave, setAddingToCave] = useState(false)
+  const [addedToCave, setAddedToCave] = useState(false)
 
   const SCORE_EMOJIS_R = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
   const SCORE_LABELS_R = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
@@ -68,6 +72,17 @@ export default function RevealPage() {
           .from('session_players').select('*').eq('session_id', sessionId)
           .order('points_session', { ascending: false })
         setPlayers(pl ?? [])
+
+        if (w?.shopify_url) {
+          const { data: catalogWine } = await supabase
+            .from('catalog_wines').select('id').eq('shopify_url', w.shopify_url).maybeSingle()
+          if (catalogWine) {
+            setCatalogWineId(catalogWine.id)
+            const { data: existingRating } = await supabase
+              .from('cave_ratings').select('id').eq('wine_id', catalogWine.id).eq('user_id', user.id).maybeSingle()
+            setAlreadyInCave(!!existingRating)
+          }
+        }
       }
       setLoading(false)
     }
@@ -105,6 +120,26 @@ export default function RevealPage() {
     } else {
       setTimeout(() => setPostRevealSaved(false), 3000)
     }
+  }
+
+  async function addToCave() {
+    if (!catalogWineId) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    setAddingToCave(true)
+    await supabase.from('cave_ratings').upsert({
+      wine_id: catalogWineId,
+      user_id: user.id,
+      stars: postRevealScore,
+      notes_degustation: postRevealNotesDeg.trim() || null,
+      design_rating: postRevealDesign,
+      valeur_rating: postRevealValeur,
+      racheterait: postRevealRachete,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'wine_id,user_id' })
+    setAddingToCave(false)
+    setAddedToCave(true)
+    setAlreadyInCave(true)
   }
 
   function getAromeCounts() {
@@ -327,6 +362,32 @@ export default function RevealPage() {
             )}
             {postRevealSaved && (
               <div style={{ marginTop: '8px', fontSize: '12px', color: '#27500A', textAlign: 'center' }}>✓ Enregistré !</div>
+            )}
+          </div>
+        )}
+
+        {/* Ajouter à la cave à pépites */}
+        {catalogWineId && myTasting && (
+          <div style={{ background: '#fff', border: `0.5px solid ${alreadyInCave ? '#b8d4b0' : '#e0e0e0'}`, borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: alreadyInCave ? 0 : '12px' }}>
+              <span style={{ fontSize: '28px', lineHeight: 1 }}>💎</span>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Ce vin est dans la cave à pépites</div>
+                <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+                  {alreadyInCave
+                    ? addedToCave ? 'Ajouté avec ta note du jeu !' : 'Tu l\'as déjà noté dans ta cave'
+                    : 'Enregistre ta note du jeu dans ta cave'}
+                </div>
+              </div>
+            </div>
+            {!alreadyInCave && (
+              <button onClick={addToCave} disabled={addingToCave}
+                style={{ width: '100%', padding: '10px', background: addingToCave ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: addingToCave ? 'default' : 'pointer' }}>
+                {addingToCave ? 'Ajout en cours...' : '💎 Ajouter à ma cave à pépites'}
+              </button>
+            )}
+            {alreadyInCave && addedToCave && (
+              <div style={{ fontSize: '13px', color: '#27500A', fontWeight: '500', textAlign: 'center', marginTop: '8px' }}>✓ Ajouté !</div>
             )}
           </div>
         )}
