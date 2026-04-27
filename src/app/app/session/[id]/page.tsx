@@ -465,6 +465,9 @@ export default function SessionPage() {
                   <QRCodeSVG value={getShareUrl()} size={160} fgColor="#8d323b" />
                 </div>
               </div>
+              <div style={{ fontSize: '11px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all', background: '#fff', border: '0.5px solid #d0a090', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px' }}>
+                {getShareUrl()}
+              </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={copyLink}
                   style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', background: copied ? '#27500A' : '#8d323b', color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: '500', transition: 'background .2s' }}>
