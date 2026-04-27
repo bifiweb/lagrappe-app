@@ -9,7 +9,8 @@ const GQL_QUERY = `{
     edges { node {
       id handle
       metafields(identifiers: [
-        {namespace: "shopify", key: "region"}
+        {namespace: "shopify", key: "region"},
+        {namespace: "my_fields", key: "pdf"}
       ]) { namespace key value }
     }}
   }
@@ -38,7 +39,7 @@ export async function GET() {
     const raw: any[] = json?.products ?? []
 
     // 2. Metafields via Storefront API si token disponible
-    const metaByHandle: Record<string, { region?: string }> = {}
+    const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
     if (STOREFRONT_TOKEN) {
       try {
         const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
@@ -52,6 +53,7 @@ export async function GET() {
             const mfs: any[] = node.metafields ?? []
             metaByHandle[node.handle] = {
               region: mfs.find(m => m?.namespace === 'shopify' && m?.key === 'region')?.value,
+              pdf: mfs.find(m => m?.namespace === 'my_fields' && m?.key === 'pdf')?.value,
             }
           }
         }
@@ -72,6 +74,7 @@ export async function GET() {
         image_url: p.images?.[0]?.src ?? null,
         prix_chf: p.variants?.[0]?.price ? parseFloat(p.variants[0].price) : null,
         shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
+        pdf_url: meta.pdf || null,
         tags,
       }
     })

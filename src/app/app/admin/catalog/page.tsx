@@ -16,6 +16,7 @@ interface CatalogWine {
   image_url: string | null
   prix_chf: number | null
   shopify_url: string | null
+  pdf_url: string | null
   active: boolean
 }
 
@@ -30,6 +31,7 @@ interface ShopifyProduct {
   image_url: string | null
   prix_chf: number | null
   shopify_url: string
+  pdf_url: string | null
   tags: string[]
 }
 
@@ -43,7 +45,7 @@ function detectWineType(tags: string[]): string {
   return 'rouge'
 }
 
-const EMPTY: Partial<CatalogWine> = { name: '', cave: '', cepage: '', region: '', millesime: null, type: 'rouge', description: '', image_url: '', prix_chf: null, shopify_url: '', active: true }
+const EMPTY: Partial<CatalogWine> = { name: '', cave: '', cepage: '', region: '', millesime: null, type: 'rouge', description: '', image_url: '', prix_chf: null, shopify_url: '', pdf_url: '', active: true }
 
 export default function AdminCatalogPage() {
   const [wines, setWines] = useState<CatalogWine[]>([])
@@ -125,6 +127,7 @@ export default function AdminCatalogPage() {
       image_url: form.image_url?.trim() || null,
       prix_chf: form.prix_chf || null,
       shopify_url: form.shopify_url?.trim() || null,
+      pdf_url: form.pdf_url?.trim() || null,
       active: form.active ?? true,
     }
 
@@ -213,6 +216,7 @@ export default function AdminCatalogPage() {
         image_url: p.image_url || null,
         prix_chf: prix || null,
         shopify_url: p.shopify_url,
+        pdf_url: p.pdf_url || null,
         active: true,
       }
       // Vérifie si le vin existe déjà (par shopify_url)
@@ -402,6 +406,13 @@ export default function AdminCatalogPage() {
                 <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Lien Shopify</label>
                 <input value={f('shopify_url')} onChange={e => set('shopify_url', e.target.value)}
                   placeholder="https://lagrappe.ch/products/..."
+                  style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>PDF fiche vin</label>
+                <input value={f('pdf_url')} onChange={e => set('pdf_url', e.target.value)}
+                  placeholder="https://cdn.shopify.com/.../fiche.pdf"
                   style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
               </div>
 

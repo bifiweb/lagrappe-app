@@ -16,6 +16,7 @@ interface CatalogWine {
   image_url: string | null
   prix_chf: number | null
   shopify_url: string | null
+  pdf_url: string | null
 }
 
 interface WineEntry {
@@ -383,12 +384,20 @@ function CavePepitesContent() {
                         </button>
                       </div>
 
-                      {wine.shopify_url && (
-                        <a href={wine.shopify_url} target="_blank" rel="noreferrer"
-                          style={{ display: 'block', textAlign: 'center', marginTop: '10px', fontSize: '13px', color: accent, textDecoration: 'none', fontWeight: '500' }}>
-                          Racheter ce vin →
-                        </a>
-                      )}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        {wine.pdf_url && (
+                          <a href={wine.pdf_url} target="_blank" rel="noreferrer"
+                            style={{ flex: 1, display: 'block', textAlign: 'center', padding: '9px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#444', textDecoration: 'none', fontWeight: '500' }}>
+                            📄 Fiche PDF
+                          </a>
+                        )}
+                        {wine.shopify_url && (
+                          <a href={wine.shopify_url} target="_blank" rel="noreferrer"
+                            style={{ flex: 1, display: 'block', textAlign: 'center', padding: '9px', background: accent, borderRadius: '8px', fontSize: '13px', color: '#fff', textDecoration: 'none', fontWeight: '500' }}>
+                            Racheter →
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
