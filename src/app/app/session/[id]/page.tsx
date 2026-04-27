@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import type { Profile, Session, SessionPlayer } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { QRCodeSVG } from 'qrcode.react'
 
 type ChifoumiMove = 'pierre' | 'feuille' | 'ciseaux'
 const CHIFOUMI_EMOJI: Record<ChifoumiMove, string> = { pierre: '✊', feuille: '🖐️', ciseaux: '✌️' }
@@ -459,8 +460,10 @@ export default function SessionPage() {
               <div style={{ fontSize: '12px', color: '#7a4030', marginBottom: '12px' }}>
                 Plus on est de fous, plus le jeu est fun — partage le lien pour qu'ils rejoignent la session.
               </div>
-              <div style={{ fontSize: '11px', color: '#8d323b', fontFamily: 'monospace', wordBreak: 'break-all', background: '#fff', border: '0.5px solid #d0a090', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px' }}>
-                {getShareUrl()}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                <div style={{ background: '#fff', border: '0.5px solid #d0a090', borderRadius: '12px', padding: '12px', display: 'inline-block' }}>
+                  <QRCodeSVG value={getShareUrl()} size={160} fgColor="#8d323b" />
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={copyLink}
