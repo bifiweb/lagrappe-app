@@ -106,7 +106,13 @@ function CavePepitesContent() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth/login'); return }
+      if (!user) {
+        const redirect = targetWineId
+          ? `/app/cave/pepites?wine=${targetWineId}`
+          : '/app/cave/pepites'
+        router.push(`/auth/login?redirect=${encodeURIComponent(redirect)}`)
+        return
+      }
 
       const { data: wines } = await supabase
         .from('catalog_wines').select('*').eq('active', true).order('name')
