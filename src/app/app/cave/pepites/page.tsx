@@ -203,15 +203,21 @@ function CavePepitesContent() {
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem', position: 'sticky', top: 0, zIndex: 10 }}>
-
-        <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
-          <button onClick={() => router.push('/app/cave')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>La cave à pépites</span>
-          <button onClick={() => router.push('/app/cave')}
-            style={{ fontSize: '12px', color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: '500', whiteSpace: 'nowrap' }}>
-            🍷 Mes dégustations
-          </button>
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
+            <button onClick={() => router.push('/app/dashboard')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Ma cave</span>
+          </div>
+          <div style={{ display: 'flex', borderTop: '0.5px solid #f0f0f0', marginBottom: '-1px' }}>
+            <button onClick={() => router.push('/app/cave')}
+              style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '400', color: '#888', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'pointer' }}>
+              Mes dégustations
+            </button>
+            <button style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '600', color: accent, background: 'none', border: 'none', borderBottom: `2px solid ${accent}`, cursor: 'default' }}>
+              Cave à pépites
+            </button>
+          </div>
         </div>
       </div>
 

@@ -103,15 +103,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => router.push('/app/cave')}
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-              🍷 Mes dégustations
-            </button>
-            <button onClick={() => router.push('/app/cave/pepites')}
-              style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-              💎 Cave à pépites
-            </button>
-<button onClick={() => router.push('/app/quiz')}
-              style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-              🧠 Quiz
+              🍷 Ma cave
             </button>
           </div>
         </div>

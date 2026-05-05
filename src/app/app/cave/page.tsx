@@ -199,26 +199,26 @@ export default function CavePage() {
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
-      <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
-        <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
-          <button onClick={() => router.push('/app/dashboard')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Mes dégustations</span>
+      <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
+            <button onClick={() => router.push('/app/dashboard')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Ma cave</span>
+          </div>
+          <div style={{ display: 'flex', borderTop: '0.5px solid #f0f0f0', marginBottom: '-1px' }}>
+            <button style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '600', color: accent, background: 'none', border: 'none', borderBottom: `2px solid ${accent}`, cursor: 'default' }}>
+              Mes dégustations
+            </button>
+            <button onClick={() => router.push('/app/cave/pepites')}
+              style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '400', color: '#888', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'pointer' }}>
+              Cave à pépites
+            </button>
+          </div>
         </div>
       </div>
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1.5rem' }}>
-
-        {/* Accès cave à pépites */}
-        <div onClick={() => router.push('/app/cave/pepites')}
-          style={{ background: 'linear-gradient(135deg, #8d323b 0%, #b84d5a 100%)', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ fontSize: '36px', lineHeight: 1 }}>💎</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500', fontSize: '15px', color: '#fff', marginBottom: '3px' }}>La cave à pépites</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)' }}>Découvre & note tous les vins La Grappe</div>
-          </div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '20px' }}>›</div>
-        </div>
 
         {/* Stats */}
         {entries.length > 0 && (
