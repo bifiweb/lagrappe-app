@@ -251,7 +251,7 @@ function CavePepitesContent() {
               const isOpen = expanded === wine.id
 
               return (
-                <div key={wine.id} id={`wine-${wine.id}`} style={{ background: '#fff', border: `0.5px solid ${isOpen ? accent : myRating?.stars != null ? '#b8d4b0' : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
+                <div key={wine.id} id={`wine-${wine.id}`} style={{ background: isOpen ? '#fff' : myRating?.stars != null ? '#f7f0ec' : '#fff', border: `${myRating?.stars != null || isOpen ? '1.5px' : '0.5px'} solid ${isOpen ? accent : myRating?.stars != null ? '#b8a89e' : '#e0e0e0'}`, borderRadius: '16px', overflow: 'hidden' }}>
 
                   <div onClick={() => openRating(entry)}
                     style={{ padding: '1rem 1.25rem', cursor: 'pointer', display: 'flex', gap: '14px', alignItems: 'center', position: 'relative' }}>
