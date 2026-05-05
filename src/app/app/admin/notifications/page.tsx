@@ -27,13 +27,14 @@ export default function AdminNotificationsPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/auth/login'); return }
-      const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/auth/login'); return }
+      const { data: prof } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
       if (prof?.role !== 'admin') { router.push('/app/dashboard'); return }
 
+      const authHeader = { 'Authorization': `Bearer ${session.access_token}` }
       const [subsRes, { data: hist }] = await Promise.all([
-        fetch('/api/push/subscribers'),
+        fetch('/api/push/subscribers', { headers: authHeader }),
         supabase.from('push_notifications').select('*').order('sent_at', { ascending: false }).limit(20),
       ])
       const subsJson = await subsRes.json()
@@ -49,9 +50,14 @@ export default function AdminNotificationsPage() {
     setSending(true)
     setResult(null)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expirée, recharge la page')
       const res = await fetch('/api/push/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ title: title.trim(), body: body.trim(), url: url.trim() || '/' }),
       })
       const json = await res.json()
@@ -60,7 +66,6 @@ export default function AdminNotificationsPage() {
       setTitle('')
       setBody('')
       setUrl('')
-      // Refresh history
       const { data: hist } = await supabase
         .from('push_notifications').select('*').order('sent_at', { ascending: false }).limit(20)
       setHistory(hist ?? [])
