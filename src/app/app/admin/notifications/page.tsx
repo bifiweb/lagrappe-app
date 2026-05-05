@@ -32,11 +32,12 @@ export default function AdminNotificationsPage() {
       const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
       if (prof?.role !== 'admin') { router.push('/app/dashboard'); return }
 
-      const [{ count }, { data: hist }] = await Promise.all([
-        supabase.from('push_subscriptions').select('*', { count: 'exact', head: true }),
+      const [subsRes, { data: hist }] = await Promise.all([
+        fetch('/api/push/subscribers'),
         supabase.from('push_notifications').select('*').order('sent_at', { ascending: false }).limit(20),
       ])
-      setSubscriberCount(count ?? 0)
+      const subsJson = await subsRes.json()
+      setSubscriberCount(subsJson.count ?? 0)
       setHistory(hist ?? [])
       setLoading(false)
     }
