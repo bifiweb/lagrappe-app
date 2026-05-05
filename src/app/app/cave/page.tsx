@@ -220,20 +220,16 @@ export default function CavePage() {
 
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1.5rem' }}>
 
-        {/* Stats */}
-        {entries.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '1.5rem' }}>
-            {[
-              { label: 'Dégustations', value: totalVins },
-              { label: 'Points de jeu', value: totalPts.toLocaleString() },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '.875rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a' }}>{value}</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{label}</div>
-              </div>
-            ))}
+        {/* Accès cave à pépites */}
+        <div onClick={() => router.push('/app/cave/pepites')}
+          style={{ background: 'linear-gradient(135deg, #8d323b 0%, #b84d5a 100%)', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ fontSize: '30px', lineHeight: 1 }}>💎</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: '500', fontSize: '14px', color: '#fff', marginBottom: '2px' }}>Cave à pépites</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)' }}>Découvrir & noter tous les vins La Grappe</div>
           </div>
-        )}
+          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '20px' }}>›</div>
+        </div>
 
         {/* Filtres + tri */}
         {entries.length > 0 && (
