@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Project } from '@/types'
-import { avatarUrl, getCharacter } from '@/lib/gameCharacters'
+import { avatarUrl } from '@/lib/gameCharacters'
 import PushBanner from '@/components/PushBanner'
 
 export default function DashboardPage() {
@@ -69,18 +69,16 @@ export default function DashboardPage() {
               </span>
             )}
             {(() => {
-              const char = profile?.avatar ? getCharacter(profile.avatar) : null
               return (
                 <button onClick={() => router.push('/app/profile')}
                   title="Mon profil"
                   style={{ position: 'relative', width: '36px', height: '36px', padding: 0, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: profile?.avatar ? 'transparent' : '#8d323b', border: profile?.avatar ? '2px solid #8d323b' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '600', color: '#fff', overflow: 'hidden' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: profile?.avatar ? '#f5ede8' : '#8d323b', border: profile?.avatar ? '2px solid #8d323b' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '600', color: '#fff', overflow: 'hidden' }}>
                     {profile?.avatar
-                      ? <img src={avatarUrl(profile.avatar, char?.skinColor)} width={36} height={36} alt="" style={{ objectFit: 'cover', display: 'block' }} />
+                      ? <img src={avatarUrl(profile.avatar)} width={36} height={36} alt="" style={{ objectFit: 'cover', display: 'block' }} />
                       : (profile?.display_name ?? profile?.email ?? '?')[0].toUpperCase()
                     }
                   </div>
-                  {char && <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '14px', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))' }}>{char.emoji}</span>}
                 </button>
               )
             })()}
