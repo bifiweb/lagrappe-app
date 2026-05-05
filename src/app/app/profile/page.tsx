@@ -8,7 +8,6 @@ import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
 const accent = '#8d323b'
-type ThemeMode = 'auto' | 'light' | 'dark'
 
 interface BadgeDef {
   id: string
@@ -57,16 +56,12 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false)
   const [editingAvatar, setEditingAvatar] = useState(false)
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
-  const [theme, setTheme] = useState<ThemeMode>('auto')
+
   const router = useRouter()
   const supabase = createClient()
   const { state: pushState, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications()
 
   useEffect(() => {
-    const saved = (localStorage.getItem('theme') ?? 'auto') as ThemeMode
-    setTheme(saved)
-    document.documentElement.setAttribute('data-theme', saved)
-
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
@@ -98,12 +93,6 @@ export default function ProfilePage() {
     }
     load()
   }, [])
-
-  function applyTheme(t: ThemeMode) {
-    setTheme(t)
-    localStorage.setItem('theme', t)
-    document.documentElement.setAttribute('data-theme', t)
-  }
 
   async function saveName() {
     if (!profile || !displayName.trim()) return
@@ -295,19 +284,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-
-        {/* Apparence */}
-        <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-          <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>Apparence</div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {([['auto', '🔆 Auto'], ['light', '☀️ Clair'], ['dark', '🌙 Sombre']] as [ThemeMode, string][]).map(([t, label]) => (
-              <button key={t} onClick={() => applyTheme(t)}
-                style={{ flex: 1, padding: '8px 4px', fontSize: '12px', fontWeight: '500', borderRadius: '8px', border: theme === t ? `1.5px solid ${accent}` : '0.5px solid #e0e0e0', background: theme === t ? '#fdf0ee' : '#fff', color: theme === t ? accent : '#666', cursor: 'pointer' }}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Stats */}
         <div style={{ marginBottom: '1rem' }}>

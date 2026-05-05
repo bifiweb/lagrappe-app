@@ -25,7 +25,7 @@ export const CHARACTERS: Character[] = [
   { seed: 'duck',     filename: '16-duck-canard-mousseux',       label: 'Canard Mousseux',      emoji: '🦆' },
   { seed: 'bee',      filename: '17-bee-abeille-florale',        label: 'Abeille Florale',      emoji: '🐝' },
   { seed: 'monkey',   filename: '18-monkey-singe-exotique',      label: 'Singe Exotique',       emoji: '🐒' },
-  { seed: 'llama',    filename: '19-llama-lama-lev',             label: 'Lama Levé',            emoji: '🦙' },
+  { seed: 'llama',    filename: '19-llama-lama-lev',             label: 'Lama Élevé',           emoji: '🦙' },
   { seed: 'crab',     filename: '20-crab-crabe-iod',             label: 'Crabe Iodé',           emoji: '🦀' },
 ]
 
