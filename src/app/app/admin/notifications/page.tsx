@@ -52,14 +52,18 @@ export default function AdminNotificationsPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expirée, recharge la page')
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000)
       const res = await fetch('/api/push/send', {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ title: title.trim(), body: body.trim(), url: url.trim() || '/' }),
       })
+      clearTimeout(timeoutId)
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? 'Erreur')
       setResult({ type: 'success', msg: `Envoyé à ${json.recipients} appareil(s)` })
@@ -70,7 +74,8 @@ export default function AdminNotificationsPage() {
         .from('push_notifications').select('*').order('sent_at', { ascending: false }).limit(20)
       setHistory(hist ?? [])
     } catch (err: any) {
-      setResult({ type: 'error', msg: err.message })
+      const msg = err.name === 'AbortError' ? 'Délai dépassé (25s) — vérifie les clés VAPID dans les variables d\'environnement' : err.message
+      setResult({ type: 'error', msg })
     } finally {
       setSending(false)
     }
