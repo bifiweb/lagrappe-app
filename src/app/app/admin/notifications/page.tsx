@@ -53,7 +53,7 @@ export default function AdminNotificationsPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expirée, recharge la page')
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 25000)
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
       const res = await fetch('/api/push/send', {
         method: 'POST',
         signal: controller.signal,
@@ -74,7 +74,7 @@ export default function AdminNotificationsPage() {
         .from('push_notifications').select('*').order('sent_at', { ascending: false }).limit(20)
       setHistory(hist ?? [])
     } catch (err: any) {
-      const msg = err.name === 'AbortError' ? 'Délai dépassé (25s) — vérifie les clés VAPID dans les variables d\'environnement' : err.message
+      const msg = err.name === 'AbortError' ? 'Délai dépassé — vérifie les variables d\'environnement sur Vercel (VAPID, SUPABASE_SERVICE_ROLE_KEY)' : err.message
       setResult({ type: 'error', msg })
     } finally {
       setSending(false)
