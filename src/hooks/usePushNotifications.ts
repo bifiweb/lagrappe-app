@@ -34,7 +34,7 @@ export function usePushNotifications() {
       if (!session) { setState('unsubscribed'); return }
 
       const json = sub.toJSON()
-      await fetch('/api/push/subscribe', {
+      const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,6 +42,7 @@ export function usePushNotifications() {
         },
         body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
       })
+      if (!res.ok) { setState('unsubscribed'); return }
       setState('subscribed')
     } catch {
       setState('unsubscribed')
