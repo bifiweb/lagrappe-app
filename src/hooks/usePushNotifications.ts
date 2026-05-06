@@ -30,10 +30,16 @@ export function usePushNotifications() {
       const sub = await registerPushSubscription()
       if (!sub) { setState('unsubscribed'); return }
 
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setState('unsubscribed'); return }
+
       const json = sub.toJSON()
       await fetch('/api/push/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
       })
       setState('subscribed')
@@ -44,15 +50,24 @@ export function usePushNotifications() {
 
   async function unsubscribe() {
     setState('loading')
-    const sub = await getCurrentSubscription()
-    const endpoint = sub?.endpoint
-    await unregisterPushSubscription()
-    await fetch('/api/push/unsubscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ endpoint }),
-    })
-    setState('unsubscribed')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const sub = await getCurrentSubscription()
+      const endpoint = sub?.endpoint
+      await unregisterPushSubscription()
+      if (session) {
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ endpoint }),
+        })
+      }
+    } finally {
+      setState('unsubscribed')
+    }
   }
 
   return { state, subscribe, unsubscribe }
