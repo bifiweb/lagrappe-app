@@ -1,25 +1,6 @@
 import { NextResponse } from 'next/server'
 
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
-const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN
-
-// Admin GraphQL — accès complet aux metafields sans config Storefront
-const ADMIN_GQL_QUERY = `{
-  products(first: 250, sortKey: TITLE) {
-    edges { node {
-      id handle
-      metafields(identifiers: [
-        {namespace: "shopify", key: "region"},
-        {namespace: "my_fields", key: "pdf"}
-      ]) {
-        namespace key value
-        reference {
-          ... on GenericFile { url }
-        }
-      }
-    }}
-  }
-}`
 
 function detectWineType(tags: string[], productType: string): string {
   const haystack = [...tags, productType].map(s => s.toLowerCase()).join(' ')
@@ -31,7 +12,6 @@ function detectWineType(tags: string[], productType: string): string {
 
 export async function GET() {
   try {
-    // 1. API JSON publique — produits de base
     const res = await fetch(
       `https://${SHOPIFY_DOMAIN}/products.json?limit=250`,
       { headers: { 'Accept': 'application/json' }, next: { revalidate: 0 } }
@@ -42,59 +22,25 @@ export async function GET() {
     const json = await res.json()
     const raw: any[] = json?.products ?? []
 
-    // 2. Metafields via Admin API GraphQL
-    const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
-    let metaError: string | null = null
-    if (ADMIN_TOKEN) {
-      try {
-        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Shopify-Access-Token': ADMIN_TOKEN,
-          },
-          body: JSON.stringify({ query: ADMIN_GQL_QUERY }),
-        })
-        if (gqlRes.ok) {
-          const gql = await gqlRes.json()
-          for (const { node } of gql?.data?.products?.edges ?? []) {
-            const mfs: any[] = node.metafields ?? []
-            const pdfMf = mfs.find(m => m?.namespace === 'my_fields' && m?.key === 'pdf')
-            metaByHandle[node.handle] = {
-              region: mfs.find(m => m?.namespace === 'shopify' && m?.key === 'region')?.value,
-              pdf: pdfMf?.reference?.url ?? pdfMf?.value ?? undefined,
-            }
-          }
-        } else {
-          metaError = `Admin API ${gqlRes.status} — vérifie SHOPIFY_ADMIN_TOKEN dans Vercel`
-        }
-      } catch (e: any) {
-        metaError = `Admin API inaccessible : ${e.message}`
-      }
-    } else {
-      metaError = 'SHOPIFY_ADMIN_TOKEN non défini dans Vercel'
-    }
-
     const products = raw.map((p: any) => {
       const tags: string[] = Array.isArray(p.tags) ? p.tags : (p.tags ? String(p.tags).split(', ') : [])
-      const meta = metaByHandle[p.handle] ?? {}
       return {
         shopify_id: String(p.id),
         name: p.title,
         cave: p.vendor || null,
         cepage: p.product_type || null,
-        region: meta.region || null,
+        region: null,
         type: detectWineType(tags, p.product_type ?? ''),
         description: p.body_html ? (() => { const t = p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 600 ? t.slice(0, 600) + '…' : t || null })() : null,
         image_url: p.images?.[0]?.src ?? null,
         prix_chf: p.variants?.[0]?.price ? parseFloat(p.variants[0].price) : null,
         shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
-        pdf_url: meta.pdf || null,
+        pdf_url: null,
         tags,
       }
     })
 
-    return NextResponse.json({ products, metaError })
+    return NextResponse.json({ products })
   } catch (e: any) {
     return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }

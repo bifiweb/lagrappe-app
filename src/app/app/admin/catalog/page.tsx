@@ -222,7 +222,9 @@ export default function AdminCatalogPage() {
       }
       // Vérifie si le vin existe déjà (par shopify_url)
       const { data: existing } = await supabase
-        .from('catalog_wines').select('id').eq('shopify_url', p.shopify_url).maybeSingle()
+        .from('catalog_wines').select('id, pdf_url').eq('shopify_url', p.shopify_url).maybeSingle()
+      // Préserve le pdf_url saisi manuellement si Shopify n'en fournit pas
+      if (existing) payload.pdf_url = payload.pdf_url ?? existing.pdf_url ?? null
       const { error } = existing
         ? await supabase.from('catalog_wines').update(payload).eq('id', existing.id)
         : await supabase.from('catalog_wines').insert(payload)
