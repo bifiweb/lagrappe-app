@@ -52,7 +52,12 @@ export async function GET() {
         next: { revalidate: 0 },
       })
       const gql = await gqlRes.json()
-      metaDebug = { status: gqlRes.status, errors: gql?.errors, dataKeys: gql?.data ? Object.keys(gql.data) : null }
+      const firstEdge = gql?.data?.products?.edges?.[0]
+      metaDebug = {
+        status: gqlRes.status,
+        errors: gql?.errors,
+        firstProduct: firstEdge ? { handle: firstEdge.node.handle, metafields: firstEdge.node.metafields } : null,
+      }
       if (gqlRes.ok && !gql?.errors) {
         for (const { node } of gql?.data?.products?.edges ?? []) {
           const mfs: any[] = node.metafields ?? []
