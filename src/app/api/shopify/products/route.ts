@@ -91,7 +91,9 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ products, _debug: metaDebug })
+    const withPdf = products.filter(p => p.pdf_url)
+    const withRegion = products.filter(p => p.region)
+    return NextResponse.json({ products, _debug: { ...metaDebug, withPdfCount: withPdf.length, withRegionCount: withRegion.length, samplePdf: withPdf[0] ?? null } })
   } catch (e: any) {
     return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }
