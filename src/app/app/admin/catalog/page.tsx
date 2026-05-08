@@ -165,8 +165,8 @@ export default function AdminCatalogPage() {
       }
       if (!res.ok) { setImportError(json?.error ?? `Erreur HTTP ${res.status}`); return }
 
-      if (json.metaError) setImportError(json.metaError)
       setShopifyProducts(json.products)
+      if (json.metaError) setImportError(json.metaError)
       const existingUrls = new Set(wines.map(w => w.shopify_url).filter(Boolean))
       setSelected(new Set(json.products.filter((p: ShopifyProduct) => !existingUrls.has(p.shopify_url)).map((p: ShopifyProduct) => p.shopify_id)))
       setOverrides({})
@@ -488,10 +488,8 @@ export default function AdminCatalogPage() {
               )}
 
               {importError && (
-                <div style={{ background: '#fef2f2', border: '0.5px solid #fca5a5', borderRadius: '10px', padding: '1rem', color: '#dc2626', fontSize: '13px' }}>
-                  <strong>Erreur :</strong> {importError}
-                  <br /><br />
-                  Vérifie que les métachamps Shopify ont bien l'accès Storefront API activé (Admin Shopify → Paramètres → Données personnalisées → Produits).
+                <div style={{ background: '#fff8e8', border: '0.5px solid #f0c040', borderRadius: '10px', padding: '10px 14px', color: '#7a5000', fontSize: '12px', marginBottom: '10px' }}>
+                  ⚠️ {importError}
                 </div>
               )}
 
@@ -501,7 +499,7 @@ export default function AdminCatalogPage() {
                 </div>
               )}
 
-              {!importLoading && !importError && shopifyProducts.length > 0 && (
+              {!importLoading && shopifyProducts.length > 0 && (
                 <>
                   <div style={{ marginBottom: '10px' }}>
                     <input
