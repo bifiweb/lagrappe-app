@@ -14,6 +14,12 @@ const GQL_QUERY = `{
         namespace key value
         reference {
           ... on GenericFile { url }
+          ... on Metaobject { field(key: "name") { value } }
+        }
+        references(first: 1) {
+          nodes {
+            ... on Metaobject { field(key: "name") { value } }
+          }
         }
       }
     }}
@@ -61,9 +67,12 @@ export async function GET() {
       if (gqlRes.ok && !gql?.errors) {
         for (const { node } of gql?.data?.products?.edges ?? []) {
           const mfs: any[] = node.metafields ?? []
+          const regionMf = mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')
           const pdfMf = mfs.find((m: any) => m?.namespace === 'my_fields' && m?.key === 'pdf')
           metaByHandle[node.handle] = {
-            region: mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')?.value,
+            region: regionMf?.reference?.field?.value
+              ?? regionMf?.references?.nodes?.[0]?.field?.value
+              ?? null,
             pdf: pdfMf?.reference?.url ?? pdfMf?.value ?? undefined,
           }
         }
