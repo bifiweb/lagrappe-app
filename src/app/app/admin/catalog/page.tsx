@@ -165,6 +165,7 @@ export default function AdminCatalogPage() {
       }
       if (!res.ok) { setImportError(json?.error ?? `Erreur HTTP ${res.status}`); return }
 
+      if (json.storefrontError) setImportError(json.storefrontError)
       setShopifyProducts(json.products)
       const existingUrls = new Set(wines.map(w => w.shopify_url).filter(Boolean))
       setSelected(new Set(json.products.filter((p: ShopifyProduct) => !existingUrls.has(p.shopify_url)).map((p: ShopifyProduct) => p.shopify_id)))

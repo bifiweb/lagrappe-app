@@ -45,7 +45,7 @@ export async function GET() {
 
     // 2. Metafields via Storefront API si token disponible
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
-    let gqlDebug: any = null
+    let storefrontError: string | null = null
     if (STOREFRONT_TOKEN) {
       try {
         const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
@@ -55,11 +55,6 @@ export async function GET() {
         })
         if (gqlRes.ok) {
           const gql = await gqlRes.json()
-          // Garde les 3 premiers produits pour debug
-          gqlDebug = gql?.data?.products?.edges?.slice(0, 3).map(({ node }: any) => ({
-            handle: node.handle,
-            metafields: node.metafields,
-          }))
           for (const { node } of gql?.data?.products?.edges ?? []) {
             const mfs: any[] = node.metafields ?? []
             const pdfMf = mfs.find(m => m?.namespace === 'my_fields' && m?.key === 'pdf')
@@ -69,13 +64,11 @@ export async function GET() {
             }
           }
         } else {
-          gqlDebug = { httpError: gqlRes.status, body: await gqlRes.text() }
+          storefrontError = `Storefront API ${gqlRes.status} — token invalide ou expiré. Régénère NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN dans Vercel.`
         }
       } catch (e: any) {
-        gqlDebug = { exception: e.message }
+        storefrontError = `Storefront API inaccessible : ${e.message}`
       }
-    } else {
-      gqlDebug = 'STOREFRONT_TOKEN manquant'
     }
 
     const products = raw.map((p: any) => {
@@ -97,7 +90,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ products, _debug: gqlDebug })
+    return NextResponse.json({ products, storefrontError })
   } catch (e: any) {
     return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }
