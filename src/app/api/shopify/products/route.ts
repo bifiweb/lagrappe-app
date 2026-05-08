@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
 
+const SWISS_REGIONS = ['Valais', 'Vaud', 'Genève', 'Geneve', 'Tessin', 'Neuchâtel', 'Neuchatel', 'Grisons', 'Fribourg', 'Zurich', 'Schaffhouse', 'Thurgovie', 'Berne', 'Argovie']
+
+function detectRegion(tags: string[]): string | null {
+  const haystack = tags.map(s => s.toLowerCase())
+  for (const region of SWISS_REGIONS) {
+    if (haystack.some(t => t.includes(region.toLowerCase()))) return region
+  }
+  return null
+}
+
 function detectWineType(tags: string[], productType: string): string {
   const haystack = [...tags, productType].map(s => s.toLowerCase()).join(' ')
   if (haystack.includes('blanc') || haystack.includes('white')) return 'blanc'
@@ -29,7 +39,7 @@ export async function GET() {
         name: p.title,
         cave: p.vendor || null,
         cepage: p.product_type || null,
-        region: null,
+        region: detectRegion(tags),
         type: detectWineType(tags, p.product_type ?? ''),
         description: p.body_html ? (() => { const t = p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 600 ? t.slice(0, 600) + '…' : t || null })() : null,
         image_url: p.images?.[0]?.src ?? null,

@@ -56,6 +56,10 @@ export default function AdminCatalogPage() {
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [bulkMode, setBulkMode] = useState(false)
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   function copyQrUrl(e: React.MouseEvent, wineId: string) {
     e.stopPropagation()
@@ -152,6 +156,18 @@ export default function AdminCatalogPage() {
     close()
   }
 
+  async function bulkDelete() {
+    if (bulkSelected.size === 0) return
+    if (!confirm(`Supprimer ${bulkSelected.size} vin${bulkSelected.size > 1 ? 's' : ''} ? Les notes des utilisateurs seront aussi supprimées.`)) return
+    setBulkDeleting(true)
+    await supabase.from('catalog_wines').delete().in('id', Array.from(bulkSelected))
+    setWines(wines.filter(w => !bulkSelected.has(w.id)))
+    setBulkSelected(new Set())
+    setBulkMode(false)
+    setBulkDeleting(false)
+    close()
+  }
+
   async function fetchShopifyProducts() {
     setImportLoading(true)
     setImportError(null)
@@ -166,9 +182,7 @@ export default function AdminCatalogPage() {
       if (!res.ok) { setImportError(json?.error ?? `Erreur HTTP ${res.status}`); return }
 
       setShopifyProducts(json.products)
-      if (json.metaError) setImportError(json.metaError)
-      const existingUrls = new Set(wines.map(w => w.shopify_url).filter(Boolean))
-      setSelected(new Set(json.products.filter((p: ShopifyProduct) => !existingUrls.has(p.shopify_url)).map((p: ShopifyProduct) => p.shopify_id)))
+      setSelected(new Set())
       setOverrides({})
     } catch (e: any) {
       setImportError(e.message)
@@ -272,15 +286,40 @@ export default function AdminCatalogPage() {
 
         {/* Liste */}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ fontSize: '13px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em' }}>
               {wines.length} vin{wines.length > 1 ? 's' : ''}
             </div>
-            <button onClick={openCreate}
-              style={{ padding: '7px 14px', background: accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-              + Ajouter manuellement
-            </button>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {bulkMode ? (
+                <>
+                  <button onClick={() => { setBulkMode(false); setBulkSelected(new Set()) }}
+                    style={{ padding: '6px 12px', background: '#fff', color: '#888', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}>
+                    Annuler
+                  </button>
+                  <button onClick={bulkDelete} disabled={bulkSelected.size === 0 || bulkDeleting}
+                    style={{ padding: '6px 12px', background: bulkSelected.size === 0 ? '#f5f5f5' : '#dc2626', color: bulkSelected.size === 0 ? '#bbb' : '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '500', cursor: bulkSelected.size === 0 ? 'default' : 'pointer' }}>
+                    {bulkDeleting ? 'Suppression...' : `Supprimer${bulkSelected.size > 0 ? ` (${bulkSelected.size})` : ''}`}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setBulkMode(true)}
+                    style={{ padding: '6px 12px', background: '#fff', color: '#888', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' }}>
+                    Sélectionner
+                  </button>
+                  <button onClick={openCreate}
+                    style={{ padding: '7px 14px', background: accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+                    + Ajouter
+                  </button>
+                </>
+              )}
+            </div>
           </div>
+
+          <input value={catalogSearch} onChange={e => setCatalogSearch(e.target.value)}
+            placeholder="Rechercher dans le catalogue..."
+            style={{ width: '100%', padding: '8px 12px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '13px', outline: 'none', marginBottom: '10px', boxSizing: 'border-box' }} />
 
           {success && (
             <div style={{ background: '#e8f0e8', color: '#27500A', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginBottom: '12px' }}>
@@ -293,9 +332,21 @@ export default function AdminCatalogPage() {
               <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '2rem', textAlign: 'center', color: '#888', fontSize: '14px' }}>
                 Aucun vin dans le catalogue.<br />Importe depuis Shopify ou ajoute manuellement !
               </div>
-            ) : wines.map(w => (
-              <div key={w.id} onClick={() => openEdit(w)}
-                style={{ background: '#fff', border: editing?.id === w.id ? `2px solid ${accent}` : '0.5px solid #e0e0e0', borderRadius: '12px', padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            ) : wines.filter(w => {
+              if (!catalogSearch.trim()) return true
+              const q = catalogSearch.toLowerCase()
+              return w.name.toLowerCase().includes(q) || (w.cave ?? '').toLowerCase().includes(q) || (w.cepage ?? '').toLowerCase().includes(q) || (w.region ?? '').toLowerCase().includes(q)
+            }).map(w => (
+              <div key={w.id}
+                onClick={() => bulkMode
+                  ? setBulkSelected(prev => { const s = new Set(prev); s.has(w.id) ? s.delete(w.id) : s.add(w.id); return s })
+                  : openEdit(w)
+                }
+                style={{ background: bulkSelected.has(w.id) ? '#fdf5f5' : '#fff', border: bulkSelected.has(w.id) ? `2px solid #dc2626` : editing?.id === w.id ? `2px solid ${accent}` : '0.5px solid #e0e0e0', borderRadius: '12px', padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {bulkMode && (
+                  <input type="checkbox" checked={bulkSelected.has(w.id)} onChange={() => {}} onClick={e => e.stopPropagation()}
+                    style={{ width: '16px', height: '16px', accentColor: '#dc2626', flexShrink: 0 }} />
+                )}
                 {w.image_url ? (
                   <img src={w.image_url} alt={w.name} style={{ width: '40px', height: '60px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }} />
                 ) : (
@@ -308,16 +359,18 @@ export default function AdminCatalogPage() {
                   </div>
                   <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'monospace' }}>{w.id}</div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, alignItems: 'flex-end' }}>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{w.type}</span>
-                    {!w.active && <span style={{ fontSize: '11px', background: '#f5f5f5', color: '#aaa', padding: '2px 8px', borderRadius: '6px' }}>inactif</span>}
+                {!bulkMode && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flexShrink: 0, alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{w.type}</span>
+                      {!w.active && <span style={{ fontSize: '11px', background: '#f5f5f5', color: '#aaa', padding: '2px 8px', borderRadius: '6px' }}>inactif</span>}
+                    </div>
+                    <button onClick={e => copyQrUrl(e, w.id)}
+                      style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', border: '0.5px solid #e0e0e0', background: copiedId === w.id ? '#e8f0e8' : '#fff', color: copiedId === w.id ? '#27500A' : '#888', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      {copiedId === w.id ? '✓ Copié !' : '📋 URL QR'}
+                    </button>
                   </div>
-                  <button onClick={e => copyQrUrl(e, w.id)}
-                    style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', border: '0.5px solid #e0e0e0', background: copiedId === w.id ? '#e8f0e8' : '#fff', color: copiedId === w.id ? '#27500A' : '#888', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    {copiedId === w.id ? '✓ Copié !' : '📋 URL QR'}
-                  </button>
-                </div>
+                )}
               </div>
             ))}
           </div>
