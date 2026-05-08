@@ -143,6 +143,7 @@ function CavePepitesContent() {
       const q = search.toLowerCase()
       result = result.filter(e =>
         e.wine.name?.toLowerCase().includes(q) ||
+        e.wine.cave?.toLowerCase().includes(q) ||
         e.wine.cepage?.toLowerCase().includes(q) ||
         e.wine.region?.toLowerCase().includes(q) ||
         e.wine.millesime?.toString().includes(q)
@@ -235,7 +236,7 @@ function CavePepitesContent() {
         <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
           <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', color: '#aaa' }}>🔍</span>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Nom, cépage, région, millésime..."
+            placeholder="Nom, producteur, cépage, région..."
             style={{ width: '100%', padding: '10px 12px 10px 36px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
         </div>
 

@@ -22,6 +22,7 @@ interface CatalogWine {
   image_url: string | null
   prix_chf: number | null
   shopify_url: string | null
+  pdf_url: string | null
 }
 
 const PRICE_RANGES = [
@@ -117,6 +118,7 @@ export default function AdminWinesPage() {
   const [elevage, setElevage] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [shopifyUrl, setShopifyUrl] = useState('')
+  const [pdfUrl, setPdfUrl] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -174,6 +176,7 @@ export default function AdminWinesPage() {
     setElevage(n?.elevage ?? '')
     setImageUrl(n?.image_url ?? '')
     setShopifyUrl(wine.shopify_url ?? '')
+    setPdfUrl(n?.pdf_url ?? '')
     setSuccess(false)
   }
 
@@ -188,7 +191,7 @@ export default function AdminWinesPage() {
   async function openCatalogPicker() {
     if (catalogWines.length === 0) {
       const { data } = await supabase
-        .from('catalog_wines').select('id, name, cave, cepage, region, millesime, type, description, image_url, prix_chf, shopify_url')
+        .from('catalog_wines').select('id, name, cave, cepage, region, millesime, type, description, image_url, prix_chf, shopify_url, pdf_url')
         .eq('active', true).order('name')
       setCatalogWines((data as CatalogWine[]) ?? [])
     }
@@ -210,6 +213,7 @@ export default function AdminWinesPage() {
     setImageUrl(cw.image_url ?? '')
     setShopifyUrl(cw.shopify_url ?? '')
     setPrixExact(cw.prix_chf?.toString() ?? '')
+    setPdfUrl(cw.pdf_url ?? '')
     setShowCatalogPicker(false)
     setSuccess(false)
   }
@@ -239,6 +243,7 @@ export default function AdminWinesPage() {
       cave,
       elevage: elevage || null,
       image_url: imageUrl,
+      pdf_url: pdfUrl || null,
     }, { onConflict: 'wine_id' })
 
     await loadWines(selectedProject!.id)
@@ -456,6 +461,15 @@ export default function AdminWinesPage() {
                 <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Lien Shopify</label>
                 <input value={shopifyUrl} onChange={e => setShopifyUrl(e.target.value)} placeholder="https://lagrappe.ch/..."
                   style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Fiche PDF</label>
+                <input value={pdfUrl} onChange={e => setPdfUrl(e.target.value)} placeholder="https://..."
+                  style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }} />
+                {pdfUrl && (
+                  <a href={pdfUrl} target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: accent, marginTop: '4px', display: 'inline-block' }}>→ Voir le PDF</a>
+                )}
               </div>
 
               <div style={{ marginBottom: '1rem' }}>

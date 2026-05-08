@@ -66,6 +66,7 @@ export interface GrappisteNotes {
   cave: string | null
   elevage: string | null
   image_url: string | null
+  pdf_url: string | null
   created_at: string
 }
 
