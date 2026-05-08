@@ -225,7 +225,7 @@ export default function AdminCatalogPage() {
         name: p.name,
         cave: p.cave || null,
         cepage: p.cepage || null,
-        region: p.region || null,
+        region: p.region || 'Valais',
         type: p.type,
         description: p.description || null,
         image_url: p.image_url || null,
@@ -623,7 +623,7 @@ export default function AdminCatalogPage() {
                             <div style={{ padding: '0 14px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
                               <div>
                                 <label style={{ fontSize: '10px', color: '#888', display: 'block', marginBottom: '2px' }}>Région</label>
-                                <input value={m.region ?? ''} onChange={e => setOverride(p.shopify_id, 'region', e.target.value)}
+                                <input value={m.region ?? 'Valais'} onChange={e => setOverride(p.shopify_id, 'region', e.target.value)}
                                   style={{ width: '100%', padding: '5px 8px', border: '0.5px solid #e0e0e0', borderRadius: '6px', fontSize: '12px', outline: 'none', boxSizing: 'border-box' }} />
                               </div>
                               <div>
