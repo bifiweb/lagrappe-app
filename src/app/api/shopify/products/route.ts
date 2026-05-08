@@ -3,28 +3,31 @@ import { NextResponse } from 'next/server'
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 
-const GQL_QUERY = `{
-  products(first: 250, sortKey: TITLE) {
-    edges { node {
-      handle
-      metafields(identifiers: [
-        {namespace: "shopify", key: "region"},
-        {namespace: "my_fields", key: "pdf"}
-      ]) {
-        namespace key value
-        reference {
-          ... on GenericFile { url }
-          ... on Metaobject { field(key: "name") { value } }
-        }
-        references(first: 1) {
-          nodes {
+function gqlQuery(cursor: string | null) {
+  return `{
+    products(first: 250, sortKey: TITLE${cursor ? `, after: "${cursor}"` : ''}) {
+      pageInfo { hasNextPage endCursor }
+      edges { node {
+        handle
+        metafields(identifiers: [
+          {namespace: "shopify", key: "region"},
+          {namespace: "my_fields", key: "pdf"}
+        ]) {
+          namespace key value
+          reference {
+            ... on GenericFile { url }
             ... on Metaobject { field(key: "name") { value } }
           }
+          references(first: 1) {
+            nodes {
+              ... on Metaobject { field(key: "name") { value } }
+            }
+          }
         }
-      }
-    }}
-  }
-}`
+      }}
+    }
+  }`
+}
 
 function detectWineType(tags: string[], productType: string): string {
   const haystack = [...tags, productType].map(s => s.toLowerCase()).join(' ')
@@ -47,25 +50,32 @@ export async function GET() {
     const json = await res.json()
     const raw: any[] = json?.products ?? []
 
-    // 2. Metafields région + PDF via Storefront API
+    // 2. Metafields région + PDF via Storefront API (paginé)
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
     let metaDebug: any = null
     if (STOREFRONT_TOKEN) {
-      const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
-        body: JSON.stringify({ query: GQL_QUERY }),
-        next: { revalidate: 0 },
-      })
-      const gql = await gqlRes.json()
-      const firstEdge = gql?.data?.products?.edges?.[0]
-      metaDebug = {
-        status: gqlRes.status,
-        errors: gql?.errors,
-        firstProduct: firstEdge ? { handle: firstEdge.node.handle, metafields: firstEdge.node.metafields } : null,
-      }
-      if (gqlRes.ok && !gql?.errors) {
-        for (const { node } of gql?.data?.products?.edges ?? []) {
+      let cursor: string | null = null
+      let hasNextPage = true
+      let totalFetched = 0
+      let lastStatus = 0
+
+      while (hasNextPage) {
+        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
+          body: JSON.stringify({ query: gqlQuery(cursor) }),
+          next: { revalidate: 0 },
+        })
+        lastStatus = gqlRes.status
+        if (!gqlRes.ok) break
+        const gql = await gqlRes.json()
+        if (gql?.errors) { metaDebug = { status: lastStatus, errors: gql.errors }; break }
+
+        const productsData = gql?.data?.products
+        hasNextPage = productsData?.pageInfo?.hasNextPage ?? false
+        cursor = productsData?.pageInfo?.endCursor ?? null
+
+        for (const { node } of productsData?.edges ?? []) {
           const mfs: any[] = node.metafields ?? []
           const regionMf = mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')
           const pdfMf = mfs.find((m: any) => m?.namespace === 'my_fields' && m?.key === 'pdf')
@@ -75,8 +85,10 @@ export async function GET() {
               ?? null,
             pdf: pdfMf?.reference?.url ?? pdfMf?.value ?? undefined,
           }
+          totalFetched++
         }
       }
+      metaDebug = { status: lastStatus, totalFetched }
     } else {
       metaDebug = { status: 'no token' }
     }
