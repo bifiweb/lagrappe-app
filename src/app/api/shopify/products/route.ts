@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
-const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN
+const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
 
 const GQL_QUERY = `{
   products(first: 250, sortKey: TITLE) {
@@ -41,13 +41,13 @@ export async function GET() {
     const json = await res.json()
     const raw: any[] = json?.products ?? []
 
-    // 2. Metafields région + PDF via Admin API
+    // 2. Metafields région + PDF via Storefront API
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
     let metaDebug: any = null
-    if (ADMIN_TOKEN) {
-      const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json`, {
+    if (STOREFRONT_TOKEN) {
+      const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': ADMIN_TOKEN },
+        headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
         body: JSON.stringify({ query: GQL_QUERY }),
         next: { revalidate: 0 },
       })
@@ -64,7 +64,7 @@ export async function GET() {
         }
       }
     } else {
-      metaDebug = { status: 'no token', token: !!ADMIN_TOKEN }
+      metaDebug = { status: 'no token' }
     }
 
     const products = raw.map((p: any) => {
