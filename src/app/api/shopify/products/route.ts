@@ -41,28 +41,30 @@ export async function GET() {
     const json = await res.json()
     const raw: any[] = json?.products ?? []
 
-    // 2. Metafields région + PDF via Storefront API
+    // 2. Metafields région + PDF via Admin API
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
+    let metaDebug: any = null
     if (ADMIN_TOKEN) {
-      try {
-        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': ADMIN_TOKEN },
-          body: JSON.stringify({ query: GQL_QUERY }),
-          next: { revalidate: 0 },
-        })
-        if (gqlRes.ok) {
-          const gql = await gqlRes.json()
-          for (const { node } of gql?.data?.products?.edges ?? []) {
-            const mfs: any[] = node.metafields ?? []
-            const pdfMf = mfs.find((m: any) => m?.namespace === 'my_fields' && m?.key === 'pdf')
-            metaByHandle[node.handle] = {
-              region: mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')?.value,
-              pdf: pdfMf?.reference?.url ?? pdfMf?.value ?? undefined,
-            }
+      const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': ADMIN_TOKEN },
+        body: JSON.stringify({ query: GQL_QUERY }),
+        next: { revalidate: 0 },
+      })
+      const gql = await gqlRes.json()
+      metaDebug = { status: gqlRes.status, errors: gql?.errors, dataKeys: gql?.data ? Object.keys(gql.data) : null }
+      if (gqlRes.ok && !gql?.errors) {
+        for (const { node } of gql?.data?.products?.edges ?? []) {
+          const mfs: any[] = node.metafields ?? []
+          const pdfMf = mfs.find((m: any) => m?.namespace === 'my_fields' && m?.key === 'pdf')
+          metaByHandle[node.handle] = {
+            region: mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')?.value,
+            pdf: pdfMf?.reference?.url ?? pdfMf?.value ?? undefined,
           }
         }
-      } catch {} // silencieux si Storefront indispo
+      }
+    } else {
+      metaDebug = { status: 'no token', token: !!ADMIN_TOKEN }
     }
 
     const products = raw.map((p: any) => {
@@ -84,7 +86,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ products })
+    return NextResponse.json({ products, _debug: metaDebug })
   } catch (e: any) {
     return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }
