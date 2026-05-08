@@ -13,6 +13,8 @@ interface GameEntry {
   notes: GrappisteNotes | null
   players: SessionPlayer[]
   sessionId: string
+  catalogName?: string | null
+  linkedRating?: any | null
 }
 
 interface RatingEntry {
@@ -153,15 +155,26 @@ export default function CavePage() {
         ? await supabase.from('session_players').select('*').in('session_id', sessionIds)
         : { data: [] }
 
+      // Index catalog wines par shopify_url pour fusion avec game entries
+      const ratingByShopifyUrl = new Map<string, { catalogWine: any, rating: any }>()
+      for (const r of ratings ?? []) {
+        const catalogWine = catalogWines?.find(w => w.id === r.wine_id)
+        if (catalogWine?.shopify_url) ratingByShopifyUrl.set(catalogWine.shopify_url, { catalogWine, rating: r })
+      }
+      const mergedRatingIds = new Set<string>()
+
       const gameEntries: GameEntry[] = (tastings ?? []).map(t => {
         const session = sessions?.find(s => s.id === t.session_id)
         const wine = wines?.find(w => w.id === session?.wine_id)
         const notes = allNotes?.find(n => n.wine_id === wine?.id) ?? null
         const players = allPlayers?.filter(p => p.session_id === t.session_id) ?? []
-        return { type: 'game', date: t.created_at, tasting: t, wine: wine!, notes, players, sessionId: t.session_id }
+        const linked = wine?.shopify_url ? ratingByShopifyUrl.get(wine.shopify_url) : undefined
+        if (linked) mergedRatingIds.add(linked.rating.id)
+        return { type: 'game', date: t.created_at, tasting: t, wine: wine!, notes, players, sessionId: t.session_id, catalogName: linked?.catalogWine?.name ?? null, linkedRating: linked?.rating ?? null }
       }).filter(e => e.wine) as GameEntry[]
 
       const ratingEntries: RatingEntry[] = (ratings ?? []).map(r => {
+        if (mergedRatingIds.has(r.id)) return null
         const catalogWine = catalogWines?.find(w => w.id === r.wine_id)
         if (!catalogWine) return null
         return { type: 'rating', date: r.updated_at, rating: r, wine: catalogWine as any, notes: null }
@@ -305,7 +318,9 @@ export default function CavePage() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a' }}>
-                          {notes ? `${notes.cepage} ${notes.millesime}` : isGame ? `Bouteille #${wine?.bottle_number}` : ((wine as any).name ?? wine?.type ?? '—')}
+                          {isGame
+                            ? (gameEntry?.catalogName ?? (notes ? `${notes.cepage ?? ''} ${notes.millesime ?? ''}`.trim() : `Bouteille #${wine?.bottle_number}`))
+                            : ((wine as any).name ?? wine?.type ?? '—')}
                         </span>
                         <span style={{ fontSize: '10px', background: isGame ? '#edeaf8' : '#e8f5e8', color: isGame ? '#3C3489' : '#27500A', padding: '2px 7px', borderRadius: '6px' }}>
                           {isGame ? '🎮 Jeu' : '📖 Cave'}
