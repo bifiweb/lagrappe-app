@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
-const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
+const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN
 
-// Requête Storefront GraphQL pour les metafields (région) si token disponible
-const GQL_QUERY = `{
+// Admin GraphQL — accès complet aux metafields sans config Storefront
+const ADMIN_GQL_QUERY = `{
   products(first: 250, sortKey: TITLE) {
     edges { node {
       id handle
@@ -29,10 +29,9 @@ function detectWineType(tags: string[], productType: string): string {
   return 'rouge'
 }
 
-
 export async function GET() {
   try {
-    // 1. API JSON publique — aucun token requis
+    // 1. API JSON publique — produits de base
     const res = await fetch(
       `https://${SHOPIFY_DOMAIN}/products.json?limit=250`,
       { headers: { 'Accept': 'application/json' }, next: { revalidate: 0 } }
@@ -43,15 +42,18 @@ export async function GET() {
     const json = await res.json()
     const raw: any[] = json?.products ?? []
 
-    // 2. Metafields via Storefront API si token disponible
+    // 2. Metafields via Admin API GraphQL
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
-    let storefrontError: string | null = null
-    if (STOREFRONT_TOKEN) {
+    let metaError: string | null = null
+    if (ADMIN_TOKEN) {
       try {
-        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
-          body: JSON.stringify({ query: GQL_QUERY }),
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Access-Token': ADMIN_TOKEN,
+          },
+          body: JSON.stringify({ query: ADMIN_GQL_QUERY }),
         })
         if (gqlRes.ok) {
           const gql = await gqlRes.json()
@@ -64,11 +66,13 @@ export async function GET() {
             }
           }
         } else {
-          storefrontError = `Storefront API ${gqlRes.status} — token invalide ou expiré. Régénère NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN dans Vercel.`
+          metaError = `Admin API ${gqlRes.status} — vérifie SHOPIFY_ADMIN_TOKEN dans Vercel`
         }
       } catch (e: any) {
-        storefrontError = `Storefront API inaccessible : ${e.message}`
+        metaError = `Admin API inaccessible : ${e.message}`
       }
+    } else {
+      metaError = 'SHOPIFY_ADMIN_TOKEN non défini dans Vercel'
     }
 
     const products = raw.map((p: any) => {
@@ -90,7 +94,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ products, storefrontError })
+    return NextResponse.json({ products, metaError })
   } catch (e: any) {
     return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }
