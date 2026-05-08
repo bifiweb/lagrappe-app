@@ -607,6 +607,7 @@ export default function AdminCatalogPage() {
                             <div style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center', flexDirection: 'column' }}>
                               <div style={{ display: 'flex', gap: '4px' }}>
                                 {alreadyIn && <span style={{ fontSize: '10px', background: '#e8f0e8', color: '#27500A', padding: '2px 6px', borderRadius: '4px' }}>déjà importé</span>}
+                                {p.pdf_url && <span style={{ fontSize: '10px', background: '#e8eaf0', color: '#27408B', padding: '2px 6px', borderRadius: '4px' }}>PDF</span>}
                                 <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>{m.type}</span>
                               </div>
                               {m.prix_chf && (
