@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
-const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
+const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN
 
 const GQL_QUERY = `{
   products(first: 250, sortKey: TITLE) {
@@ -43,11 +43,11 @@ export async function GET() {
 
     // 2. Metafields région + PDF via Storefront API
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
-    if (STOREFRONT_TOKEN) {
+    if (ADMIN_TOKEN) {
       try {
-        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/admin/api/2024-01/graphql.json`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
+          headers: { 'Content-Type': 'application/json', 'X-Shopify-Access-Token': ADMIN_TOKEN },
           body: JSON.stringify({ query: GQL_QUERY }),
           next: { revalidate: 0 },
         })
