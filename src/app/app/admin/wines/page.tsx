@@ -10,6 +10,20 @@ interface WineWithNotes extends Wine {
   grappiste_notes: GrappisteNotes | null
 }
 
+interface CatalogWine {
+  id: string
+  name: string
+  cave: string | null
+  cepage: string | null
+  region: string | null
+  millesime: number | null
+  type: string
+  description: string | null
+  image_url: string | null
+  prix_chf: number | null
+  shopify_url: string | null
+}
+
 const PRICE_RANGES = [
   { label: '< 20 CHF', min: 0, max: 19.99 },
   { label: '20 – 25 CHF', min: 20, max: 25 },
@@ -82,6 +96,9 @@ export default function AdminWinesPage() {
   const [editingWine, setEditingWine] = useState<WineWithNotes | null>(null)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showCatalogPicker, setShowCatalogPicker] = useState(false)
+  const [catalogWines, setCatalogWines] = useState<CatalogWine[]>([])
+  const [catalogSearch, setCatalogSearch] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -166,6 +183,35 @@ export default function AdminWinesPage() {
     setBouche('')
     setCepage('')
     setAromes([])
+  }
+
+  async function openCatalogPicker() {
+    if (catalogWines.length === 0) {
+      const { data } = await supabase
+        .from('catalog_wines').select('id, name, cave, cepage, region, millesime, type, description, image_url, prix_chf, shopify_url')
+        .eq('active', true).order('name')
+      setCatalogWines((data as CatalogWine[]) ?? [])
+    }
+    setCatalogSearch('')
+    setShowCatalogPicker(true)
+  }
+
+  function applyCatalogWine(cw: CatalogWine) {
+    const newType = (cw.type as WineType) ?? 'rouge'
+    setWineType(newType)
+    setRobe('')
+    setBouche('')
+    setAromes([])
+    setCave(cw.cave ?? '')
+    setCepage(cw.cepage ?? '')
+    setRegion(cw.region ?? '')
+    setMillesime(cw.millesime?.toString() ?? '')
+    setDescription(cw.description ?? '')
+    setImageUrl(cw.image_url ?? '')
+    setShopifyUrl(cw.shopify_url ?? '')
+    setPrixExact(cw.prix_chf?.toString() ?? '')
+    setShowCatalogPicker(false)
+    setSuccess(false)
   }
 
   async function saveWine() {
@@ -301,8 +347,14 @@ export default function AdminWinesPage() {
           {/* Formulaire d'édition */}
           {editingWine && (
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', overflowY: 'auto', maxHeight: 'calc(100vh - 100px)' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '1rem' }}>
-                Bouteille #{editingWine.bottle_number}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
+                  Bouteille #{editingWine.bottle_number}
+                </div>
+                <button onClick={openCatalogPicker}
+                  style={{ padding: '6px 12px', borderRadius: '16px', fontSize: '12px', cursor: 'pointer', border: '0.5px solid #8d323b', background: '#fff', color: '#8d323b', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                  Cave à pépites
+                </button>
               </div>
 
               {success && (
@@ -427,6 +479,66 @@ export default function AdminWinesPage() {
           )}
         </div>
       </div>
+
+      {/* Modal cave à pépites */}
+      {showCatalogPicker && (
+        <div onClick={() => setShowCatalogPicker(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '600px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', padding: '1.25rem' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '15px', fontWeight: '600', color: '#1a1a1a' }}>Cave à pépites</div>
+              <button onClick={() => setShowCatalogPicker(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#888', lineHeight: 1 }}>×</button>
+            </div>
+
+            <input
+              autoFocus
+              value={catalogSearch}
+              onChange={e => setCatalogSearch(e.target.value)}
+              placeholder="Rechercher un vin..."
+              style={{ width: '100%', padding: '9px 12px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '13px', outline: 'none', marginBottom: '12px', boxSizing: 'border-box' }}
+            />
+
+            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {catalogWines
+                .filter(cw => {
+                  const q = catalogSearch.toLowerCase()
+                  return !q || cw.name.toLowerCase().includes(q) || (cw.cave ?? '').toLowerCase().includes(q) || (cw.cepage ?? '').toLowerCase().includes(q) || (cw.region ?? '').toLowerCase().includes(q)
+                })
+                .map(cw => (
+                  <button key={cw.id} onClick={() => applyCatalogWine(cw)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', cursor: 'pointer', textAlign: 'left', width: '100%' }}>
+                    {cw.image_url ? (
+                      <img src={cw.image_url} alt="" style={{ width: '32px', height: '44px', objectFit: 'contain', borderRadius: '4px', flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#f5ede8', flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {cw.name}{cw.millesime ? ` ${cw.millesime}` : ''}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#888' }}>
+                        {[cw.cave, cw.cepage, cw.region].filter(Boolean).join(' · ')}
+                      </div>
+                    </div>
+                    {cw.prix_chf && (
+                      <div style={{ fontSize: '12px', color: '#8d323b', fontWeight: '500', flexShrink: 0 }}>{cw.prix_chf} CHF</div>
+                    )}
+                  </button>
+                ))}
+              {catalogWines.filter(cw => {
+                const q = catalogSearch.toLowerCase()
+                return !q || cw.name.toLowerCase().includes(q) || (cw.cave ?? '').toLowerCase().includes(q) || (cw.cepage ?? '').toLowerCase().includes(q) || (cw.region ?? '').toLowerCase().includes(q)
+              }).length === 0 && (
+                <div style={{ textAlign: 'center', color: '#aaa', fontSize: '13px', padding: '2rem' }}>Aucun vin trouvé</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
