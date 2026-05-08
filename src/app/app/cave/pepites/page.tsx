@@ -22,6 +22,7 @@ interface CatalogWine {
 interface WineEntry {
   wine: CatalogWine
   myRating: any | null
+  playedInGame: boolean
 }
 
 const accent = '#8d323b'
@@ -123,9 +124,19 @@ function CavePepitesContent() {
         ? await supabase.from('cave_ratings').select('*').eq('user_id', user.id).in('wine_id', wineIds)
         : { data: [] }
 
+      // Shopify URLs des vins dégustés en session de jeu
+      const { data: gameTastings } = await supabase
+        .from('tastings')
+        .select('sessions!inner(wines!inner(shopify_url))')
+        .eq('user_id', user.id)
+      const gameShopifyUrls = new Set(
+        (gameTastings ?? []).map((t: any) => t.sessions?.wines?.shopify_url).filter(Boolean)
+      )
+
       const result: WineEntry[] = (wines ?? []).map(wine => ({
         wine,
         myRating: myRatings?.find(r => r.wine_id === wine.id) ?? null,
+        playedInGame: !!wine.shopify_url && gameShopifyUrls.has(wine.shopify_url),
       }))
 
       setEntries(result)
@@ -254,7 +265,7 @@ function CavePepitesContent() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filtered.map(entry => {
-              const { wine, myRating } = entry
+              const { wine, myRating, playedInGame } = entry
               const isOpen = expanded === wine.id
 
               return (
@@ -281,6 +292,11 @@ function CavePepitesContent() {
                         {wine.cave && (wine.cepage || wine.region || wine.millesime) && ' · '}
                         {[wine.cepage, wine.region, wine.millesime].filter(Boolean).join(' · ')}
                       </div>
+                      {playedInGame && (
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eef3ff', color: '#3b5bdb', borderRadius: '8px', padding: '2px 8px', fontSize: '11px', fontWeight: '500', marginTop: '4px', width: 'fit-content' }}>
+                          🎮 Dégusté en jeu
+                        </div>
+                      )}
                       {myRating?.stars != null
                         ? <MiniStars score={myRating.stars} />
                         : <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>Pas encore noté</span>
