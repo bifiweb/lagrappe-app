@@ -308,6 +308,14 @@ function CavePepitesContent() {
                   {isOpen && (
                     <div style={{ borderTop: '0.5px solid #f0f0f0', padding: '1.25rem', background: '#fdf8f5' }}>
 
+                      <div style={{ background: '#f0f5ff', border: '0.5px solid #d0dcf5', borderRadius: '10px', padding: '10px 12px', marginBottom: '1rem', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '16px', lineHeight: 1.4, flexShrink: 0 }}>✍️</span>
+                        <div>
+                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#3b5bdb', marginBottom: '2px' }}>Donne ton avis au vigneron</div>
+                          <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.4 }}>Les avis sont anonymes. C'est aussi le meilleur moyen de retrouver les vins que tu aimes !</div>
+                        </div>
+                      </div>
+
                       {wine.description && (
                         <div style={{ fontSize: '13px', color: '#666', fontStyle: 'italic', marginBottom: '1rem', lineHeight: '1.6' }}>
                           {wine.description}

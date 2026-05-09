@@ -270,8 +270,16 @@ export default function RevealPage() {
         {/* Mon appréciation */}
         {myTasting && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>
               Ton appréciation
+            </div>
+
+            <div style={{ background: '#f0f5ff', border: '0.5px solid #d0dcf5', borderRadius: '10px', padding: '10px 12px', marginBottom: '14px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '16px', lineHeight: 1.4, flexShrink: 0 }}>✍️</span>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: '500', color: '#3b5bdb', marginBottom: '2px' }}>Donne ton avis au vigneron</div>
+                <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.4 }}>Les avis sont anonymes. C'est aussi le meilleur moyen de retrouver les vins que tu aimes !</div>
+              </div>
             </div>
 
             {/* Note /10 */}
