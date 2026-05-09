@@ -159,12 +159,14 @@ export default function AdminWinesPage() {
       .select('*, grappiste_notes(*)')
       .eq('project_id', projectId)
       .order('bottle_number')
-    setWines((w as WineWithNotes[]) ?? [])
-    setEditingWine(null)
+    const loaded = (w as WineWithNotes[]) ?? []
+    setWines(loaded)
+    return loaded
   }
 
   async function handleProjectChange(project: Project) {
     setSelectedProject(project)
+    setEditingWine(null)
     await loadWines(project.id)
   }
 
@@ -255,7 +257,9 @@ export default function AdminWinesPage() {
       pdf_url: pdfUrl || null,
     }, { onConflict: 'wine_id' })
 
-    await loadWines(selectedProject!.id)
+    const updatedWines = await loadWines(selectedProject!.id)
+    const updatedWine = updatedWines.find(w => w.id === editingWine.id)
+    if (updatedWine) setEditingWine(updatedWine)
     setSaving(false)
     setSuccess(true)
   }
