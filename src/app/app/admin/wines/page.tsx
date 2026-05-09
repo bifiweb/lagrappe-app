@@ -98,6 +98,7 @@ export default function AdminWinesPage() {
   const [editingWine, setEditingWine] = useState<WineWithNotes | null>(null)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [showCatalogPicker, setShowCatalogPicker] = useState(false)
   const [catalogWines, setCatalogWines] = useState<CatalogWine[]>([])
   const [catalogSearch, setCatalogSearch] = useState('')
@@ -189,6 +190,7 @@ export default function AdminWinesPage() {
     setShopifyUrl(wine.shopify_url ?? '')
     setPdfUrl(n?.pdf_url ?? '')
     setSuccess(false)
+    setSaveError(null)
   }
 
   function handleTypeChange(newType: WineType) {
@@ -232,16 +234,19 @@ export default function AdminWinesPage() {
   async function saveWine() {
     if (!editingWine) return
     setSaving(true)
+    setSaveError(null)
+    setSuccess(false)
 
-    await supabase.from('wines')
+    const { error: wineError } = await supabase.from('wines')
       .update({ shopify_url: shopifyUrl, type: wineType })
       .eq('id', editingWine.id)
 
     const prixNum = parseFloat(prixExact)
+    const noteNum = parseFloat(note)
 
-    await supabase.from('grappiste_notes').upsert({
+    const { error: notesError } = await supabase.from('grappiste_notes').upsert({
       wine_id: editingWine.id,
-      note: parseFloat(note),
+      note: isNaN(noteNum) ? null : noteNum,
       description,
       robe,
       aromes_officiels: aromes,
@@ -256,6 +261,12 @@ export default function AdminWinesPage() {
       image_url: imageUrl,
       pdf_url: pdfUrl || null,
     }, { onConflict: 'wine_id' })
+
+    if (wineError || notesError) {
+      setSaveError((wineError ?? notesError)?.message ?? 'Erreur inconnue')
+      setSaving(false)
+      return
+    }
 
     const updatedWines = await loadWines(selectedProject!.id)
     const updatedWine = updatedWines.find(w => w.id === editingWine.id)
@@ -386,6 +397,12 @@ export default function AdminWinesPage() {
               {success && (
                 <div style={{ background: '#e8f0e8', color: '#27500A', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginBottom: '1rem' }}>
                   ✓ Sauvegardé !
+                </div>
+              )}
+
+              {saveError && (
+                <div style={{ background: '#fff5f5', color: '#dc2626', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginBottom: '1rem', border: '0.5px solid #fca5a5' }}>
+                  ✕ Erreur : {saveError}
                 </div>
               )}
 
