@@ -100,8 +100,16 @@ export default function AdminWinesPage() {
   const [showCatalogPicker, setShowCatalogPicker] = useState(false)
   const [catalogWines, setCatalogWines] = useState<CatalogWine[]>([])
   const [catalogSearch, setCatalogSearch] = useState('')
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // Form state
   const [wineType, setWineType] = useState<WineType>('rouge')
@@ -300,10 +308,10 @@ export default function AdminWinesPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: editingWine ? '280px 1fr' : '1fr', gap: '1rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: (!isMobile && editingWine) ? '280px 1fr' : '1fr', gap: '1rem' }}>
 
-          {/* Liste des vins */}
-          <div>
+          {/* Liste des vins — masquée sur mobile quand on édite */}
+          <div style={{ display: isMobile && editingWine ? 'none' : 'block' }}>
             <div style={{ fontSize: '13px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>
               {selectedProject?.name} — {wines.length} vins
             </div>
@@ -351,10 +359,16 @@ export default function AdminWinesPage() {
 
           {/* Formulaire d'édition */}
           {editingWine && (
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', overflowY: 'auto', maxHeight: 'calc(100vh - 100px)' }}>
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', overflowY: 'auto', maxHeight: isMobile ? 'none' : 'calc(100vh - 100px)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
-                  Bouteille #{editingWine.bottle_number}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {isMobile && (
+                    <button onClick={() => setEditingWine(null)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0, lineHeight: 1 }}>‹</button>
+                  )}
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
+                    Bouteille #{editingWine.bottle_number}
+                  </div>
                 </div>
                 <button onClick={openCatalogPicker}
                   style={{ padding: '6px 12px', borderRadius: '16px', fontSize: '12px', cursor: 'pointer', border: '0.5px solid #8d323b', background: '#fff', color: '#8d323b', fontWeight: '500', whiteSpace: 'nowrap' }}>
