@@ -332,10 +332,19 @@ function CavePepitesContent() {
                       )}
 
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '1.25rem' }}>
-                        {wine.type && <span style={{ fontSize: '12px', background: '#f5ede8', color: accent, padding: '3px 10px', borderRadius: '8px' }}>{wine.type}</span>}
+                        {wine.type && (() => {
+                          const typeConfig: Record<string, { emoji: string; bg: string; color: string }> = {
+                            rouge:     { emoji: '🔴', bg: '#f5ede8', color: accent },
+                            blanc:     { emoji: '🟡', bg: '#fdf8e8', color: '#7a6500' },
+                            rose:      { emoji: '🌸', bg: '#fceef5', color: '#a0326a' },
+                            petillant: { emoji: '🫧', bg: '#eaf3ff', color: '#1a5fa8' },
+                          }
+                          const cfg = typeConfig[wine.type] ?? { emoji: '🍾', bg: '#f5ede8', color: accent }
+                          return <span style={{ fontSize: '12px', background: cfg.bg, color: cfg.color, padding: '3px 10px', borderRadius: '8px', fontWeight: '500' }}>{cfg.emoji} {wine.type}</span>
+                        })()}
                         {wine.cave && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>🏠 {wine.cave}</span>}
-                        {wine.region && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>{wine.region}</span>}
-                        {wine.prix_chf && <span style={{ fontSize: '12px', background: '#e8f0e8', color: '#27500A', padding: '3px 10px', borderRadius: '8px' }}>CHF {wine.prix_chf}</span>}
+                        {wine.region && <span style={{ fontSize: '12px', background: '#f0f0f0', color: '#555', padding: '3px 10px', borderRadius: '8px' }}>📍 {wine.region}</span>}
+                        {wine.prix_chf && <span style={{ fontSize: '12px', background: '#e8f0e8', color: '#27500A', padding: '3px 10px', borderRadius: '8px' }}>🏷️ CHF {wine.prix_chf}</span>}
                       </div>
 
                       <div style={{ marginBottom: '1.25rem' }}>
