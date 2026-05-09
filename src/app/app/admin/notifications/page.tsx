@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import AdminNav from '@/components/AdminNav'
 
 interface SentNotification {
   id: string
@@ -105,6 +106,8 @@ export default function AdminNotificationsPage() {
       </div>
 
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>
+
+        <AdminNav active="/app/admin/notifications" />
 
         {/* Formulaire d'envoi */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>

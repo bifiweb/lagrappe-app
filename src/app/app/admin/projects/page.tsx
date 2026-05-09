@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Project, Profile } from '@/types'
+import AdminNav from '@/components/AdminNav'
 
 interface ProjectWithStats extends Project {
   wine_count?: number
@@ -219,7 +220,10 @@ export default function AdminProjectsPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem', display: 'grid', gridTemplateColumns: showForm ? '1fr 1.5fr' : '1fr', gap: '1.5rem' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
+        <AdminNav active="/app/admin/projects" />
+      </div>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem 1.5rem', display: 'grid', gridTemplateColumns: showForm ? '1fr 1.5fr' : '1fr', gap: '1.5rem' }}>
 
         {/* Liste des projets */}
         <div>

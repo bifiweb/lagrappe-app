@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { WINE_CONTENT, ELEVAGE_OPTIONS } from '@/types'
+import AdminNav from '@/components/AdminNav'
 import type { Wine, GrappisteNotes, Project, WineType } from '@/types'
 
 interface WineWithNotes extends Wine {
@@ -307,6 +308,8 @@ export default function AdminWinesPage() {
             ))}
           </div>
         </div>
+
+        <AdminNav active="/app/admin/wines" />
 
         <div style={{ display: 'grid', gridTemplateColumns: (!isMobile && editingWine) ? '280px 1fr' : '1fr', gap: '1rem' }}>
 

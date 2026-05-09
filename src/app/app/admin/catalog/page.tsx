@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import AdminNav from '@/components/AdminNav'
 
 interface CatalogWine {
   id: string
@@ -282,7 +283,10 @@ export default function AdminCatalogPage() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem', display: 'grid', gridTemplateColumns: showForm ? '1fr 1.4fr' : '1fr', gap: '1.5rem' }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
+        <AdminNav active="/app/admin/catalog" />
+      </div>
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem 1.5rem', display: 'grid', gridTemplateColumns: showForm ? '1fr 1.4fr' : '1fr', gap: '1.5rem' }}>
 
         {/* Liste */}
         <div>

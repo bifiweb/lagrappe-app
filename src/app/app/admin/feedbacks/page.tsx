@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import AdminNav from '@/components/AdminNav'
 
 interface FeedbackEntry {
   id: string
@@ -207,6 +208,8 @@ export default function FeedbacksPage() {
       </div>
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.25rem 1.5rem' }}>
+
+        <AdminNav active="/app/admin/feedbacks" />
 
         {/* Filtres */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import AdminNav from '@/components/AdminNav'
 
 interface PlayerSummary {
   pseudo: string
@@ -180,28 +181,7 @@ export default function AdminMainPage() {
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
 
-        {/* Navigation hub */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '1.5rem' }}>
-          {[
-            { emoji: '🎮', label: 'Sessions', sub: `${sessions.length} au total`, href: null, active: true },
-            { emoji: '📋', label: 'Feedbacks', sub: 'Avis clients', href: '/app/admin/feedbacks', active: false },
-            { emoji: '📁', label: 'Projets', sub: 'Gérer', href: '/app/admin/projects', active: false },
-            { emoji: '🍷', label: 'Vins', sub: 'Notes grappistes', href: '/app/admin/wines', active: false },
-            { emoji: '💎', label: 'Cave à pépites', sub: 'Catalogue', href: '/app/admin/catalog', active: false },
-            { emoji: '🔔', label: 'Notifications', sub: 'Push', href: '/app/admin/notifications', active: false },
-          ].map(({ emoji, label, sub, href, active }) => (
-            <button key={label} onClick={() => href && router.push(href)}
-              style={{
-                padding: '14px 12px', borderRadius: '14px', border: active ? `2px solid ${accent}` : '0.5px solid #e0e0e0',
-                background: active ? '#fdf5f5' : '#fff', cursor: href ? 'pointer' : 'default',
-                textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '4px',
-              }}>
-              <span style={{ fontSize: '22px', lineHeight: 1 }}>{emoji}</span>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: active ? accent : '#1a1a1a' }}>{label}</span>
-              <span style={{ fontSize: '11px', color: '#888' }}>{sub}</span>
-            </button>
-          ))}
-        </div>
+        <AdminNav active="/app/admin" />
 
         {/* Stats globales */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '1.5rem' }}>
