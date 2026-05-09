@@ -156,31 +156,30 @@ export default function DashboardPage() {
 
         {/* Admin */}
         {profile?.role === 'admin' && (
-          <div style={{ marginTop: '2rem', padding: '1rem', background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px' }}>
+          <div style={{ marginTop: '2rem' }}>
             <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '.04em' }}>
               Administration
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <button onClick={() => router.push('/app/admin')}
-                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-                Vue globale
-              </button>
-              <button onClick={() => router.push('/app/admin/projects')}
-                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-                Gérer les projets
-              </button>
-              <button onClick={() => router.push('/app/admin/wines')}
-                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-                Gérer les vins
-              </button>
-              <button onClick={() => router.push('/app/admin/catalog')}
-                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-                💎 Cave à pépites
-              </button>
-              <button onClick={() => router.push('/app/admin/notifications')}
-                style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: 'transparent', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-                🔔 Notifications
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+              {[
+                { emoji: '🎮', label: 'Sessions', sub: 'Vue globale', href: '/app/admin' },
+                { emoji: '📋', label: 'Feedbacks', sub: 'Avis clients', href: '/app/admin/feedbacks' },
+                { emoji: '📁', label: 'Projets', sub: 'Gérer', href: '/app/admin/projects' },
+                { emoji: '🍷', label: 'Vins', sub: 'Notes grappistes', href: '/app/admin/wines' },
+                { emoji: '💎', label: 'Cave à pépites', sub: 'Catalogue', href: '/app/admin/catalog' },
+                { emoji: '🔔', label: 'Notifications', sub: 'Push', href: '/app/admin/notifications' },
+              ].map(({ emoji, label, sub, href }) => (
+                <button key={label} onClick={() => router.push(href)}
+                  style={{
+                    padding: '14px 12px', borderRadius: '14px', border: '0.5px solid #e0e0e0',
+                    background: '#fff', cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', flexDirection: 'column', gap: '4px',
+                  }}>
+                  <span style={{ fontSize: '22px', lineHeight: 1 }}>{emoji}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a' }}>{label}</span>
+                  <span style={{ fontSize: '11px', color: '#888' }}>{sub}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
