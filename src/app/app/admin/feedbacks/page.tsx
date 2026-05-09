@@ -67,10 +67,10 @@ export default function FeedbacksPage() {
         ? await supabase.from('wines').select('id, shopify_url').in('id', gameWineIds)
         : { data: [] }
 
-      // 6. catalog_wines pour les vins de jeu (via shopify_url)
+      // 6. catalog_wines pour les vins de jeu (via shopify_url) — id inclus pour déduplication
       const shopifyUrls = [...new Set((gameWines ?? []).filter((w: any) => w.shopify_url).map((w: any) => w.shopify_url))]
       const { data: catalogWinesGame } = shopifyUrls.length
-        ? await supabase.from('catalog_wines').select('shopify_url, name, cave').in('shopify_url', shopifyUrls)
+        ? await supabase.from('catalog_wines').select('id, shopify_url, name, cave').in('shopify_url', shopifyUrls)
         : { data: [] }
 
       // 7. profils de tous les utilisateurs concernés
@@ -88,7 +88,18 @@ export default function FeedbacksPage() {
       const gameWineMap = new Map((gameWines ?? []).map((w: any) => [w.id, w]))
       const catalogGameMap = new Map((catalogWinesGame ?? []).map((w: any) => [w.shopify_url, w]))
 
-      const caveEntries: FeedbackEntry[] = (caveRatings ?? []).map((r: any) => {
+      // Paires (user_id:catalog_wine_id) couvertes par une entrée jeu → exclure la cave_rating correspondante
+      const gameUserWineSet = new Set<string>()
+      for (const t of tastings ?? []) {
+        const session = sessionMap.get((t as any).session_id)
+        const gw = session ? gameWineMap.get((session as any).wine_id) : null
+        const cw = (gw as any)?.shopify_url ? catalogGameMap.get((gw as any).shopify_url) : null
+        if ((cw as any)?.id) gameUserWineSet.add(`${(t as any).user_id}:${(cw as any).id}`)
+      }
+
+      const caveEntries: FeedbackEntry[] = (caveRatings ?? []).filter((r: any) =>
+        !gameUserWineSet.has(`${r.user_id}:${r.wine_id}`)
+      ).map((r: any) => {
         const cw = catalogMap.get(r.wine_id)
         return {
           id: `cave-${r.id}`,

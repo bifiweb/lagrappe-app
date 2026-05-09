@@ -170,6 +170,10 @@ export default function AdminMainPage() {
           <button onClick={() => router.push('/app/dashboard')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Vue globale</span>
+          <button onClick={() => router.push('/app/admin/feedbacks')}
+            style={{ padding: '7px 14px', background: '#fff', color: '#8d323b', border: '0.5px solid #e0c8c8', borderRadius: '8px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>
+            📋 Feedbacks
+          </button>
           <button onClick={exportCSV}
             style={{ padding: '7px 14px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>
             ↓ Export CSV
