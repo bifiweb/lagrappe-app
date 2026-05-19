@@ -40,7 +40,7 @@ function HintBanner({ used, onUse }: { used: number, onUse: () => void }) {
           Aide disponible {used > 0 ? `(${used}/2 utilisée)` : ''}
         </div>
         <div style={{ fontSize: '11px', color: '#a07820', lineHeight: 1.3 }}>
-          Élimine ~1/3 des mauvaises réponses · coûte <strong>200 pts</strong>
+          Élimine ~1/3 des mauvaises réponses · coûte <strong>300 pts</strong>
         </div>
       </div>
       <button onClick={onUse} style={{ padding: '6px 14px', background: '#f0a000', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
@@ -306,15 +306,15 @@ export default function TastingPage() {
             <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>📊 Barème des points</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
               {[
-                { icon: '👁️', label: 'Robe', detail: '300 pts si juste · 100 pts sinon' },
-                { icon: '👃', label: 'Arômes', detail: '300 pts × nb joueurs même arôme · +300 pts si officiel' },
-                { icon: '👄', label: 'Bouche', detail: '300 pts si juste · 100 pts sinon' },
-                { icon: '🍇', label: 'Cépage', detail: '1 000 pts si juste · 200 pts sinon' },
+                { icon: '👁️', label: 'Robe', detail: '500 pts si juste · 200 pts sinon' },
+                { icon: '👃', label: 'Arômes', detail: '200 pts × nb joueurs même arôme · +200 pts si officiel' },
+                { icon: '👄', label: 'Bouche', detail: '500 pts si juste · 200 pts sinon' },
+                { icon: '🍇', label: 'Cépage', detail: '1 500 pts si juste · 300 pts sinon' },
                 { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
-                { icon: '📅', label: 'Millésime', detail: '500 pts si juste · −100 pts par année d\'écart' },
-                { icon: '🪣', label: 'Élevage', detail: '300 pts si juste · 100 pts sinon' },
+                { icon: '📅', label: 'Millésime', detail: '500 pts si exact · −50 pts par année d\'écart' },
+                { icon: '🪣', label: 'Élevage', detail: '500 pts si juste · 100 pts sinon' },
                 { icon: '💰', label: 'Prix', detail: '500 pts si exact · −50 pts par CHF d\'écart' },
-                { icon: '💡', label: 'Aide', detail: '−200 pts par aide utilisée' },
+                { icon: '💡', label: 'Aide', detail: '−300 pts par aide utilisée' },
               ].map(({ icon, label, detail }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ fontSize: '13px', flexShrink: 0 }}>{icon}</span>

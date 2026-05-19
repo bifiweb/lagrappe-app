@@ -498,15 +498,15 @@ export default function SessionPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
-                  { emoji: '👁️', label: 'Robe',      pts: '300 si juste · 100 sinon' },
-                  { emoji: '👃', label: 'Arômes',    pts: '300 pts × nb joueurs même arôme · +300 si officiel' },
-                  { emoji: '👄', label: 'Bouche',    pts: '300 si juste · 100 sinon' },
+                  { emoji: '👁️', label: 'Robe',      pts: '500 si juste · 200 sinon' },
+                  { emoji: '👃', label: 'Arômes',    pts: '200 pts × nb joueurs même arôme · +200 si officiel' },
+                  { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 200 sinon' },
                   { emoji: '💰', label: 'Prix',      pts: '500 si exact · −50 pts/CHF d\'écart' },
-                  { emoji: '📅', label: 'Millésime', pts: '500 si juste · −100 pts par année d\'écart' },
-                  { emoji: '🍇', label: 'Cépage',    pts: '1 000 si juste · 200 sinon' },
+                  { emoji: '📅', label: 'Millésime', pts: '500 si exact · −50 pts par année d\'écart' },
+                  { emoji: '🍇', label: 'Cépage',    pts: '1 500 si juste · 300 sinon' },
                   { emoji: '📍', label: 'Région',    pts: '500 si juste · 100 sinon' },
-                  { emoji: '🪣', label: 'Élevage',   pts: '300 si juste · 100 sinon' },
-                  { emoji: '💡', label: 'Aide',      pts: '−200 pts par aide utilisée' },
+                  { emoji: '🪣', label: 'Élevage',   pts: '500 si juste · 100 sinon' },
+                  { emoji: '💡', label: 'Aide',      pts: '−300 pts par aide utilisée' },
                 ].map(({ emoji, label, pts }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '14px', lineHeight: 1.4, flexShrink: 0 }}>{emoji}</span>
