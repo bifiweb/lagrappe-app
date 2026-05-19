@@ -114,7 +114,7 @@ export default function TastingPage() {
   const [robe, setRobe] = useState<string | null>(null)
   const [nezIntensite, setNezIntensite] = useState(3)
   const [aromes, setAromes] = useState<string[]>([])
-  const [boucheIndex, setBoucheIndex] = useState(1)
+  const [boucheIndex, setBoucheIndex] = useState(2)
   const [accords, setAccords] = useState<string[]>([])
   const [prix, setPrix] = useState('')
   const [millesime, setMillesime] = useState('')
@@ -564,14 +564,14 @@ export default function TastingPage() {
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 {content.bouche.map((opt, i) => (
-                  <div key={i} style={{ textAlign: i === 0 ? 'left' : i === 2 ? 'right' : 'center', flex: 1 }}>
+                  <div key={i} style={{ textAlign: i === 0 ? 'left' : i === content.bouche.length - 1 ? 'right' : 'center', flex: 1 }}>
                     <div style={{ fontSize: '11px', color: boucheIndex === i ? accent : '#aaa', fontWeight: boucheIndex === i ? '500' : '400', transition: 'color .2s' }}>
                       {opt.split(',')[0]}
                     </div>
                   </div>
                 ))}
               </div>
-              <input type="range" min={0} max={2} step={1} value={boucheIndex}
+              <input type="range" min={0} max={content.bouche.length - 1} step={1} value={boucheIndex}
                 onChange={e => { setBoucheIndex(Number(e.target.value)); haptic() }}
                 style={{ width: '100%', accentColor: accent, height: '6px' }} />
               <div style={{ textAlign: 'center', fontSize: '15px', fontWeight: '500', color: accent, marginTop: '12px', transition: 'all .2s' }}>
