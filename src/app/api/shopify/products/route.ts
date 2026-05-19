@@ -39,16 +39,20 @@ function detectWineType(tags: string[], productType: string): string {
 
 export async function GET() {
   try {
-    // 1. Produits via API publique
-    const res = await fetch(
-      `https://${SHOPIFY_DOMAIN}/products.json?limit=250`,
-      { headers: { 'Accept': 'application/json' }, next: { revalidate: 0 } }
-    )
-    if (!res.ok) {
-      return NextResponse.json({ error: `Shopify ${res.status} — vérifie le domaine (${SHOPIFY_DOMAIN})` }, { status: 502 })
+    // 1. Produits via API publique (paginé)
+    const raw: any[] = []
+    let nextUrl: string | null = `https://${SHOPIFY_DOMAIN}/products.json?limit=250`
+    while (nextUrl) {
+      const res = await fetch(nextUrl, { headers: { 'Accept': 'application/json' }, next: { revalidate: 0 } })
+      if (!res.ok) {
+        return NextResponse.json({ error: `Shopify ${res.status} — vérifie le domaine (${SHOPIFY_DOMAIN})` }, { status: 502 })
+      }
+      const json = await res.json()
+      raw.push(...(json?.products ?? []))
+      const linkHeader = res.headers.get('Link')
+      const nextMatch = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)
+      nextUrl = nextMatch?.[1] ?? null
     }
-    const json = await res.json()
-    const raw: any[] = json?.products ?? []
 
     // 2. Metafields région + PDF via Storefront API (paginé)
     const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
