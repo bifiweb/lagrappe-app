@@ -418,7 +418,7 @@ export default function TastingPage() {
             </div>
             <div style={{ marginBottom: '12px' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Un mot sur la robe ?</div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts si juste · 100 pts sinon</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 200 pts sinon</div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginBottom: '1.25rem' }}>
               {content.robes.map(r => {
@@ -485,7 +485,7 @@ export default function TastingPage() {
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
                   Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts × nb joueurs ayant le même arôme · +300 pts si arôme officiel</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>200 pts × nb joueurs ayant le même arôme · +200 pts si arôme officiel</div>
               </div>
               <HintBanner used={hintCounts.aromes} onUse={() => useHint('aromes')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -559,7 +559,7 @@ export default function TastingPage() {
             </div>
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Structure en bouche</div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts si juste · 100 pts sinon</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 200 pts sinon</div>
             </div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -655,7 +655,7 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🍇 Cépage ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 000 pts si juste · 200 pts sinon</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 500 pts si juste · 300 pts sinon</div>
               </div>
               <HintBanner used={hintCounts.cepage} onUse={() => useHint('cepage')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
@@ -701,7 +701,7 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📅 Millésime ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · −100 pts par année d'écart</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si exact · −50 pts par année d'écart</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
                 <button onClick={() => { setMillesime(m => m === '' ? '2025' : String(Math.max(1990, parseInt(m) - 1))); haptic() }}
@@ -717,7 +717,7 @@ export default function TastingPage() {
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🪣 Élevage ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>300 pts si juste · 100 pts sinon</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {ELEVAGE_OPTIONS.map(e => (
