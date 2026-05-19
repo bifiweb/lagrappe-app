@@ -8,7 +8,15 @@ function gqlQuery(cursor: string | null) {
     products(first: 250, sortKey: TITLE${cursor ? `, after: "${cursor}"` : ''}) {
       pageInfo { hasNextPage endCursor }
       edges { node {
+        id
         handle
+        title
+        vendor
+        productType
+        descriptionHtml
+        tags
+        images(first: 1) { edges { node { url } } }
+        variants(first: 1) { edges { node { price { amount } } } }
         metafields(identifiers: [
           {namespace: "shopify", key: "region"},
           {namespace: "my_fields", key: "pdf"}
@@ -39,86 +47,69 @@ function detectWineType(tags: string[], productType: string): string {
 
 export async function GET() {
   try {
-    // 1. Produits via API publique (paginé)
-    const raw: any[] = []
-    let nextUrl: string | null = `https://${SHOPIFY_DOMAIN}/products.json?limit=250`
-    while (nextUrl) {
-      const res = await fetch(nextUrl, { headers: { 'Accept': 'application/json' }, next: { revalidate: 0 } })
-      if (!res.ok) {
-        return NextResponse.json({ error: `Shopify ${res.status} — vérifie le domaine (${SHOPIFY_DOMAIN})` }, { status: 502 })
-      }
-      const json = await res.json()
-      raw.push(...(json?.products ?? []))
-      const linkHeader = res.headers.get('Link')
-      const nextMatch = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)
-      nextUrl = nextMatch?.[1] ?? null
+    if (!STOREFRONT_TOKEN) {
+      return NextResponse.json({ error: 'NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN manquant' }, { status: 500 })
     }
 
-    // 2. Metafields région + PDF via Storefront API (paginé)
-    const metaByHandle: Record<string, { region?: string; pdf?: string }> = {}
-    let metaDebug: any = null
-    if (STOREFRONT_TOKEN) {
-      let cursor: string | null = null
-      let hasNextPage = true
-      let totalFetched = 0
-      let lastStatus = 0
+    const products: any[] = []
+    let cursor: string | null = null
+    let hasNextPage = true
+    let totalFetched = 0
+    let lastStatus = 0
 
-      while (hasNextPage) {
-        const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
-          body: JSON.stringify({ query: gqlQuery(cursor) }),
-          next: { revalidate: 0 },
+    while (hasNextPage) {
+      const gqlRes = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN },
+        body: JSON.stringify({ query: gqlQuery(cursor) }),
+        next: { revalidate: 0 },
+      })
+      lastStatus = gqlRes.status
+      if (!gqlRes.ok) {
+        return NextResponse.json({ error: `Shopify GraphQL ${gqlRes.status}` }, { status: 502 })
+      }
+      const gql = await gqlRes.json()
+      if (gql?.errors) {
+        return NextResponse.json({ error: 'Erreur GraphQL Shopify', details: gql.errors }, { status: 502 })
+      }
+
+      const productsData = gql?.data?.products
+      hasNextPage = productsData?.pageInfo?.hasNextPage ?? false
+      cursor = productsData?.pageInfo?.endCursor ?? null
+
+      for (const { node: p } of productsData?.edges ?? []) {
+        const tags: string[] = p.tags ?? []
+        const mfs: any[] = p.metafields ?? []
+        const regionMf = mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')
+        const pdfMf = mfs.find((m: any) => m?.namespace === 'my_fields' && m?.key === 'pdf')
+        const region = regionMf?.reference?.field?.value
+          ?? regionMf?.references?.nodes?.[0]?.field?.value
+          ?? null
+        const pdf = pdfMf?.reference?.url ?? pdfMf?.value ?? null
+        const rawHtml = p.descriptionHtml ?? ''
+        const descText = rawHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        const gidParts = (p.id as string).split('/')
+        products.push({
+          shopify_id: gidParts[gidParts.length - 1],
+          name: p.title,
+          cave: p.vendor || null,
+          cepage: p.productType || null,
+          region,
+          type: detectWineType(tags, p.productType ?? ''),
+          description: descText.length > 600 ? descText.slice(0, 600) + '…' : descText || null,
+          image_url: p.images?.edges?.[0]?.node?.url ?? null,
+          prix_chf: p.variants?.edges?.[0]?.node?.price?.amount ? parseFloat(p.variants.edges[0].node.price.amount) : null,
+          shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
+          pdf_url: pdf,
+          tags,
         })
-        lastStatus = gqlRes.status
-        if (!gqlRes.ok) break
-        const gql = await gqlRes.json()
-        if (gql?.errors) { metaDebug = { status: lastStatus, errors: gql.errors }; break }
-
-        const productsData = gql?.data?.products
-        hasNextPage = productsData?.pageInfo?.hasNextPage ?? false
-        cursor = productsData?.pageInfo?.endCursor ?? null
-
-        for (const { node } of productsData?.edges ?? []) {
-          const mfs: any[] = node.metafields ?? []
-          const regionMf = mfs.find((m: any) => m?.namespace === 'shopify' && m?.key === 'region')
-          const pdfMf = mfs.find((m: any) => m?.namespace === 'my_fields' && m?.key === 'pdf')
-          metaByHandle[node.handle] = {
-            region: regionMf?.reference?.field?.value
-              ?? regionMf?.references?.nodes?.[0]?.field?.value
-              ?? null,
-            pdf: pdfMf?.reference?.url ?? pdfMf?.value ?? undefined,
-          }
-          totalFetched++
-        }
+        totalFetched++
       }
-      metaDebug = { status: lastStatus, totalFetched }
-    } else {
-      metaDebug = { status: 'no token' }
     }
-
-    const products = raw.map((p: any) => {
-      const tags: string[] = Array.isArray(p.tags) ? p.tags : (p.tags ? String(p.tags).split(', ') : [])
-      const meta = metaByHandle[p.handle] ?? {}
-      return {
-        shopify_id: String(p.id),
-        name: p.title,
-        cave: p.vendor || null,
-        cepage: p.product_type || null,
-        region: meta.region || null,
-        type: detectWineType(tags, p.product_type ?? ''),
-        description: p.body_html ? (() => { const t = p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 600 ? t.slice(0, 600) + '…' : t || null })() : null,
-        image_url: p.images?.[0]?.src ?? null,
-        prix_chf: p.variants?.[0]?.price ? parseFloat(p.variants[0].price) : null,
-        shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
-        pdf_url: meta.pdf || null,
-        tags,
-      }
-    })
 
     const withPdf = products.filter(p => p.pdf_url)
     const withRegion = products.filter(p => p.region)
-    return NextResponse.json({ products, _debug: { ...metaDebug, withPdfCount: withPdf.length, withRegionCount: withRegion.length, samplePdf: withPdf[0] ?? null } })
+    return NextResponse.json({ products, _debug: { status: lastStatus, totalFetched, withPdfCount: withPdf.length, withRegionCount: withRegion.length, samplePdf: withPdf[0] ?? null } })
   } catch (e: any) {
     return NextResponse.json({ error: `${e.message} — domaine: "${SHOPIFY_DOMAIN}"` }, { status: 500 })
   }
