@@ -578,6 +578,58 @@ export default function TastingPage() {
                 {content.bouche[boucheIndex]}
               </div>
             </div>
+
+            <div style={{ marginTop: '1.5rem' }}>
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
+                  Arômes en bouche <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>Confirme, ajoute ou retire des arômes détectés au nez</div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {content.aromes.map(a => {
+                  const selected = aromes.includes(a)
+                  const eliminated = eliminatedAromes.includes(a)
+                  const disabled = eliminated || (!selected && aromes.length >= MAX_AROMES)
+                  const icon = getAromeIcon(a)
+                  return (
+                    <button key={a} onClick={() => !eliminated && toggleArome(a)}
+                      style={{
+                        padding: '7px 12px', borderRadius: '20px', fontSize: '12px',
+                        cursor: disabled ? 'default' : 'pointer',
+                        border: selected ? 'none' : '0.5px solid #e0e0e0',
+                        background: eliminated ? '#f5f5f5' : selected ? accent : '#fff',
+                        color: eliminated ? '#ccc' : selected ? '#fff' : '#444',
+                        opacity: (!eliminated && !selected && aromes.length >= MAX_AROMES) ? 0.35 : 1,
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        transition: 'transform .15s ease, box-shadow .15s ease',
+                        transform: selected ? 'scale(1.05)' : 'scale(1)',
+                        boxShadow: selected ? `0 2px 8px ${accent}40` : 'none',
+                        textDecoration: eliminated ? 'line-through' : 'none',
+                      }}>
+                      {icon && (
+                        <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: eliminated ? 'grayscale(1) opacity(0.3)' : selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />
+                      )}
+                      {a}
+                    </button>
+                  )
+                })}
+              </div>
+              {aromes.length > 0 && (
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>Tes arômes :</span>
+                  {aromes.map(a => {
+                    const icon = getAromeIcon(a)
+                    return (
+                      <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', background: '#f5ede8', color: accent, padding: '4px 10px', borderRadius: '10px', fontWeight: '500' }}>
+                        {icon && <img src={icon} alt={a} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
+                        {a}
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </>
         )}
 
