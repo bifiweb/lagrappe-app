@@ -135,8 +135,8 @@ export default function ProfilePage() {
   const totalDegustations = tastings.length + caveRatings.length
   const moyParSession = tastings.length ? Math.round(totalPtsJeu / tastings.length) : null
 
-  const cepageCorrect  = tastings.filter(t => t.pts_cepage === 1000).length
-  const regionCorrect  = tastings.filter(t => t.pts_region === 1000).length
+  const cepageCorrect  = tastings.filter(t => t.pts_cepage === 1500).length
+  const regionCorrect  = tastings.filter(t => t.pts_region === 500).length
   const millesimeCorrect = tastings.filter(t => t.pts_millesime === 500).length
   const prixCorrect    = tastings.filter(t => t.pts_prix === 500).length
   const aromesAvecPts  = tastings.filter(t => (t.pts_aromes ?? 0) > 0).length
