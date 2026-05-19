@@ -115,7 +115,7 @@ export default function TastingPage() {
   const [nezIntensite, setNezIntensite] = useState(3)
   const [aromes, setAromes] = useState<string[]>([])
   const [boucheIndex, setBoucheIndex] = useState(1)
-  const [accord, setAccord] = useState<string | null>(null)
+  const [accords, setAccords] = useState<string[]>([])
   const [prix, setPrix] = useState('')
   const [millesime, setMillesime] = useState('')
   const [cepage, setCepage] = useState<string | null>(null)
@@ -217,7 +217,7 @@ export default function TastingPage() {
       nez_intensite: nezIntensite,
       aromes,
       bouche: WINE_CONTENT[wine!.type].bouche[boucheIndex],
-      accords: accord ? [accord] : [],
+      accords,
       prix_estime: prix.trim() || null,
       millesime_estime: millesime ? parseInt(millesime) : null,
       cepage_guess: cepage,
@@ -250,7 +250,7 @@ export default function TastingPage() {
   const stepValid = (() => {
     if (step === 0) return robe !== null
     if (step === 1) return aromes.length > 0
-    if (step === 3) return accord !== null
+    if (step === 3) return accords.length > 0
     if (step === 4) return scorePerso !== null
     if (step === 5) return cepage !== null && region !== null && millesime.trim() !== '' && prix.trim() !== '' && elevage !== null
     return true
@@ -259,7 +259,7 @@ export default function TastingPage() {
   const stepMissing = (() => {
     if (step === 0 && !robe) return 'Sélectionne une robe pour continuer'
     if (step === 1 && aromes.length === 0) return 'Sélectionne au moins un arôme'
-    if (step === 3 && !accord) return 'Choisis un accord mets-vin'
+    if (step === 3 && accords.length === 0) return 'Choisis au moins un accord mets-vin'
     if (step === 4 && scorePerso === null) return 'Donne une note pour continuer'
     if (step === 5) {
       const missing: string[] = []
@@ -352,12 +352,12 @@ export default function TastingPage() {
                 👄 {content.bouche[boucheIndex]}
               </span>
             )}
-            {step > 3 && accord && (
+            {step > 3 && accords.length > 0 && (
               <span onClick={() => goStep(3)} style={{ cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: '#fff', border: '0.5px solid #e0e0e0', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                {getAccordIcon(accord)
-                  ? <img src={getAccordIcon(accord)!} alt={accord} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
+                {getAccordIcon(accords[0])
+                  ? <img src={getAccordIcon(accords[0])!} alt={accords[0]} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
                   : '🍴'}
-                {accord}
+                {accords[0]}{accords.length > 1 ? ` +${accords.length - 1}` : ''}
               </span>
             )}
             {step > 4 && scorePerso !== null && (
@@ -640,14 +640,14 @@ export default function TastingPage() {
               💡 Quel plat mettrait ce vin en valeur ? Fais confiance à ton instinct !
             </div>
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>
-              Accord idéal <span style={{ fontWeight: '400', color: '#888' }}>(1 seul choix)</span>
+              Accord idéal <span style={{ fontWeight: '400', color: '#888' }}>(plusieurs choix possibles)</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
               {content.accords.map(a => {
-                const selected = accord === a
+                const selected = accords.includes(a)
                 const icon = getAccordIcon(a)
                 return (
-                  <div key={a} onClick={() => { setAccord(accord === a ? null : a); haptic() }}
+                  <div key={a} onClick={() => { setAccords(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]); haptic() }}
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '10px 12px', borderRadius: '12px', border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: selected ? '#fdf5f5' : '#fff', transition: 'all .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', minWidth: '72px', boxShadow: selected ? `0 2px 8px ${accent}30` : 'none' }}>
                     {icon ? (
                       <img src={icon} alt={a} style={{ width: '40px', height: '40px', objectFit: 'contain', filter: selected ? `drop-shadow(0 0 4px ${accent}60)` : 'none', transition: 'filter .15s' }} />
@@ -661,10 +661,15 @@ export default function TastingPage() {
                 )
               })}
             </div>
-            {accord && (
-              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', fontSize: '13px', color: accent, fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {getAccordIcon(accord) && <img src={getAccordIcon(accord)!} alt={accord} style={{ width: '24px', height: '24px', objectFit: 'contain' }} />}
-                {accord}
+            {accords.length > 0 && (
+              <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>Tes accords :</span>
+                {accords.map(a => (
+                  <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', background: '#f5ede8', color: accent, padding: '4px 10px', borderRadius: '10px', fontWeight: '500' }}>
+                    {getAccordIcon(a) && <img src={getAccordIcon(a)!} alt={a} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
+                    {a}
+                  </span>
+                ))}
               </div>
             )}
           </>
