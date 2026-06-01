@@ -5,12 +5,13 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { useSessionRealtime } from '@/hooks/useRealtime'
 import { useWineMode } from '@/store/wineMode'
-import type { Session, SessionPlayer } from '@/types'
+import type { Session, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 
 export default function WaitingPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<SessionPlayer[]>([])
+  const [evening, setEvening] = useState<Evening | null>(null)
   const [isChef, setIsChef] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
   const [flash, setFlash] = useState(false)
@@ -35,8 +36,14 @@ export default function WaitingPage() {
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
 
-      const myPlayer = pl?.find(p => p.user_id === user.id)
-      setIsChef(myPlayer?.is_chef ?? false)
+      if (sess?.evening_id) {
+        const { data: ev } = await supabase.from('evenings').select('*').eq('id', sess.evening_id).single()
+        setEvening(ev)
+        setIsChef(ev?.chef_id === user.id)
+      } else {
+        const myPlayer = pl?.find(p => p.user_id === user.id)
+        setIsChef(myPlayer?.is_chef ?? false)
+      }
     }
     load()
   }, [])
@@ -198,7 +205,7 @@ export default function WaitingPage() {
                   <PlayerAvatar avatar={p.avatar} pseudo={p.pseudo} size={32} />
                   <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
                     {p.pseudo}
-                    {p.is_chef && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#888' }}>👑</span>}
+                    {p.is_chef && !session?.evening_id && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#888' }}>👑</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.tasting_done ? '#3B6D11' : '#e0c070' }}></div>
@@ -214,7 +221,9 @@ export default function WaitingPage() {
               <>
                 {allDone && (
                   <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '10px 14px', marginBottom: '12px', textAlign: 'center', fontSize: '12px', color: '#7a5020', lineHeight: 1.5 }}>
-                    👑 Tu es le·la chef·fe — c'est toi qui lances la révélation !
+                    {session?.evening_id
+                      ? '🎉 Tu es l\'organisateur·ice — c\'est toi qui lances la révélation !'
+                      : '👑 Tu es le·la chef·fe — c\'est toi qui lances la révélation !'}
                   </div>
                 )}
                 <button
@@ -234,12 +243,12 @@ export default function WaitingPage() {
 
             {!isChef && allDone && (
               <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '1rem 1.25rem', textAlign: 'center' }}>
-                <div style={{ fontSize: '28px', marginBottom: '8px' }}>👑</div>
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>{session?.evening_id ? '🎉' : '👑'}</div>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                  En attente du·de la chef·fe...
+                  {session?.evening_id ? 'En attente de l\'organisateur·ice...' : 'En attente du·de la chef·fe...'}
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>
-                  Tout le monde a terminé ! C'est au·à la chef·fe de lancer<br />la révélation du vin mystère. 🍾
+                  Tout le monde a terminé ! C'est {session?.evening_id ? 'à l\'organisateur·ice' : 'au·à la chef·fe'} de lancer<br />la révélation du vin mystère. 🍾
                 </div>
               </div>
             )}

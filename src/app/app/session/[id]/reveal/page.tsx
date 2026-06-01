@@ -653,11 +653,24 @@ export default function RevealPage() {
           </>
         )}
 
-        {/* Retour au dashboard */}
-        <button onClick={() => router.push('/app/dashboard')}
-          style={{ width: '100%', padding: '13px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#888', fontSize: '14px', cursor: 'pointer', marginTop: '1rem' }}>
-          Retour au dashboard
-        </button>
+        {/* Navigation post-reveal */}
+        {session?.evening_id ? (
+          <>
+            <button onClick={() => router.push(`/app/evening/${session.evening_id}/leaderboard`)}
+              style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', marginTop: '1rem' }}>
+              Voir le classement soirée →
+            </button>
+            <button onClick={() => router.push('/app/dashboard')}
+              style={{ width: '100%', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>
+              Retour au dashboard
+            </button>
+          </>
+        ) : (
+          <button onClick={() => router.push('/app/dashboard')}
+            style={{ width: '100%', padding: '13px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#888', fontSize: '14px', cursor: 'pointer', marginTop: '1rem' }}>
+            Retour au dashboard
+          </button>
+        )}
 
       </div>
     </div>

@@ -118,24 +118,26 @@ export default function ProjectPage() {
                 </div>
               </div>
 
-              <div onClick={() => setMode('soiree')}
-                style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', cursor: 'pointer' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = '#8d323b')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#edeaf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-                    🎉
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '3px' }}>
-                      Soirée continue
+              {wines.length >= 2 && (
+                <div onClick={() => project && router.push(`/app/evening/new?project=${project.id}`)}
+                  style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#8d323b')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#e0e0e0')}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#edeaf8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+                      🎉
                     </div>
-                    <div style={{ fontSize: '13px', color: '#888' }}>
-                      Plusieurs vins le même soir, solo ou en groupe
+                    <div>
+                      <div style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a', marginBottom: '3px' }}>
+                        Soirée continue
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#888' }}>
+                        Plusieurs vins le même soir, solo ou en groupe
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </>
         )}

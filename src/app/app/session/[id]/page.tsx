@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import type { Profile, Session, SessionPlayer } from '@/types'
+import type { Profile, Session, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -36,6 +36,7 @@ export default function SessionPage() {
   const [loading, setLoading] = useState(true)
   const [determiningChef, setDeterminingChef] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [evening, setEvening] = useState<Evening | null>(null)
 
   // Chifoumi
   const [tiedPlayerIds, setTiedPlayerIds] = useState<string[]>([])
@@ -75,6 +76,11 @@ export default function SessionPage() {
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
+
+      if (sess?.evening_id) {
+        const { data: ev } = await supabase.from('evenings').select('*').eq('id', sess.evening_id).single()
+        setEvening(ev)
+      }
 
       if (sess?.status === 'voting') setPhase('voting')
       if (sess?.status === 'tasting') {
@@ -118,6 +124,10 @@ export default function SessionPage() {
       if (sess?.status === 'voting') {
         setPhase('voting')
         clearInterval(interval)
+      }
+      if (sess?.status === 'tasting') {
+        clearInterval(interval)
+        router.push(`/app/tasting/${sessionId}`)
       }
     }, 2000)
     return () => clearInterval(interval)
@@ -239,6 +249,11 @@ export default function SessionPage() {
     const done = setTimeout(() => setWheelDone(true), 4500)
     return () => { clearTimeout(spin); clearTimeout(done) }
   }, [phase, tirageWinner?.user_id])
+
+  async function launchSubSession() {
+    await supabase.from('sessions').update({ status: 'tasting' }).eq('id', sessionId)
+    router.push(`/app/tasting/${sessionId}`)
+  }
 
   async function launchVote() {
     await supabase.from('sessions')
@@ -416,18 +431,37 @@ export default function SessionPage() {
   )
 
   const amInTiebreak = tiedPlayerIds.includes(profile?.id ?? '')
+  const isEveningSession = !!session?.evening_id
+  const isChef = isEveningSession
+    ? evening?.chef_id === profile?.id
+    : players.find(p => p.user_id === profile?.id)?.is_chef ?? false
+  const totalBottles = evening ? (evening.bottle_order as unknown as string[]).length : 1
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '16px' }}>🍷</span>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: session?.evening_id ? '#6B4FAE' : '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '16px' }}>{session?.evening_id ? '🎉' : '🍷'}</span>
           </div>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
-            Bouteille #{session?.bottle_number}
-          </span>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
+              Bouteille #{session?.bottle_number}
+            </span>
+            {session?.evening_id && (
+              <div style={{ fontSize: '11px', color: '#6B4FAE', fontWeight: '500' }}>
+                Soirée — {session.order_in_evening}/{totalBottles}
+              </div>
+            )}
+          </div>
+          {session?.evening_id && (
+            <div style={{ display: 'flex', gap: '3px' }}>
+              {Array.from({ length: totalBottles }).map((_, i) => (
+                <div key={i} style={{ width: '6px', height: '6px', borderRadius: '50%', background: i < (session.order_in_evening ?? 1) ? '#6B4FAE' : '#e0e0e0' }} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -453,7 +487,7 @@ export default function SessionPage() {
               ))}
             </div>
 
-            <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            {!isEveningSession && <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '600', color: '#8d323b', marginBottom: '4px' }}>
                 🎉 Invite tes amis !
               </div>
@@ -478,9 +512,9 @@ export default function SessionPage() {
                   💬 Partager
                 </button>
               </div>
-            </div>
+            </div>}
 
-            <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            {!isEveningSession && <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
                 👑 Le rôle du·de la chef·fe
               </div>
@@ -490,9 +524,9 @@ export default function SessionPage() {
               <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
                 <strong>Son seul privilège ?</strong> C'est lui·elle — et lui·elle seul·e — qui peut lancer la révélation du vin mystère une fois que tout le monde a soumis sa dégustation. 🍾
               </p>
-            </div>
+            </div>}
 
-            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            {!isEveningSession && <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>
                 📊 Barème des points
               </div>
@@ -517,30 +551,60 @@ export default function SessionPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>}
 
-            <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-              <span style={{ fontSize: '18px', flexShrink: 0 }}>⏳</span>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: '#3C3489', marginBottom: '2px' }}>
-                  Attends que tout le monde soit là !
+            {isEveningSession ? (
+              <>
+                <div style={{ background: '#edeaf8', border: '0.5px solid #c5b8f0', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>🎉</span>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#5B3D9E', marginBottom: '2px' }}>
+                      Bouteille {session?.order_in_evening}/{totalBottles} — Même équipe !
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#6B4FAE', lineHeight: 1.5 }}>
+                      Tout le monde est en place. L'organisateur·ice peut lancer la prochaine dégustation.
+                    </div>
+                  </div>
                 </div>
-                <div style={{ fontSize: '12px', color: '#534AB7', lineHeight: 1.5 }}>
-                  Prends le temps de lire les règles ci-dessus, puis lance le vote quand tous les joueurs sont connectés.
+
+                {isChef ? (
+                  <button onClick={launchSubSession}
+                    style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+                    Lancer la dégustation →
+                  </button>
+                ) : (
+                  <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '14px', color: '#3C3489', fontWeight: '500' }}>⏳ En attente de l'organisateur·ice...</div>
+                    <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '4px' }}>La dégustation démarrera dans quelques instants</div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>⏳</span>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#3C3489', marginBottom: '2px' }}>
+                      Attends que tout le monde soit là !
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#534AB7', lineHeight: 1.5 }}>
+                      Prends le temps de lire les règles ci-dessus, puis lance le vote quand tous les joueurs sont connectés.
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <button onClick={launchVote}
-              style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-              Lancer le vote du·de la chef·fe →
-            </button>
+                <button onClick={launchVote}
+                  style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+                  Lancer le vote du·de la chef·fe →
+                </button>
 
-            {profile?.role === 'admin' && (
-              <button onClick={leaveSession}
-                style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#aaa', border: '0.5px solid #e0e0e0', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>
-                Quitter la session
-              </button>
+                {profile?.role === 'admin' && (
+                  <button onClick={leaveSession}
+                    style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#aaa', border: '0.5px solid #e0e0e0', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>
+                    Quitter la session
+                  </button>
+                )}
+              </>
             )}
           </>
         )}
