@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import type { Session, Wine, GrappisteNotes, Tasting, SessionPlayer } from '@/types'
+import type { Session, Wine, GrappisteNotes, Tasting, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 
 export default function RevealPage() {
@@ -22,6 +22,7 @@ export default function RevealPage() {
   const [postRevealRachete, setPostRevealRachete] = useState<boolean | null>(null)
   const [savingPostReveal, setSavingPostReveal] = useState(false)
   const [postRevealSaved, setPostRevealSaved] = useState(false)
+  const [evening, setEvening] = useState<Evening | null>(null)
   const [catalogWineId, setCatalogWineId] = useState<string | null>(null)
   const [alreadyInCave, setAlreadyInCave] = useState(false)
   const [addingToCave, setAddingToCave] = useState(false)
@@ -44,6 +45,11 @@ export default function RevealPage() {
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
+
+      if (sess?.evening_id) {
+        const { data: ev } = await supabase.from('evenings').select('*').eq('id', sess.evening_id).single()
+        setEvening(ev)
+      }
 
       if (sess) {
         const { data: w } = await supabase
@@ -660,10 +666,12 @@ export default function RevealPage() {
               style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', marginTop: '1rem' }}>
               Voir le classement soirée →
             </button>
-            <button onClick={() => router.push('/app/dashboard')}
-              style={{ width: '100%', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>
-              Retour au dashboard
-            </button>
+            {session.order_in_evening === (evening?.bottle_order as unknown as string[])?.length && (
+              <button onClick={() => router.push('/app/dashboard')}
+                style={{ width: '100%', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>
+                Retour au dashboard
+              </button>
+            )}
           </>
         ) : (
           <button onClick={() => router.push('/app/dashboard')}
