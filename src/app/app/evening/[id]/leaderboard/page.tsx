@@ -58,6 +58,14 @@ export default function EveningLeaderboardPage() {
         .order('order_in_evening')
       setSessions(allSessions ?? [])
 
+      // Fallback: si l'organisateur a déjà lancé la bouteille suivante
+      // pendant que ce joueur naviguait ici, le broadcast est déjà passé
+      const nextSession = (allSessions ?? []).find(s => s.status !== 'revealed')
+      if (nextSession) {
+        router.push(`/app/session/${nextSession.id}`)
+        return
+      }
+
       const { data: wineData } = await supabase
         .from('wines')
         .select('*')
