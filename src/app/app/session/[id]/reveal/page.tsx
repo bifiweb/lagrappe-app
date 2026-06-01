@@ -27,6 +27,7 @@ export default function RevealPage() {
   const [alreadyInCave, setAlreadyInCave] = useState(false)
   const [addingToCave, setAddingToCave] = useState(false)
   const [addedToCave, setAddedToCave] = useState(false)
+  const eveningChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const SCORE_EMOJIS_R = ['😫','😞','😕','😐','😏','🙂','😊','😋','😁','🤩','😍']
   const SCORE_LABELS_R = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moyen','Bien','Très bien','Excellent','Sublime','Légendaire !']
@@ -40,16 +41,47 @@ export default function RevealPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
-      await supabase.rpc('calculate_session_scores', { p_session_id: sessionId })
-
+      // Fetch session first to know evening_id as early as possible
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
       if (sess?.evening_id) {
-        const { data: ev } = await supabase.from('evenings').select('*').eq('id', sess.evening_id).single()
+        const eveningId = sess.evening_id
+
+        // Subscribe to evening channel immediately — before all other fetches
+        // so we don't miss next_session/finale broadcasts while the page loads
+        const channel = supabase.channel(`evening:${eveningId}`)
+        channel
+          .on('broadcast', { event: 'next_session' }, ({ payload }) => {
+            router.push(`/app/session/${payload.sessionId}`)
+          })
+          .on('broadcast', { event: 'finale' }, () => {
+            router.push(`/app/evening/${eveningId}/finale`)
+          })
+          .subscribe()
+        eveningChannelRef.current = channel
+
+        // Fallback: organizer may have already launched next bottle
+        // before we finished subscribing (broadcast is ephemeral)
+        const { data: nextSess } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('evening_id', eveningId)
+          .gt('order_in_evening', sess.order_in_evening ?? 0)
+          .order('order_in_evening', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        if (nextSess) {
+          router.push(`/app/session/${nextSess.id}`)
+          return
+        }
+
+        const { data: ev } = await supabase.from('evenings').select('*').eq('id', eveningId).single()
         setEvening(ev)
       }
+
+      await supabase.rpc('calculate_session_scores', { p_session_id: sessionId })
 
       if (sess) {
         const { data: w } = await supabase
@@ -93,6 +125,9 @@ export default function RevealPage() {
       setLoading(false)
     }
     load()
+    return () => {
+      if (eveningChannelRef.current) supabase.removeChannel(eveningChannelRef.current)
+    }
   }, [])
 
   const isDirty = myTasting !== null && (
@@ -664,7 +699,7 @@ export default function RevealPage() {
           <>
             <button onClick={() => router.push(`/app/evening/${session.evening_id}/leaderboard`)}
               style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', marginTop: '1rem' }}>
-              Voir le classement soirée →
+              Suite et classement →
             </button>
             {session.order_in_evening === (evening?.bottle_order as unknown as string[])?.length && (
               <button onClick={() => router.push('/app/dashboard')}
