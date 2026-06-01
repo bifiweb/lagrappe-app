@@ -176,7 +176,7 @@ export default function EveningFinalePage() {
         {/* Podium */}
         {top3.length > 0 && (
           <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '8px', height: '220px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '8px', height: '280px' }}>
               {podiumOrder.map((entry, i) => {
                 const rank = top3.indexOf(entry)
                 const height = podiumHeights[i]
