@@ -416,10 +416,12 @@ export default function EveningLeaderboardPage() {
           </button>
         )}
 
-        <button onClick={() => router.push('/app/dashboard')}
-          style={{ width: '100%', marginTop: '8px', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer' }}>
-          Retour au dashboard
-        </button>
+        {isLastBottle && (
+          <button onClick={() => router.push('/app/dashboard')}
+            style={{ width: '100%', marginTop: '8px', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer' }}>
+            Retour au dashboard
+          </button>
+        )}
 
       </div>
     </div>
