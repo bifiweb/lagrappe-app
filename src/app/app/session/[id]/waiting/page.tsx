@@ -60,6 +60,21 @@ export default function WaitingPage() {
     return () => { supabase.removeChannel(channel) }
   }, [sessionId])
 
+  // Écouter les suppressions de joueurs pour mettre à jour la liste en temps réel
+  useEffect(() => {
+    if (!sessionId) return
+    const channel = supabase
+      .channel(`players_delete:${sessionId}`)
+      .on('postgres_changes', {
+        event: 'DELETE', schema: 'public', table: 'session_players',
+        filter: `session_id=eq.${sessionId}`,
+      }, (payload) => {
+        setPlayers(prev => prev.filter(p => p.id !== (payload.old as { id: string }).id))
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [sessionId])
+
   useSessionRealtime(sessionId, {
     onPlayerUpdate: (p) => setPlayers(prev => prev.map(x => x.id === p.id ? { ...x, ...p } : x)),
     // Fallback : si un joueur recharge la page après que le reveal soit lancé
@@ -92,6 +107,12 @@ export default function WaitingPage() {
         }
       }
     }, 1000)
+  }
+
+  async function removePlayer(playerId: string, pseudo: string) {
+    if (!confirm(`Retirer ${pseudo} de la session ?`)) return
+    await supabase.from('session_players').delete().eq('id', playerId)
+    setPlayers(prev => prev.filter(p => p.id !== playerId))
   }
 
   async function startReveal() {
@@ -212,6 +233,14 @@ export default function WaitingPage() {
                     <span style={{ fontSize: '12px', color: p.tasting_done ? '#3B6D11' : '#888' }}>
                       {p.tasting_done ? 'Terminé' : 'En cours...'}
                     </span>
+                    {isChef && !p.tasting_done && (
+                      <button
+                        onClick={() => removePlayer(p.id, p.pseudo)}
+                        title="Retirer ce joueur"
+                        style={{ marginLeft: '4px', padding: '2px 7px', background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '6px', fontSize: '11px', color: '#8d323b', cursor: 'pointer', lineHeight: 1.4 }}>
+                        ✕
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -238,6 +267,18 @@ export default function WaitingPage() {
                   }}>
                   {allDone ? 'Révéler le vin mystère ! 🍾' : `En attente... (${doneCount}/${players.length})`}
                 </button>
+                {!allDone && (
+                  <button
+                    onClick={startReveal}
+                    style={{
+                      width: '100%', marginTop: '10px', padding: '12px',
+                      background: 'transparent', color: '#8d323b',
+                      border: '0.5px solid #d0a090', borderRadius: '12px',
+                      fontSize: '13px', fontWeight: '500', cursor: 'pointer',
+                    }}>
+                    ⚡ Forcer la révélation ({doneCount}/{players.length} terminés)
+                  </button>
+                )}
               </>
             )}
 
