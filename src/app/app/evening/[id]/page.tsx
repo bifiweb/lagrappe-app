@@ -19,6 +19,9 @@ export default function EveningLobbyPage() {
   const [players, setPlayers] = useState<SessionPlayer[]>([])
   const [wines, setWines] = useState<Wine[]>([])
 
+  const [guestAccess, setGuestAccess] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
   const [joined, setJoined] = useState(false)
   const [pseudo, setPseudo] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
@@ -38,46 +41,62 @@ export default function EveningLobbyPage() {
   useEffect(() => {
     async function load() {
       const { data: { user: u } } = await supabase.auth.getUser()
-      if (!u) { router.push('/auth/login'); return }
-      setUser(u)
-
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', u.id).single()
-      setProfile(prof)
-      if (prof?.display_name) setPseudo(prof.display_name)
-      setSelectedAvatar(prof?.avatar ?? null)
 
       const { data: ev } = await supabase.from('evenings').select('*').eq('id', eveningId).single()
       setEvening(ev)
 
-      if (ev) {
-        const { data: w } = await supabase.from('wines')
-          .select('*')
-          .in('id', ev.bottle_order)
-          .order('bottle_number')
-        setWines(w ?? [])
+      if (!ev) { setLoading(false); return }
 
-        const { data: sess } = await supabase
-          .from('sessions')
-          .select('*')
-          .eq('evening_id', eveningId)
-          .eq('order_in_evening', 1)
-          .single()
-        setFirstSession(sess)
+      // Vérifier guest_access avant d'exiger une connexion
+      const { data: proj } = await supabase
+        .from('projects').select('guest_access').eq('id', ev.project_id).single()
+      const hasGuestAccess = proj?.guest_access ?? false
+      setGuestAccess(hasGuestAccess)
 
-        if (sess) {
-          const { data: pl } = await supabase
-            .from('session_players').select('*').eq('session_id', sess.id)
-          setPlayers(pl ?? [])
+      if (!u && !hasGuestAccess) {
+        router.push(`/auth/login?redirect=/app/evening/${eveningId}`)
+        return
+      }
 
+      if (u) {
+        setUser(u)
+        setIsLoggedIn(true)
+        const { data: prof } = await supabase.from('profiles').select('*').eq('id', u.id).single()
+        setProfile(prof)
+        if (prof?.display_name) setPseudo(prof.display_name)
+        setSelectedAvatar(prof?.avatar ?? null)
+      }
+
+      const { data: w } = await supabase.from('wines')
+        .select('*')
+        .in('id', ev.bottle_order)
+        .order('bottle_number')
+      setWines(w ?? [])
+
+      const { data: sess } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('evening_id', eveningId)
+        .eq('order_in_evening', 1)
+        .single()
+      setFirstSession(sess)
+
+      if (sess) {
+        const { data: pl } = await supabase
+          .from('session_players').select('*').eq('session_id', sess.id)
+        setPlayers(pl ?? [])
+
+        if (u) {
           const existing = pl?.find((p: SessionPlayer) => p.user_id === u.id)
           setJoined(!!existing)
+        }
 
-          if (sess.status !== 'lobby') {
-            router.push(`/app/session/${sess.id}`)
-            return
-          }
+        if (sess.status !== 'lobby') {
+          router.push(`/app/session/${sess.id}`)
+          return
         }
       }
+
       setLoading(false)
     }
     load()
@@ -120,24 +139,36 @@ export default function EveningLobbyPage() {
   }, [eveningId, firstSession?.id])
 
   async function joinEvening() {
-    if (!pseudo.trim() || !firstSession || !user) return
+    if (!pseudo.trim() || !firstSession) return
     setJoining(true)
+
+    let userId: string | undefined
+
+    if (!isLoggedIn) {
+      const { data, error } = await supabase.auth.signInAnonymously()
+      if (error || !data.user) { setJoining(false); return }
+      userId = data.user.id
+      await supabase.from('profiles')
+        .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
+        .eq('id', userId)
+    } else {
+      if (!user) { setJoining(false); return }
+      userId = user.id
+      await supabase.from('profiles')
+        .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
+        .eq('id', userId)
+    }
 
     const { error } = await supabase.from('session_players').insert({
       session_id: firstSession.id,
-      user_id: user.id,
+      user_id: userId,
       pseudo: pseudo.trim(),
       avatar: selectedAvatar ?? null,
       is_chef: false,
       evening_id: eveningId,
     })
 
-    if (!error) {
-      await supabase.from('profiles')
-        .update({ display_name: pseudo.trim(), ...(selectedAvatar ? { avatar: selectedAvatar } : {}) })
-        .eq('id', user.id)
-      setJoined(true)
-    }
+    if (!error) setJoined(true)
     setJoining(false)
   }
 
@@ -210,6 +241,11 @@ export default function EveningLobbyPage() {
         </div>
 
         <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>
+          {!isLoggedIn && guestAccess && (
+            <div style={{ background: '#faeeda', border: '0.5px solid #e0c080', borderRadius: '10px', padding: '10px 14px', marginBottom: '1.25rem', fontSize: '13px', color: '#633806' }}>
+              👤 Tu rejoins en tant qu&apos;<strong>invité</strong> — pas besoin de compte !
+            </div>
+          )}
           <div style={{ background: '#edeaf8', border: '0.5px solid #c5b8f0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.5rem', textAlign: 'center' }}>
             <div style={{ fontSize: '13px', color: '#5B3D9E', fontWeight: '500' }}>
               {players.length} joueur{players.length > 1 ? 's' : ''} déjà connecté{players.length > 1 ? 's' : ''}
