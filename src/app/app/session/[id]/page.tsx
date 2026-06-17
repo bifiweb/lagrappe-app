@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import type { Profile, Session, SessionPlayer, Evening } from '@/types'
+import type { Profile, Session, SessionPlayer, Evening, Project } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -37,6 +37,7 @@ export default function SessionPage() {
   const [determiningChef, setDeterminingChef] = useState(false)
   const [copied, setCopied] = useState(false)
   const [evening, setEvening] = useState<Evening | null>(null)
+  const [project, setProject] = useState<Project | null>(null)
 
   // Chifoumi
   const [tiedPlayerIds, setTiedPlayerIds] = useState<string[]>([])
@@ -80,6 +81,18 @@ export default function SessionPage() {
       if (sess?.evening_id) {
         const { data: ev } = await supabase.from('evenings').select('*').eq('id', sess.evening_id).single()
         setEvening(ev)
+      }
+
+      if (sess?.project_id) {
+        const { data: proj } = await supabase.from('projects').select('*').eq('id', sess.project_id).single()
+        setProject(proj)
+
+        // Routage pour le template cépage
+        if (proj?.template === 'cepage') {
+          if (sess.status === 'cepage_info') { router.push(`/app/session/${sessionId}/cepage-info`); return }
+          if (sess.status === 'cepage_tasting') { router.push(`/app/session/${sessionId}/cepage-tasting`); return }
+          if (sess.status === 'cepage_results') { router.push(`/app/session/${sessionId}/cepage-results`); return }
+        }
       }
 
       if (sess?.status === 'voting') setPhase('voting')
@@ -128,6 +141,18 @@ export default function SessionPage() {
       if (sess?.status === 'tasting') {
         clearInterval(interval)
         router.push(`/app/tasting/${sessionId}`)
+      }
+      if (sess?.status === 'cepage_info') {
+        clearInterval(interval)
+        router.push(`/app/session/${sessionId}/cepage-info`)
+      }
+      if (sess?.status === 'cepage_tasting') {
+        clearInterval(interval)
+        router.push(`/app/session/${sessionId}/cepage-tasting`)
+      }
+      if (sess?.status === 'cepage_results') {
+        clearInterval(interval)
+        router.push(`/app/session/${sessionId}/cepage-results`)
       }
     }, 2000)
     return () => clearInterval(interval)
@@ -253,6 +278,11 @@ export default function SessionPage() {
   async function launchSubSession() {
     await supabase.from('sessions').update({ status: 'tasting' }).eq('id', sessionId)
     router.push(`/app/tasting/${sessionId}`)
+  }
+
+  async function launchCepageInfo() {
+    await supabase.from('sessions').update({ status: 'cepage_info' }).eq('id', sessionId)
+    router.push(`/app/session/${sessionId}/cepage-info`)
   }
 
   async function launchVote() {
@@ -432,22 +462,24 @@ export default function SessionPage() {
 
   const amInTiebreak = tiedPlayerIds.includes(profile?.id ?? '')
   const isEveningSession = !!session?.evening_id
+  const isCepageSession = project?.template === 'cepage'
   const isChef = isEveningSession
     ? evening?.chef_id === profile?.id
     : players.find(p => p.user_id === profile?.id)?.is_chef ?? false
   const totalBottles = evening ? (evening.bottle_order as unknown as string[]).length : 1
+  const cepageName = project?.cepage_name ?? 'Cépage'
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: session?.evening_id ? '#6B4FAE' : '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '16px' }}>{session?.evening_id ? '🎉' : '🍷'}</span>
+          <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: isCepageSession ? '#7a3a5a' : session?.evening_id ? '#6B4FAE' : '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '16px' }}>{isCepageSession ? '🍇' : session?.evening_id ? '🎉' : '🍷'}</span>
           </div>
           <div style={{ flex: 1 }}>
             <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
-              Bouteille #{session?.bottle_number}
+              {isCepageSession ? cepageName : `Bouteille #${session?.bottle_number}`}
             </span>
             {session?.evening_id && (
               <div style={{ fontSize: '11px', color: '#6B4FAE', fontWeight: '500' }}>
@@ -489,7 +521,7 @@ export default function SessionPage() {
 
             {!isEveningSession && <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '600', color: '#8d323b', marginBottom: '4px' }}>
-                🎉 Invite tes amis !
+                {isCepageSession ? '🍇 Partage le lien !' : '🎉 Invite tes amis !'}
               </div>
               <div style={{ fontSize: '12px', color: '#7a4030', marginBottom: '12px' }}>
                 Plus on est de fous, plus le jeu est fun — partage le lien pour qu'ils rejoignent la session.
@@ -514,7 +546,7 @@ export default function SessionPage() {
               </div>
             </div>}
 
-            {!isEveningSession && <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            {!isEveningSession && !isCepageSession && <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
                 👑 Le rôle du·de la chef·fe
               </div>
@@ -526,7 +558,7 @@ export default function SessionPage() {
               </p>
             </div>}
 
-            {!isEveningSession && <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+            {!isEveningSession && !isCepageSession && <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>
                 📊 Barème des points
               </div>
@@ -553,7 +585,32 @@ export default function SessionPage() {
               </div>
             </div>}
 
-            {isEveningSession ? (
+            {isCepageSession ? (
+              <>
+                <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>🍇</span>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#8d323b', marginBottom: '2px' }}>
+                      Dégustation {cepageName} à l'aveugle
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#7a4030', lineHeight: 1.5 }}>
+                      Chaque joueur a apporté une bouteille. L'organisateur lance quand tout le monde est prêt.
+                    </div>
+                  </div>
+                </div>
+                {isChef ? (
+                  <button onClick={launchCepageInfo}
+                    style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+                    Tout le monde est là ? Lancer →
+                  </button>
+                ) : (
+                  <div style={{ background: '#f5f5f5', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '14px', color: '#444', fontWeight: '500' }}>⏳ En attente de l'organisateur·ice...</div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>La dégustation démarrera dans quelques instants</div>
+                  </div>
+                )}
+              </>
+            ) : isEveningSession ? (
               <>
                 <div style={{ background: '#edeaf8', border: '0.5px solid #c5b8f0', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                   <span style={{ fontSize: '18px', flexShrink: 0 }}>🎉</span>

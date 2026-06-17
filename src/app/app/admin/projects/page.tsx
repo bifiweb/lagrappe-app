@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import type { Project, Profile } from '@/types'
+import type { Project, Profile, ProjectTemplate } from '@/types'
 import AdminNav from '@/components/AdminNav'
 
 interface ProjectWithStats extends Project {
@@ -31,6 +31,9 @@ export default function AdminProjectsPage() {
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [accessMode, setAccessMode] = useState<'public' | 'link' | 'restricted'>('public')
   const [guestAccess, setGuestAccess] = useState(false)
+  const [template, setTemplate] = useState<ProjectTemplate>('swiss_wine')
+  const [cepageName, setCepageName] = useState('')
+  const [cepageInfoUrl, setCepageInfoUrl] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -83,6 +86,9 @@ export default function AdminProjectsPage() {
     const mode = (project as any).access_mode ?? 'public'
     setAccessMode(mode as 'public' | 'link' | 'restricted')
     setGuestAccess((project as any).guest_access ?? false)
+    setTemplate((project as any).template ?? 'swiss_wine')
+    setCepageName((project as any).cepage_name ?? '')
+    setCepageInfoUrl((project as any).cepage_info_url ?? '')
 
     supabase.from('project_members')
       .select('user_id').eq('project_id', project.id)
@@ -105,6 +111,9 @@ export default function AdminProjectsPage() {
     setMemberIds([])
     setAccessMode('public')
     setGuestAccess(false)
+    setTemplate('swiss_wine')
+    setCepageName('')
+    setCepageInfoUrl('')
     setSuccess(false)
     setActiveSection('info')
     setCreating(true)
@@ -129,6 +138,9 @@ export default function AdminProjectsPage() {
         image_url: projectImageUrl || null,
         access_mode: accessMode,
         guest_access: guestAccess,
+        template,
+        cepage_name: template === 'cepage' ? (cepageName || null) : null,
+        cepage_info_url: template === 'cepage' ? (cepageInfoUrl || null) : null,
       }).eq('id', editingProject.id)
     } else {
       const { data: newProject } = await supabase.from('projects').insert({
@@ -140,6 +152,9 @@ export default function AdminProjectsPage() {
         active: true,
         access_mode: accessMode,
         guest_access: guestAccess,
+        template,
+        cepage_name: template === 'cepage' ? (cepageName || null) : null,
+        cepage_info_url: template === 'cepage' ? (cepageInfoUrl || null) : null,
       }).select().single()
       projectId = newProject?.id
 
@@ -337,6 +352,40 @@ export default function AdminProjectsPage() {
                     URL : /app/project/{projectSlug || '...'}
                   </div>
                 </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Template de dégustation</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {([
+                      { value: 'swiss_wine', emoji: '🇨🇭', label: 'Vin Suisse', desc: 'Toutes les régions suisses disponibles' },
+                      { value: 'valais_wine', emoji: '🏔️', label: 'Vin du Valais', desc: 'Régions hors Valais grisées automatiquement' },
+                      { value: 'cepage', emoji: '🍇', label: 'Dégustation Cépage', desc: 'Chaque joueur apporte un vin du même cépage' },
+                    ] as const).map(({ value, emoji, label, desc }) => (
+                      <div key={value} onClick={() => setTemplate(value)}
+                        style={{ padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', border: template === value ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: template === value ? '#fdf5f5' : '#fff' }}>
+                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{emoji} {label}</div>
+                        <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>{desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {template === 'cepage' && (
+                  <>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Nom du cépage *</label>
+                      <input value={cepageName} onChange={e => setCepageName(e.target.value)}
+                        placeholder="ex: Pinot Noir, Chasselas, Merlot..."
+                        style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Lien info cépage <span style={{ fontWeight: '400', color: '#aaa' }}>(optionnel)</span></label>
+                      <input value={cepageInfoUrl} onChange={e => setCepageInfoUrl(e.target.value)}
+                        placeholder="https://fr.wikipedia.org/wiki/Pinot_noir"
+                        style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
+                    </div>
+                  </>
+                )}
+
                 <div style={{ marginBottom: '12px' }}>
                   <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Image URL</label>
                   <input value={projectImageUrl} onChange={e => setProjectImageUrl(e.target.value)}

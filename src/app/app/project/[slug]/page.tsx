@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import type { Profile, Project, Wine } from '@/types'
+import type { Profile, Project, Wine, SessionPlayer } from '@/types'
 
 export default function ProjectPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -12,6 +12,9 @@ export default function ProjectPage() {
   const [revealedWineIds, setRevealedWineIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'solo' | 'soiree' | null>(null)
+  const [launchingCepage, setLaunchingCepage] = useState(false)
+  const [pseudo, setPseudo] = useState('')
+  const [showPseudoInput, setShowPseudoInput] = useState(false)
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
@@ -58,16 +61,47 @@ export default function ProjectPage() {
         }
       }
 
+      if (prof?.display_name) setPseudo(prof.display_name)
+
       setLoading(false)
     }
     load()
   }, [])
+
+  async function launchCepageSession() {
+    if (!pseudo.trim() || !project || !profile) return
+    setLaunchingCepage(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: session, error } = await supabase
+      .from('sessions')
+      .insert({ project_id: project.id, wine_id: null, bottle_number: null, status: 'lobby' })
+      .select().single()
+
+    if (error || !session) { setLaunchingCepage(false); return }
+
+    await supabase.from('session_players').insert({
+      session_id: session.id,
+      user_id: user.id,
+      pseudo: pseudo.trim(),
+      avatar: profile.avatar ?? null,
+      is_chef: true,
+    })
+
+    await supabase.from('profiles').update({ display_name: pseudo.trim() }).eq('id', user.id)
+    router.push(`/app/session/${session.id}`)
+  }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
     </div>
   )
+
+  const isCepage = (project as any)?.template === 'cepage'
+  const cepageName = (project as any)?.cepage_name ?? 'Cépage'
+  const cepageInfoUrl = (project as any)?.cepage_info_url
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -86,8 +120,49 @@ export default function ProjectPage() {
 
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
-        {/* Choix du mode */}
-        {!mode && (
+        {/* Mode cépage — flow dédié */}
+        {isCepage && (
+          <div>
+            <div style={{ background: 'linear-gradient(135deg, #f5ede8, #fdf0f5)', border: '0.5px solid #d0a090', borderRadius: '20px', padding: '1.5rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: '8px' }}>🍇</div>
+              <div style={{ fontSize: '22px', fontWeight: '600', color: '#8d323b', marginBottom: '4px' }}>{cepageName}</div>
+              <div style={{ fontSize: '13px', color: '#888' }}>Dégustation à l'aveugle</div>
+            </div>
+
+            <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '4px' }}>Comment ça marche ?</div>
+              <p style={{ fontSize: '13px', color: '#555', margin: '0 0 6px', lineHeight: 1.6 }}>Chaque joueur apporte une bouteille de {cepageName} à l'aveugle. Tous les vins sont dégustés, chacun note de 0 à 100. À la fin, le classement final est calculé par méthode Borda.</p>
+              {cepageInfoUrl && (
+                <a href={cepageInfoUrl} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#8d323b', textDecoration: 'none', fontWeight: '500', marginTop: '4px' }}>
+                  En savoir plus sur le {cepageName} →
+                </a>
+              )}
+            </div>
+
+            {!showPseudoInput ? (
+              <button onClick={() => setShowPseudoInput(true)}
+                style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
+                Créer une session de dégustation →
+              </button>
+            ) : (
+              <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem' }}>
+                <label style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '8px' }}>Ton pseudo</label>
+                <input value={pseudo} onChange={e => setPseudo(e.target.value)}
+                  placeholder="Ex: Sophie M., Le Sommelier..."
+                  maxLength={30}
+                  style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', outline: 'none', boxSizing: 'border-box', marginBottom: '12px' }} />
+                <button onClick={launchCepageSession} disabled={!pseudo.trim() || launchingCepage}
+                  style={{ width: '100%', padding: '12px', background: !pseudo.trim() || launchingCepage ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '500', cursor: !pseudo.trim() || launchingCepage ? 'default' : 'pointer' }}>
+                  {launchingCepage ? 'Création...' : 'Lancer la session →'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Choix du mode (templates vin suisse / valais) */}
+        {!isCepage && !mode && (
           <>
             <div style={{ marginBottom: '1.5rem' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', margin: '0 0 6px' }}>

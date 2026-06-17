@@ -103,6 +103,7 @@ function WineGlass({ color, size = 48, animate = false }: { color: string, size?
 export default function TastingPage() {
   const [session, setSession] = useState<Session | null>(null)
   const [wine, setWine] = useState<Wine | null>(null)
+  const [projectTemplate, setProjectTemplate] = useState<string>('swiss_wine')
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -146,8 +147,16 @@ export default function TastingPage() {
       const { data: sess } = await supabase.from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
       if (sess) {
-        const { data: w } = await supabase.from('wines').select('*').eq('id', sess.wine_id).single()
-        setWine(w)
+        if (sess.wine_id) {
+          const { data: w } = await supabase.from('wines').select('*').eq('id', sess.wine_id).single()
+          setWine(w)
+        }
+        if (sess.project_id) {
+          const { data: proj } = await supabase.from('projects').select('template').eq('id', sess.project_id).single()
+          if (proj?.template) setProjectTemplate(proj.template)
+          // Pré-sélectionner Valais pour le template valais_wine
+          if (proj?.template === 'valais_wine') setRegion('Valais')
+        }
       }
       setLoading(false)
     }
@@ -743,12 +752,18 @@ export default function TastingPage() {
                 <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
               </div>
               <HintBanner used={hintCounts.region} onUse={() => useHint('region')} />
+              {projectTemplate === 'valais_wine' && (
+                <div style={{ background: '#faeeda', border: '0.5px solid #d0a070', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px', fontSize: '12px', color: '#633806' }}>
+                  🏔️ Template Vin du Valais — seule la région Valais est disponible
+                </div>
+              )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {content.regions.map(r => {
                   const eliminated = eliminatedRegions.includes(r)
+                  const lockedOut = projectTemplate === 'valais_wine' && r !== 'Valais'
                   return (
-                    <button key={r} onClick={() => { if (!eliminated) { setRegion(r); haptic() } }}
-                      style={{ padding: '8px 14px', borderRadius: '20px', border: region === r ? 'none' : '0.5px solid #e0e0e0', background: eliminated ? '#f5f5f5' : region === r ? accent : '#fff', color: eliminated ? '#ccc' : region === r ? '#fff' : '#666', fontSize: '13px', cursor: eliminated ? 'default' : 'pointer', transition: 'all .15s', transform: region === r ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : 'none' }}>
+                    <button key={r} onClick={() => { if (!eliminated && !lockedOut) { setRegion(r); haptic() } }}
+                      style={{ padding: '8px 14px', borderRadius: '20px', border: region === r ? 'none' : '0.5px solid #e0e0e0', background: eliminated || lockedOut ? '#f5f5f5' : region === r ? accent : '#fff', color: eliminated || lockedOut ? '#ccc' : region === r ? '#fff' : '#666', fontSize: '13px', cursor: eliminated || lockedOut ? 'default' : 'pointer', transition: 'all .15s', transform: region === r ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : lockedOut ? 'none' : 'none', opacity: lockedOut ? 0.4 : 1 }}>
                       {r}
                     </button>
                   )

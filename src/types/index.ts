@@ -4,7 +4,8 @@
 
 export type UserRole = 'admin' | 'player'
 export type WineType = 'rouge' | 'blanc' | 'rose' | 'petillant'
-export type SessionStatus = 'lobby' | 'voting' | 'tasting' | 'waiting_reveal' | 'revealed' | 'finished'
+export type ProjectTemplate = 'swiss_wine' | 'valais_wine' | 'cepage'
+export type SessionStatus = 'lobby' | 'voting' | 'tasting' | 'waiting_reveal' | 'revealed' | 'finished' | 'cepage_info' | 'cepage_tasting' | 'cepage_results'
 export type EveningMode = 'standalone' | 'continuous'
 export type EveningStatus = 'lobby' | 'voting' | 'in_progress' | 'finished'
 export type QuizCategory = 'region' | 'cepage' | 'accord' | 'general'
@@ -28,6 +29,9 @@ export interface Project {
   image_url: string | null
   active: boolean
   guest_access: boolean
+  template: ProjectTemplate
+  cepage_name: string | null
+  cepage_info_url: string | null
   created_by: string
   created_at: string
 }
@@ -88,7 +92,7 @@ export interface Evening {
 export interface Session {
   id: string
   project_id: string
-  wine_id: string
+  wine_id: string | null
   evening_id: string | null
   chef_id: string | null
   bottle_number: number
@@ -261,6 +265,22 @@ export const PRICE_RANGES = [
 ]
 
 export const MAX_AROMES = 5
+
+// ---- Note de dégustation cépage (multi-bouteilles) ----
+export interface CepageRating {
+  id: string
+  session_id: string
+  user_id: string
+  wine_id: string
+  score: number
+  tasting_note: string | null
+  aromes: string[]
+  millesime: number | null
+  region: string | null
+  prix: number | null
+  submitted_at: string | null
+  created_at: string
+}
 
 // ---- Scoring constants ----
 export const SCORING = {
