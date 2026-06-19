@@ -54,7 +54,7 @@ export default function AdminMainPage() {
 
       if (!rawSessions?.length) { setLoading(false); return }
 
-      const wineIds = [...new Set(rawSessions.map(s => s.wine_id))]
+      const wineIds = [...new Set(rawSessions.map(s => s.wine_id).filter((id): id is string => id !== null))]
       const sessionIds = rawSessions.map(s => s.id)
 
       const [{ data: wines }, { data: notes }, { data: tastings }, { data: players }, { data: projects }, { data: profiles }] = await Promise.all([
@@ -69,7 +69,7 @@ export default function AdminMainPage() {
       const summaries: SessionSummary[] = rawSessions.map(session => {
         const wine = wines?.find(w => w.id === session.wine_id)
         const note = notes?.find(n => n.wine_id === session.wine_id)
-        const project = projects?.find(p => p.id === wine?.project_id)
+        const project = projects?.find(p => p.id === session.project_id)
         const sessionTastings = tastings?.filter(t => t.session_id === session.id) ?? []
         const sessionPlayers = players?.filter(p => p.session_id === session.id) ?? []
 
@@ -95,7 +95,7 @@ export default function AdminMainPage() {
           bottle_number: wine?.bottle_number ?? 0,
           status: session.status,
           created_at: session.created_at,
-          wine_name: note ? `${note.cepage} ${note.millesime}` : `Bouteille #${wine?.bottle_number}`,
+          wine_name: session.wine_id === null ? 'Dégustation Cépage' : (note ? `${note.cepage} ${note.millesime}` : `Bouteille #${wine?.bottle_number}`),
           wine_cepage: note?.cepage ?? '—',
           wine_region: note?.region ?? '—',
           project_name: project?.name ?? '—',
