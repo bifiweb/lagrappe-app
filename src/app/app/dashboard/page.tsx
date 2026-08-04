@@ -60,7 +60,7 @@ export default function DashboardPage() {
                 style={{ width: '22px', height: '22px', objectFit: 'contain' }}
               />
             </div>
-            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>La Grappe</span>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>La grAPP</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {profile?.role === 'admin' && (

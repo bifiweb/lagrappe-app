@@ -79,7 +79,7 @@ export default function LoginClient() {
               style={{ width: '40px', height: '40px', objectFit: 'contain' }}
             />
           </div>
-          <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: 0 }}>La Grappe</h1>
+          <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: 0 }}>La grAPP</h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
             {redirect ? 'Connecte-toi pour rejoindre la session 🍷' : 'Dégustation à l\'aveugle'}
           </p>
