@@ -107,6 +107,21 @@ Source de vérité pour tous les types TypeScript et les constantes :
 
 `/start/[slug]` — point d'entrée public. Redirige vers `/app/project/[slug]` si connecté, sinon vers login avec `?redirect=` pour revenir après auth.
 
+Chaque vin de la cave à pépites a son URL de notation : `/app/cave/pepites?wine=<catalog_wines.id>` (imprimée en QR sur les bouteilles, copiable via le bouton « 📋 URL QR » dans `/app/admin/catalog`).
+
+### Sync Shopify → bouton "Donner mon avis" (`src/lib/shopify/admin.ts`)
+
+Flux inverse : sur la fiche produit Shopify, un bouton lit le metafield produit `lagrappe.avis_url` (namespace `lagrappe`, clé `avis_url`, type URL) et renvoie vers l'URL de notation ci-dessus. Ce metafield est écrit via l'Admin API (pas la Storefront API, read-only) depuis `POST /api/shopify/sync-avis-url` :
+- `{ wineId }` → sync un seul vin (déclenché automatiquement après sauvegarde d'un vin ayant un `shopify_url` dans `/app/admin/catalog`)
+- `{ all: true }` → sync tout le catalogue (bouton « 🔄 Sync avis → Shopify » dans `/app/admin/catalog`)
+
+Le produit Shopify est retrouvé par son `handle` (extrait de `catalog_wines.shopify_url`). Nécessite `SHOPIFY_ADMIN_API_TOKEN` (custom app Shopify, scope `write_products`). Le thème Shopify doit avoir un bouton conditionnel dans le template produit :
+```liquid
+{% if product.metafields.lagrappe.avis_url != blank %}
+  <a href="{{ product.metafields.lagrappe.avis_url }}" target="_blank" rel="noopener">Donner mon avis</a>
+{% endif %}
+```
+
 ### WineMode (`src/store/wineMode.tsx`, `src/components/WineMode.tsx`)
 
 Fonctionnalité Easter egg / mode soirée. Wrappé globalement dans le `RootLayout` via `WineModeProvider`.
@@ -117,6 +132,7 @@ Voir `.env.example`. Clés requises :
 - `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (serveur uniquement)
 - `NEXT_PUBLIC_SHOPIFY_DOMAIN` + `NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN`
+- `SHOPIFY_ADMIN_API_TOKEN` (serveur uniquement, scope `write_products`) — sync du metafield `lagrappe.avis_url`
 - `CLAUDE_API_KEY` (tiebreak pseudo)
 - `NEXT_PUBLIC_APP_URL`
 

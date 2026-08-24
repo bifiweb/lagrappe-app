@@ -61,6 +61,8 @@ export default function AdminCatalogPage() {
   const [bulkMode, setBulkMode] = useState(false)
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<string | null>(null)
+  const [bulkSyncing, setBulkSyncing] = useState(false)
 
   function copyQrUrl(e: React.MouseEvent, wineId: string) {
     e.stopPropagation()
@@ -68,6 +70,46 @@ export default function AdminCatalogPage() {
     navigator.clipboard.writeText(url)
     setCopiedId(wineId)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  // Pousse l'URL de notation dans le metafield Shopify `lagrappe.avis_url`
+  // du produit correspondant, pour afficher un bouton "Donner mon avis" sur la fiche produit.
+  async function syncAvisUrl(wineId: string) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    try {
+      const res = await fetch('/api/shopify/sync-avis-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ wineId }),
+      })
+      const json = await res.json()
+      setSyncMsg(json.failed?.length ? `⚠️ Sync Shopify échouée : ${json.failed[0].error}` : '✓ Metafield Shopify synchronisé')
+    } catch (e: any) {
+      setSyncMsg(`⚠️ Sync Shopify échouée : ${e.message}`)
+    }
+    setTimeout(() => setSyncMsg(null), 4000)
+  }
+
+  async function syncAllAvisUrls() {
+    setBulkSyncing(true)
+    setSyncMsg(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setBulkSyncing(false); return }
+    try {
+      const res = await fetch('/api/shopify/sync-avis-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ all: true }),
+      })
+      const json = await res.json()
+      if (!res.ok) setSyncMsg(`⚠️ ${json.error ?? 'Erreur de synchronisation'}`)
+      else setSyncMsg(json.failed?.length ? `✓ ${json.synced} synchronisé(s), ${json.failed.length} échec(s)` : `✓ ${json.synced} vin(s) synchronisé(s) vers Shopify`)
+    } catch (e: any) {
+      setSyncMsg(`⚠️ ${e.message}`)
+    }
+    setBulkSyncing(false)
+    setTimeout(() => setSyncMsg(null), 6000)
   }
 
   // Import Shopify
@@ -136,10 +178,12 @@ export default function AdminCatalogPage() {
       active: form.active ?? true,
     }
 
+    let savedId: string | null = editing?.id ?? null
     if (editing) {
       await supabase.from('catalog_wines').update(payload).eq('id', editing.id)
     } else {
-      await supabase.from('catalog_wines').insert(payload)
+      const { data: inserted } = await supabase.from('catalog_wines').insert(payload).select('id').single()
+      savedId = inserted?.id ?? null
     }
 
     const { data } = await supabase.from('catalog_wines').select('*').order('created_at', { ascending: false })
@@ -148,6 +192,8 @@ export default function AdminCatalogPage() {
     setSuccess(true)
     setCreating(false)
     setEditing(null)
+
+    if (savedId && payload.shopify_url) syncAvisUrl(savedId)
   }
 
   async function deleteWine(w: CatalogWine) {
@@ -275,6 +321,11 @@ export default function AdminCatalogPage() {
           <button onClick={() => router.push('/app/dashboard')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Cave à pépites — Catalogue</span>
+          <button onClick={syncAllAvisUrls} disabled={bulkSyncing}
+            title="Pousse l'URL de notation dans le metafield lagrappe.avis_url de chaque produit Shopify"
+            style={{ padding: '7px 14px', background: '#fff', color: '#444', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: bulkSyncing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🔄</span> {bulkSyncing ? 'Sync en cours...' : 'Sync avis → Shopify'}
+          </button>
           <button onClick={openImport}
             style={{ padding: '7px 14px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>🛍</span> Importer Shopify
@@ -285,6 +336,11 @@ export default function AdminCatalogPage() {
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
         <AdminNav active="/app/admin/catalog" />
+        {syncMsg && (
+          <div style={{ background: syncMsg.startsWith('✓') ? '#e8f0e8' : '#fff8e8', color: syncMsg.startsWith('✓') ? '#27500A' : '#7a5000', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginTop: '12px' }}>
+            {syncMsg}
+          </div>
+        )}
       </div>
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem 1.5rem', display: 'grid', gridTemplateColumns: showForm ? '1fr 1.4fr' : '1fr', gap: '1.5rem' }}>
 
