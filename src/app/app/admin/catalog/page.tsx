@@ -108,18 +108,24 @@ export default function AdminCatalogPage() {
     if (!session) { setBulkSyncing(false); setSyncMsg('⚠️ Session expirée, recharge la page'); return }
 
     let done = 0
-    let failed = 0
+    const failedWines: { name: string; error?: string }[] = []
     for (const wine of toSync) {
-      setSyncMsg(`🔄 Sync ${done + 1}/${toSync.length}...`)
+      setSyncMsg(`🔄 Sync ${done + failedWines.length + 1}/${toSync.length}...`)
       const result = await syncAvisUrl(wine.id, session.access_token)
       if (result.ok) done++
-      else failed++
+      else failedWines.push({ name: wine.name, error: result.error })
       if (toSync.length > 1) await new Promise(r => setTimeout(r, 300))
     }
 
-    setSyncMsg(failed > 0 ? `✓ ${done} synchronisé(s), ${failed} échec(s)` : `✓ ${done} vin(s) synchronisé(s) vers Shopify`)
+    // Résultat final : pas d'auto-dismiss, l'admin doit pouvoir le lire même après être parti faire autre chose.
+    if (failedWines.length === 0) {
+      setSyncMsg(`✓ ${done} vin(s) synchronisé(s) vers Shopify`)
+    } else {
+      const detail = failedWines.slice(0, 3).map(f => `${f.name}${f.error ? ` (${f.error})` : ''}`).join(', ')
+      const more = failedWines.length > 3 ? ` et ${failedWines.length - 3} autre(s)` : ''
+      setSyncMsg(`✓ ${done} synchronisé(s), ⚠️ ${failedWines.length} échec(s) : ${detail}${more}`)
+    }
     setBulkSyncing(false)
-    setTimeout(() => setSyncMsg(null), 6000)
   }
 
   // Import Shopify
@@ -347,8 +353,10 @@ export default function AdminCatalogPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
         <AdminNav active="/app/admin/catalog" />
         {syncMsg && (
-          <div style={{ background: syncMsg.startsWith('✓') ? '#e8f0e8' : '#fff8e8', color: syncMsg.startsWith('✓') ? '#27500A' : '#7a5000', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginTop: '12px' }}>
-            {syncMsg}
+          <div style={{ background: syncMsg.startsWith('✓') ? '#e8f0e8' : '#fff8e8', color: syncMsg.startsWith('✓') ? '#27500A' : '#7a5000', borderRadius: '8px', padding: '10px 12px', fontSize: '13px', marginTop: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px', lineHeight: '1.5' }}>
+            <span style={{ flex: 1 }}>{syncMsg}</span>
+            <button onClick={() => setSyncMsg(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', opacity: 0.6, fontSize: '13px', padding: 0, flexShrink: 0 }}>✕</button>
           </div>
         )}
       </div>
