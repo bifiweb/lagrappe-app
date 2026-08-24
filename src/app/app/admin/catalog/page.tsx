@@ -104,14 +104,17 @@ export default function AdminCatalogPage() {
     if (toSync.length === 0) { setSyncMsg('⚠️ Aucun vin avec un lien Shopify'); setTimeout(() => setSyncMsg(null), 4000); return }
 
     setBulkSyncing(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setBulkSyncing(false); setSyncMsg('⚠️ Session expirée, recharge la page'); return }
+    const { data: { session: initialSession } } = await supabase.auth.getSession()
+    if (!initialSession) { setBulkSyncing(false); setSyncMsg('⚠️ Session expirée, recharge la page'); return }
 
     let done = 0
     const failedWines: { name: string; error?: string }[] = []
     for (const wine of toSync) {
       setSyncMsg(`🔄 Sync ${done + failedWines.length + 1}/${toSync.length}...`)
-      const result = await syncAvisUrl(wine.id, session.access_token)
+      // Récupère un token frais à chaque vin (getSession() rafraîchit automatiquement si besoin) :
+      // le sync complet peut prendre plusieurs minutes, un token capté une seule fois au départ expire en cours de route.
+      const { data: { session } } = await supabase.auth.getSession()
+      const result = session ? await syncAvisUrl(wine.id, session.access_token) : { ok: false, error: 'Session expirée' }
       if (result.ok) done++
       else failedWines.push({ name: wine.name, error: result.error })
       if (toSync.length > 1) await new Promise(r => setTimeout(r, 300))
