@@ -74,40 +74,50 @@ export default function AdminCatalogPage() {
 
   // Pousse l'URL de notation dans le metafield Shopify `lagrappe.avis_url`
   // du produit correspondant, pour afficher un bouton "Donner mon avis" sur la fiche produit.
-  async function syncAvisUrl(wineId: string) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+  // Retourne true/false pour permettre au sync groupé de compter les échecs.
+  async function syncAvisUrl(wineId: string, accessToken?: string): Promise<{ ok: boolean; error?: string }> {
+    const token = accessToken ?? (await supabase.auth.getSession()).data.session?.access_token
+    if (!token) return { ok: false, error: 'Session expirée' }
     try {
       const res = await fetch('/api/shopify/sync-avis-url', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ wineId }),
       })
       const json = await res.json()
-      setSyncMsg(json.failed?.length ? `⚠️ Sync Shopify échouée : ${json.failed[0].error}` : '✓ Metafield Shopify synchronisé')
+      return res.ok ? { ok: true } : { ok: false, error: json.error ?? `Erreur HTTP ${res.status}` }
     } catch (e: any) {
-      setSyncMsg(`⚠️ Sync Shopify échouée : ${e.message}`)
+      return { ok: false, error: e.message }
     }
+  }
+
+  async function syncOneAndNotify(wineId: string) {
+    const result = await syncAvisUrl(wineId)
+    setSyncMsg(result.ok ? '✓ Metafield Shopify synchronisé' : `⚠️ Sync Shopify échouée : ${result.error}`)
     setTimeout(() => setSyncMsg(null), 4000)
   }
 
+  // Boucle côté client (pas côté serveur) pour éviter un timeout serverless sur un gros catalogue :
+  // chaque vin = un appel séparé à la route, avec une petite pause entre deux pour respecter le rate limit Shopify.
   async function syncAllAvisUrls() {
+    const toSync = wines.filter(w => w.shopify_url)
+    if (toSync.length === 0) { setSyncMsg('⚠️ Aucun vin avec un lien Shopify'); setTimeout(() => setSyncMsg(null), 4000); return }
+
     setBulkSyncing(true)
-    setSyncMsg(null)
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setBulkSyncing(false); return }
-    try {
-      const res = await fetch('/api/shopify/sync-avis-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({ all: true }),
-      })
-      const json = await res.json()
-      if (!res.ok) setSyncMsg(`⚠️ ${json.error ?? 'Erreur de synchronisation'}`)
-      else setSyncMsg(json.failed?.length ? `✓ ${json.synced} synchronisé(s), ${json.failed.length} échec(s)` : `✓ ${json.synced} vin(s) synchronisé(s) vers Shopify`)
-    } catch (e: any) {
-      setSyncMsg(`⚠️ ${e.message}`)
+    if (!session) { setBulkSyncing(false); setSyncMsg('⚠️ Session expirée, recharge la page'); return }
+
+    let done = 0
+    let failed = 0
+    for (const wine of toSync) {
+      setSyncMsg(`🔄 Sync ${done + 1}/${toSync.length}...`)
+      const result = await syncAvisUrl(wine.id, session.access_token)
+      if (result.ok) done++
+      else failed++
+      if (toSync.length > 1) await new Promise(r => setTimeout(r, 300))
     }
+
+    setSyncMsg(failed > 0 ? `✓ ${done} synchronisé(s), ${failed} échec(s)` : `✓ ${done} vin(s) synchronisé(s) vers Shopify`)
     setBulkSyncing(false)
     setTimeout(() => setSyncMsg(null), 6000)
   }
@@ -193,7 +203,7 @@ export default function AdminCatalogPage() {
     setCreating(false)
     setEditing(null)
 
-    if (savedId && payload.shopify_url) syncAvisUrl(savedId)
+    if (savedId && payload.shopify_url) syncOneAndNotify(savedId)
   }
 
   async function deleteWine(w: CatalogWine) {

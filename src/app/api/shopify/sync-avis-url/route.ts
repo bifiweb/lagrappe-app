@@ -2,7 +2,7 @@ import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { setAvisUrlMetafield } from '@/lib/shopify/admin'
 
-export const maxDuration = 60
+export const maxDuration = 30
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -18,7 +18,9 @@ function reviewUrl(wineId: string): string {
   return `${base}/app/cave/pepites?wine=${wineId}`
 }
 
-// POST { wineId } → sync un seul vin. POST { all: true } → sync tout le catalogue.
+// POST { wineId } → sync un seul vin.
+// Le sync groupé (tout le catalogue) est piloté côté client en bouclant sur cette
+// route vin par vin, pour éviter un timeout serverless (60s max) sur un gros catalogue.
 export async function POST(req: Request) {
   const missing = [
     !process.env.SHOPIFY_ADMIN_API_TOKEN && 'SHOPIFY_ADMIN_API_TOKEN',
@@ -52,39 +54,17 @@ export async function POST(req: Request) {
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json().catch(() => ({}))
-    const { wineId, all } = body as { wineId?: string; all?: boolean }
+    const { wineId } = body as { wineId?: string }
+    if (!wineId) return NextResponse.json({ error: 'wineId requis' }, { status: 400 })
 
-    let wines: { id: string; shopify_url: string | null }[] = []
-    if (all) {
-      const { data } = await adminClient
-        .from('catalog_wines').select('id, shopify_url').not('shopify_url', 'is', null)
-      wines = data ?? []
-    } else if (wineId) {
-      const { data } = await adminClient
-        .from('catalog_wines').select('id, shopify_url').eq('id', wineId).single()
-      if (data) wines = [data]
-    } else {
-      return NextResponse.json({ error: 'wineId ou all requis' }, { status: 400 })
-    }
+    const { data: wine } = await adminClient
+      .from('catalog_wines').select('id, shopify_url').eq('id', wineId).single()
+    if (!wine) return NextResponse.json({ error: 'Vin introuvable' }, { status: 404 })
+    if (!wine.shopify_url) return NextResponse.json({ error: 'Pas de lien Shopify pour ce vin' }, { status: 400 })
 
-    const results: { wineId: string; ok: boolean; error?: string }[] = []
-    for (const wine of wines) {
-      if (!wine.shopify_url) {
-        results.push({ wineId: wine.id, ok: false, error: 'Pas de lien Shopify' })
-        continue
-      }
-      try {
-        const res = await setAvisUrlMetafield(wine.shopify_url, reviewUrl(wine.id))
-        results.push({ wineId: wine.id, ok: res.ok, error: res.error })
-      } catch (e: any) {
-        results.push({ wineId: wine.id, ok: false, error: e.message })
-      }
-      // petite pause pour rester sous le rate limit de l'Admin API
-      if (wines.length > 1) await new Promise(r => setTimeout(r, 300))
-    }
-
-    const failed = results.filter(r => !r.ok)
-    return NextResponse.json({ synced: results.length - failed.length, failed })
+    const result = await setAvisUrlMetafield(wine.shopify_url, reviewUrl(wine.id))
+    if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 })
+    return NextResponse.json({ ok: true })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
