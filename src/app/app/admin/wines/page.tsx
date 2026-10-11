@@ -24,6 +24,10 @@ interface CatalogWine {
   prix_chf: number | null
   shopify_url: string | null
   pdf_url: string | null
+  robe: string | null
+  bouche: string | null
+  aromes: string[] | null
+  elevage: string | null
 }
 
 const PRICE_RANGES = [
@@ -204,7 +208,7 @@ export default function AdminWinesPage() {
   async function openCatalogPicker() {
     if (catalogWines.length === 0) {
       const { data } = await supabase
-        .from('catalog_wines').select('id, name, cave, cepage, region, millesime, type, description, image_url, prix_chf, shopify_url, pdf_url')
+        .from('catalog_wines').select('id, name, cave, cepage, region, millesime, type, description, image_url, prix_chf, shopify_url, pdf_url, robe, bouche, aromes, elevage')
         .eq('active', true).order('name')
       setCatalogWines((data as CatalogWine[]) ?? [])
     }
@@ -214,10 +218,13 @@ export default function AdminWinesPage() {
 
   function applyCatalogWine(cw: CatalogWine) {
     const newType = (cw.type as WineType) ?? 'rouge'
+    const content = WINE_CONTENT[newType]
     setWineType(newType)
-    setRobe('')
-    setBouche('')
-    setAromes([])
+    // Robe / bouche / arômes importés de Shopify, seulement s'ils existent dans les options du jeu
+    setRobe(cw.robe && content.robes.includes(cw.robe) ? cw.robe : '')
+    setBouche(cw.bouche && content.bouche.includes(cw.bouche) ? cw.bouche : '')
+    setAromes((cw.aromes ?? []).filter(a => content.aromes.includes(a)))
+    setElevage(cw.elevage && ELEVAGE_OPTIONS.includes(cw.elevage) ? cw.elevage : '')
     setCave(cw.cave ?? '')
     setCepage(cw.cepage ?? '')
     setRegion(cw.region ?? '')

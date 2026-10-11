@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { robeFromOeilUrl, boucheFromStructure, aromesFromNez, elevageFromText } from '@/lib/shopify/tasting'
+import type { WineType } from '@/types'
 
 const SHOPIFY_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN ?? 'la-grappe.myshopify.com'
 const STOREFRONT_TOKEN = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN
@@ -19,11 +21,17 @@ function gqlQuery(cursor: string | null) {
         variants(first: 1) { edges { node { price { amount } } } }
         metafields(identifiers: [
           {namespace: "shopify", key: "region"},
-          {namespace: "my_fields", key: "pdf"}
+          {namespace: "my_fields", key: "pdf"},
+          {namespace: "custom", key: "oeil"},
+          {namespace: "custom", key: "structure_acidite"},
+          {namespace: "custom", key: "nez"},
+          {namespace: "custom", key: "elevage_du_vin"},
+          {namespace: "custom", key: "millesime"}
         ]) {
           namespace key value
           reference {
             ... on GenericFile { url }
+            ... on MediaImage { image { url } }
             ... on Metaobject { field(key: "name") { value } }
           }
           references(first: 1) {
@@ -86,6 +94,9 @@ export async function GET() {
           ?? regionMf?.references?.nodes?.[0]?.field?.value
           ?? null
         const pdf = pdfMf?.reference?.url ?? pdfMf?.value ?? null
+        const custom = (key: string) => mfs.find((m: any) => m?.namespace === 'custom' && m?.key === key)
+        const type = detectWineType(tags, p.productType ?? '') as WineType
+        const millesime = parseInt(custom('millesime')?.value ?? '', 10)
         const rawHtml = p.descriptionHtml ?? ''
         const descText = rawHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
         const gidParts = (p.id as string).split('/')
@@ -95,12 +106,17 @@ export async function GET() {
           cave: p.vendor || null,
           cepage: p.productType || null,
           region,
-          type: detectWineType(tags, p.productType ?? ''),
+          type,
           description: descText.length > 600 ? descText.slice(0, 600) + '…' : descText || null,
           image_url: p.images?.edges?.[0]?.node?.url ?? null,
           prix_chf: p.variants?.edges?.[0]?.node?.price?.amount ? parseFloat(p.variants.edges[0].node.price.amount) : null,
           shopify_url: `https://${SHOPIFY_DOMAIN}/products/${p.handle}`,
           pdf_url: pdf,
+          millesime: isNaN(millesime) ? null : millesime,
+          robe: robeFromOeilUrl(custom('oeil')?.reference?.image?.url, type),
+          bouche: boucheFromStructure(custom('structure_acidite')?.value, type),
+          aromes: aromesFromNez(custom('nez')?.value, type),
+          elevage: elevageFromText(custom('elevage_du_vin')?.value),
           tags,
         })
         totalFetched++

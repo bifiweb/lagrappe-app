@@ -33,6 +33,11 @@ interface ShopifyProduct {
   prix_chf: number | null
   shopify_url: string
   pdf_url: string | null
+  millesime: number | null
+  robe: string | null
+  bouche: string | null
+  aromes: string[]
+  elevage: string | null
   tags: string[]
 }
 
@@ -298,13 +303,25 @@ export default function AdminCatalogPage() {
         prix_chf: prix || null,
         shopify_url: p.shopify_url,
         pdf_url: p.pdf_url || null,
+        millesime: p.millesime || null,
+        robe: p.robe || null,
+        bouche: p.bouche || null,
+        aromes: p.aromes ?? [],
+        elevage: p.elevage || null,
         active: true,
       }
       // Vérifie si le vin existe déjà (par shopify_url)
       const { data: existing } = await supabase
-        .from('catalog_wines').select('id, pdf_url').eq('shopify_url', p.shopify_url).maybeSingle()
-      // Préserve le pdf_url saisi manuellement si Shopify n'en fournit pas
-      if (existing) payload.pdf_url = payload.pdf_url ?? existing.pdf_url ?? null
+        .from('catalog_wines').select('id, pdf_url, millesime, robe, bouche, aromes, elevage').eq('shopify_url', p.shopify_url).maybeSingle()
+      // Préserve les valeurs déjà en base si Shopify n'en fournit pas
+      if (existing) {
+        payload.pdf_url = payload.pdf_url ?? existing.pdf_url ?? null
+        payload.millesime = payload.millesime ?? existing.millesime ?? null
+        payload.robe = payload.robe ?? existing.robe ?? null
+        payload.bouche = payload.bouche ?? existing.bouche ?? null
+        if (payload.aromes.length === 0) payload.aromes = existing.aromes ?? []
+        payload.elevage = payload.elevage ?? existing.elevage ?? null
+      }
       const { error } = existing
         ? await supabase.from('catalog_wines').update(payload).eq('id', existing.id)
         : await supabase.from('catalog_wines').insert(payload)

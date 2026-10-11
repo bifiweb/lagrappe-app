@@ -200,7 +200,7 @@ export interface WineContent {
 
 export const WINE_CONTENT: Record<WineType, WineContent> = {
   rouge: {
-    robes: ['Violacée', 'Rouge pâle', 'Rouge dense', 'Tuilée'],
+    robes: ['Rouge pâle', 'Rouge dense', 'Tuilée'],
     aromes: [
       'Fraise', 'Framboise', 'Cerise', 'Myrtille', 'Mûre', 'Cassis',
       'Figue', 'Fruits secs', 'Violette', 'Herbes aromatiques', 'Poivron vert',
