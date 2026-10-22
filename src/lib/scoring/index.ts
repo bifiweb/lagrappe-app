@@ -9,12 +9,14 @@ export function calcAromePoints(
   allTastings: Tasting[],
   officialAromes: string[]
 ): number {
+  // Miroir de calculate_session_scores (migration 028) : le joueur ne se compte pas lui-même
+  const others = allTastings.length - 1
   let pts = 0
   for (const arome of myAromes) {
     const count = allTastings.filter(t =>
       t.aromes.includes(arome)
-    ).length
-    pts += count * SCORING.AROME_PER_PLAYER
+    ).length - 1
+    if (others > 0) pts += Math.round((count / others) * SCORING.AROME_SHARED_MAX)
     if (officialAromes.includes(arome)) {
       pts += SCORING.AROME_GRAPPISTE_BONUS
     }
@@ -73,7 +75,7 @@ export function calcTotalPoints(
 
   const breakdown: ScoreBreakdown[] = [
     { label: 'Robe',      pts: pts_robe,      correct: pts_robe === SCORING.ROBE_CORRECT,         max: SCORING.ROBE_CORRECT },
-    { label: 'Arômes',    pts: pts_aromes,    correct: pts_aromes > 0,                             max: SCORING.AROME_PER_PLAYER * allTastings.length + SCORING.AROME_GRAPPISTE_BONUS },
+    { label: 'Arômes',    pts: pts_aromes,    correct: pts_aromes > 0,                             max: (SCORING.AROME_SHARED_MAX + SCORING.AROME_GRAPPISTE_BONUS) * 5 },
     { label: 'Bouche',    pts: pts_bouche,    correct: pts_bouche === SCORING.BOUCHE_CORRECT,       max: SCORING.BOUCHE_CORRECT },
     { label: 'Prix',      pts: pts_prix,      correct: pts_prix === SCORING.PRIX_MAX,              max: SCORING.PRIX_MAX },
     { label: 'Millésime', pts: pts_millesime, correct: pts_millesime === SCORING.MILLESIME_MAX,    max: SCORING.MILLESIME_MAX },

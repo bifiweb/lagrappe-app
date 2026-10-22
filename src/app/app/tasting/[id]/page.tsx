@@ -316,7 +316,7 @@ export default function TastingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
               {[
                 { icon: '👁️', label: 'Robe', detail: '500 pts si juste · 200 pts sinon' },
-                { icon: '👃', label: 'Arômes', detail: '200 pts × nb joueurs même arôme · +200 pts si officiel' },
+                { icon: '👃', label: 'Arômes', detail: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si officiel" },
                 { icon: '👄', label: 'Bouche', detail: '500 pts si juste · 200 pts sinon' },
                 { icon: '🍇', label: 'Cépage', detail: '1 500 pts si juste · 300 pts sinon' },
                 { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
@@ -494,7 +494,7 @@ export default function TastingPage() {
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
                   Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>200 pts × nb joueurs ayant le même arôme · +200 pts si arôme officiel</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>Jusqu'à 1 000 pts par arôme selon la part des autres joueurs qui l'ont aussi trouvé · +200 pts si arôme officiel</div>
               </div>
               <HintBanner used={hintCounts.aromes} onUse={() => useHint('aromes')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
