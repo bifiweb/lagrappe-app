@@ -203,10 +203,10 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
   rouge: {
     robes: ['Rouge pâle', 'Rouge dense', 'Tuilée'],
     aromes: [
-      'Fraise', 'Framboise', 'Cerise', 'Myrtille', 'Mûre', 'Cassis',
-      'Figue', 'Fruits secs', 'Violette', 'Herbes aromatiques', 'Poivron vert',
+      'Fraise', 'Framboise', 'Groseille', 'Cerise', 'Myrtille', 'Mûre', 'Cassis',
+      'Prune', 'Figue', 'Fruits secs', 'Violette', 'Herbes aromatiques', 'Poivron vert',
       'Sous-bois', 'Poivre', 'Clou de girofle', 'Vanille', 'Chocolat',
-      'Réglisse', 'Tabac', 'Notes sauvages', 'Champignons', 'Pain grillé',
+      'Réglisse', 'Tabac', 'Cuir', 'Notes sauvages', 'Champignons', 'Pain grillé',
     ],
     bouche: ['Très léger', 'Léger', 'Souple, équilibré', 'Puissant', 'Très puissant'],
     accords: ['Salade', 'Charcuterie', 'Raclette/Fondue', 'Poulet au four', 'Burger', 'Côte de boeuf', 'Civet de cerf', 'Fondant au chocolat'],
@@ -216,10 +216,10 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
   blanc: {
     robes: ['Jaune pâle', 'Or / Paille', 'Ambrée'],
     aromes: [
-      'Pomme', 'Poire', 'Pêche', 'Abricot', 'Coing', 'Rhubarbe',
-      'Citron', 'Pamplemousse', 'Ananas', 'Litchi', 'Fruit de la passion',
-      'Fleurs blanches', 'Rose', 'Herbes aromatiques', 'Minéralité',
-      'Épices', 'Vanille', 'Miel', 'Beurre', 'Champignons',
+      'Pomme', 'Poire', 'Pêche', 'Abricot', 'Coing', 'Raisin frais', 'Rhubarbe',
+      'Citron', 'Mandarine', 'Pamplemousse', 'Ananas', 'Litchi', 'Fruit de la passion',
+      'Fleurs blanches', 'Tilleul', 'Rose', 'Herbes aromatiques', 'Herbe coupée', 'Minéralité',
+      'Épices', 'Vanille', 'Miel', 'Amande', 'Beurre', 'Champignons',
     ],
     bouche: ['Acidité vive', 'Acidité', 'Équilibre', 'Gras', 'Très gras, onctueux'],
     accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette/Fondue', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
