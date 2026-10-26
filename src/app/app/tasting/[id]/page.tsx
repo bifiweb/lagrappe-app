@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES, ELEVAGE_OPTIONS } from '@/types'
 import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
-import { CEPAGE_INFO } from '@/lib/cepage-info'
+import { CEPAGE_INFO, rankCepages } from '@/lib/cepage-info'
 import type { Session, Wine } from '@/types'
 
 
@@ -316,8 +316,8 @@ export default function TastingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
               {[
                 { icon: '👁️', label: 'Robe', detail: '500 pts si juste · 200 pts sinon' },
-                { icon: '👃', label: 'Arômes', detail: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si officiel" },
-                { icon: '👄', label: 'Bouche', detail: '500 pts si juste · 200 pts sinon' },
+                { icon: '👃', label: 'Arômes', detail: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes" },
+                { icon: '👄', label: 'Bouche', detail: '500 pts si juste · 350 pts si à côté · 200 pts sinon' },
                 { icon: '🍇', label: 'Cépage', detail: '1 500 pts si juste · 300 pts sinon' },
                 { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
                 { icon: '📅', label: 'Millésime', detail: '500 pts si exact · −50 pts par année d\'écart' },
@@ -494,7 +494,7 @@ export default function TastingPage() {
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
                   Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>Jusqu'à 1 000 pts par arôme selon la part des autres joueurs qui l'ont aussi trouvé · +200 pts si arôme officiel</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>Jusqu'à 1 000 pts par arôme selon la part des autres joueurs qui l'ont aussi trouvé · +200 pts si arôme des grappistes</div>
               </div>
               <HintBanner used={hintCounts.aromes} onUse={() => useHint('aromes')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -568,7 +568,7 @@ export default function TastingPage() {
             </div>
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Structure en bouche</div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 200 pts sinon</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 350 pts si à côté · 200 pts sinon</div>
             </div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -722,10 +722,11 @@ export default function TastingPage() {
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🍇 Cépage ?</div>
                 <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 500 pts si juste · 300 pts sinon</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>Classés du plus proche au plus éloigné de ta dégustation</div>
               </div>
               <HintBanner used={hintCounts.cepage} onUse={() => useHint('cepage')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-                {content.cepages.map(c => {
+                {rankCepages(content.cepages, { type: wine.type, robe, aromes, boucheIndex }).map(c => {
                   const eliminated = eliminatedCepages.includes(c)
                   return (
                     <button key={c} onClick={() => { if (!eliminated) { setCepage(c); haptic() } }}

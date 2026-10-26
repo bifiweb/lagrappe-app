@@ -28,6 +28,7 @@ export interface Project {
   description: string | null
   image_url: string | null
   active: boolean
+  archived: boolean
   guest_access: boolean
   template: ProjectTemplate
   cepage_name: string | null
@@ -289,6 +290,7 @@ export const SCORING = {
   AROME_SHARED_MAX: 1000,
   AROME_GRAPPISTE_BONUS: 200,
   BOUCHE_CORRECT: 500,
+  BOUCHE_CLOSE: 350,
   BOUCHE_WRONG: 200,
   PRIX_MAX: 500,
   PRIX_PER_CHF: 50,

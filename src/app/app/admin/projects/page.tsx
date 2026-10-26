@@ -19,6 +19,7 @@ export default function AdminProjectsPage() {
   const [editingProject, setEditingProject] = useState<ProjectWithStats | null>(null)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const [activeSection, setActiveSection] = useState<'info' | 'vins' | 'acces'>('info')
   const router = useRouter()
   const supabase = createClient()
@@ -195,6 +196,13 @@ export default function AdminProjectsPage() {
     if (!editingProject) setEditingProject(null)
   }
 
+  async function toggleArchive(project: ProjectWithStats) {
+    const archived = !project.archived
+    const { error } = await supabase.from('projects').update({ archived }).eq('id', project.id)
+    if (error) { alert(`Erreur : ${error.message}`); return }
+    setProjects(projects.map(p => p.id === project.id ? { ...p, archived } : p))
+  }
+
   async function deleteProject(project: ProjectWithStats) {
     if (!confirm(`Supprimer "${project.name}" ? Cette action est irréversible et supprimera aussi tous les vins associés.`)) return
 
@@ -223,6 +231,56 @@ export default function AdminProjectsPage() {
   const accent = '#8d323b'
   const showForm = creating || editingProject !== null
 
+  function renderProjectCard(project: ProjectWithStats) {
+    return (
+      <div key={project.id}
+        onClick={() => openEdit(project)}
+        style={{
+          background: '#fff',
+          border: editingProject?.id === project.id ? `2px solid ${accent}` : '0.5px solid #e0e0e0',
+          borderRadius: '12px', padding: '14px 16px',
+          cursor: 'pointer',
+        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {(project as any).image_url ? (
+            <img src={(project as any).image_url} alt={project.name}
+              style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
+              🍾
+            </div>
+          )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '3px' }}>{project.name}</div>
+            <div style={{ fontSize: '12px', color: '#888' }}>{project.description ?? 'Pas de description'}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>
+              🍾 {project.wine_count}
+            </span>
+            {(project as any).access_mode === 'link' ? (
+              <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '2px 8px', borderRadius: '6px' }}>🔗 Par lien</span>
+            ) : (project as any).access_mode === 'restricted' ? (
+              <span style={{ fontSize: '11px', background: '#edeaf8', color: '#3C3489', padding: '2px 8px', borderRadius: '6px' }}>👥 {project.member_count}</span>
+            ) : (
+              <span style={{ fontSize: '11px', background: '#e8f0e8', color: '#27500A', padding: '2px 8px', borderRadius: '6px' }}>🌍 Public</span>
+            )}
+          </div>
+        </div>
+        <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
+          <button onClick={e => { e.stopPropagation(); router.push('/app/admin/wines') }}
+            style={{ fontSize: '11px', color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+            Gérer les vins →
+          </button>
+          <button onClick={e => { e.stopPropagation(); toggleArchive(project) }}
+            style={{ fontSize: '11px', color: '#888', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            {project.archived ? '↩ Désarchiver' : '📦 Archiver'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
 
@@ -244,7 +302,7 @@ export default function AdminProjectsPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ fontSize: '13px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-              {projects.length} projet{projects.length > 1 ? 's' : ''}
+              {projects.filter(p => !p.archived).length} projet{projects.filter(p => !p.archived).length > 1 ? 's' : ''}
             </div>
             <button onClick={startCreate}
               style={{ padding: '7px 14px', background: accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
@@ -253,50 +311,28 @@ export default function AdminProjectsPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {projects.map(project => (
-              <div key={project.id}
-                onClick={() => openEdit(project)}
-                style={{
-                  background: '#fff',
-                  border: editingProject?.id === project.id ? `2px solid ${accent}` : '0.5px solid #e0e0e0',
-                  borderRadius: '12px', padding: '14px 16px',
-                  cursor: 'pointer',
-                }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {(project as any).image_url ? (
-                    <img src={(project as any).image_url} alt={project.name}
-                      style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: '44px', height: '44px', borderRadius: '8px', background: '#f5ede8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
-                      🍾
-                    </div>
-                  )}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '3px' }}>{project.name}</div>
-                    <div style={{ fontSize: '12px', color: '#888' }}>{project.description ?? 'Pas de description'}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', background: '#f5ede8', color: accent, padding: '2px 8px', borderRadius: '6px' }}>
-                      🍾 {project.wine_count}
-                    </span>
-                    {(project as any).access_mode === 'link' ? (
-                      <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '2px 8px', borderRadius: '6px' }}>🔗 Par lien</span>
-                    ) : (project as any).access_mode === 'restricted' ? (
-                      <span style={{ fontSize: '11px', background: '#edeaf8', color: '#3C3489', padding: '2px 8px', borderRadius: '6px' }}>👥 {project.member_count}</span>
-                    ) : (
-                      <span style={{ fontSize: '11px', background: '#e8f0e8', color: '#27500A', padding: '2px 8px', borderRadius: '6px' }}>🌍 Public</span>
-                    )}
-                  </div>
-                </div>
-                <div style={{ marginTop: '8px' }}>
-                  <button onClick={e => { e.stopPropagation(); router.push('/app/admin/wines') }}
-                    style={{ fontSize: '11px', color: accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
-                    Gérer les vins →
-                  </button>
-                </div>
-              </div>
-            ))}
+            {projects.filter(p => !p.archived).map(renderProjectCard)}
           </div>
+
+          {/* Projets archivés : masqués de l'accueil, URL toujours active */}
+          {projects.some(p => p.archived) && (
+            <div style={{ marginTop: '1.25rem' }}>
+              <button onClick={() => setShowArchived(!showArchived)}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '13px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                {showArchived ? '▾' : '▸'} 📦 {projects.filter(p => p.archived).length} archivé{projects.filter(p => p.archived).length > 1 ? 's' : ''}
+              </button>
+              {showArchived && (
+                <>
+                  <div style={{ fontSize: '11px', color: '#aaa', margin: '6px 0 10px' }}>
+                    Masqués de l'accueil — leur lien continue de fonctionner.
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', opacity: 0.7 }}>
+                    {projects.filter(p => p.archived).map(renderProjectCard)}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Formulaire */}

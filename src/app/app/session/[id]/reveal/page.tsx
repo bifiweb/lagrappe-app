@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
+import { SCORING } from '@/types'
 import type { Session, Wine, GrappisteNotes, Tasting, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 
@@ -247,7 +248,7 @@ export default function RevealPage() {
     )
   }
 
-  function CompareRow({ label, mine, official, correct }: { label: string, mine: string | null, official: string | null, correct: boolean }) {
+  function CompareRow({ label, mine, official, correct, close = false }: { label: string, mine: string | null, official: string | null, correct: boolean, close?: boolean }) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
         <div style={{ fontSize: '12px', color: '#888', minWidth: '70px' }}>{label}</div>
@@ -259,7 +260,7 @@ export default function RevealPage() {
             </div>
           )}
         </div>
-        <div style={{ fontSize: '18px' }}>{mine ? (correct ? '✅' : '❌') : '—'}</div>
+        <div style={{ fontSize: '18px' }}>{mine ? (correct ? '✅' : close ? '🟡' : '❌') : '—'}</div>
       </div>
     )
   }
@@ -527,7 +528,7 @@ export default function RevealPage() {
                   })}
                 </div>
                 <div style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>
-                  ✓ = dans la liste officielle des grappistes
+                  ✓ = arôme des grappistes
                 </div>
               </div>
             )}
@@ -552,7 +553,7 @@ export default function RevealPage() {
                 )
               })}
               <div style={{ marginTop: '1rem', fontSize: '12px', color: '#888' }}>
-                👤 = ton arôme · ✓ = liste officielle
+                👤 = ton arôme · ✓ = arôme des grappistes
               </div>
             </div>
           </div>
@@ -577,6 +578,7 @@ export default function RevealPage() {
                 mine={myTasting.bouche}
                 official={notes?.bouche ?? null}
                 correct={myTasting.bouche === notes?.bouche}
+                close={myTasting.pts_bouche === SCORING.BOUCHE_CLOSE}
               />
 
               {/* Arômes */}
@@ -599,7 +601,7 @@ export default function RevealPage() {
                 </div>
                 {notes?.aromes_officiels && (
                   <div style={{ fontSize: '11px', color: '#888', marginTop: '6px' }}>
-                    ✓ = dans la liste officielle
+                    ✓ = arôme des grappistes
                   </div>
                 )}
               </div>

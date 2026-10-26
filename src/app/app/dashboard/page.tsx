@@ -24,9 +24,9 @@ export default function DashboardPage() {
       setProfile(prof)
 
       if (prof?.role === 'admin') {
-        // Admin voit tous les projets actifs
+        // Admin voit tous les projets actifs non archivés
         const { data: proj } = await supabase
-          .from('projects').select('*').eq('active', true).order('created_at')
+          .from('projects').select('*').eq('active', true).eq('archived', false).order('created_at')
         setProjects(proj ?? [])
       } else {
         // Utilise la fonction SQL qui gère la visibilité

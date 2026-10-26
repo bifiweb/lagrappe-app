@@ -465,7 +465,7 @@ export default function AdminWinesPage() {
 
               <div style={{ marginBottom: '12px' }}>
                 <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>
-                  Arômes officiels <span style={{ fontWeight: '400', color: '#aaa' }}>({aromes.length} sélectionnés)</span>
+                  Arômes des grappistes <span style={{ fontWeight: '400', color: '#aaa' }}>({aromes.length} sélectionnés)</span>
                 </label>
                 <MultiButtons options={content.aromes} values={aromes} onChange={setAromes} accent={accent} />
               </div>

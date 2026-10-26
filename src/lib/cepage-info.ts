@@ -111,3 +111,62 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
     bouche: 'Très aromatique, frais, doux à sec, finale florale',
   },
 }
+
+// ---- Profils pour classer les cépages dans la devinette ----
+// Robes et arômes repris des listes du jeu (WINE_CONTENT), bouche = plage d'index
+// sur l'échelle à 5 crans (rouge : structure, blanc : acidité → gras)
+export interface CepageProfil {
+  robes: string[]
+  aromes: string[]
+  bouche: [number, number]
+}
+
+export const CEPAGE_PROFILS: Record<string, CepageProfil> = {
+  'Pinot Noir':     { robes: ['Rouge pâle', 'Tuilée'], aromes: ['Fraise', 'Framboise', 'Cerise', 'Sous-bois', 'Champignons', 'Vanille', 'Chocolat'], bouche: [0, 2] },
+  'Gamay':          { robes: ['Rouge pâle'], aromes: ['Fraise', 'Framboise', 'Cerise', 'Violette', 'Poivre'], bouche: [0, 2] },
+  'Merlot':         { robes: ['Rouge dense', 'Tuilée'], aromes: ['Cerise', 'Mûre', 'Cassis', 'Figue', 'Chocolat', 'Vanille', 'Réglisse', 'Tabac'], bouche: [2, 4] },
+  'Syrah':          { robes: ['Rouge dense'], aromes: ['Mûre', 'Myrtille', 'Cassis', 'Violette', 'Poivre', 'Réglisse', 'Notes sauvages'], bouche: [3, 4] },
+  'Cabernet':       { robes: ['Rouge dense'], aromes: ['Cassis', 'Mûre', 'Poivron vert', 'Herbes aromatiques', 'Tabac', 'Vanille'], bouche: [3, 4] },
+  'Diolinoir':      { robes: ['Rouge dense'], aromes: ['Mûre', 'Myrtille', 'Cassis', 'Poivre', 'Clou de girofle'], bouche: [3, 4] },
+  'Garanoir':       { robes: ['Rouge pâle', 'Rouge dense'], aromes: ['Cerise', 'Framboise', 'Mûre', 'Poivre'], bouche: [1, 2] },
+  'Cornalin':       { robes: ['Rouge dense'], aromes: ['Cerise', 'Mûre', 'Myrtille', 'Violette', 'Poivre', 'Notes sauvages'], bouche: [2, 4] },
+  'Humagne Rouge':  { robes: ['Rouge pâle', 'Rouge dense'], aromes: ['Myrtille', 'Mûre', 'Violette', 'Sous-bois', 'Poivre', 'Notes sauvages'], bouche: [2, 3] },
+  'Chasselas':      { robes: ['Jaune pâle'], aromes: ['Fleurs blanches', 'Citron', 'Minéralité', 'Pomme', 'Poire'], bouche: [1, 2] },
+  'Chardonnay':     { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pomme', 'Pêche', 'Ananas', 'Vanille', 'Beurre', 'Miel'], bouche: [2, 4] },
+  'Pinot Gris':     { robes: ['Or / Paille'], aromes: ['Poire', 'Pêche', 'Abricot', 'Coing', 'Miel', 'Épices'], bouche: [3, 4] },
+  'Riesling':       { robes: ['Jaune pâle'], aromes: ['Citron', 'Pamplemousse', 'Pomme', 'Pêche', 'Fleurs blanches', 'Minéralité'], bouche: [0, 1] },
+  'Sauvignon':      { robes: ['Jaune pâle'], aromes: ['Pamplemousse', 'Fruit de la passion', 'Citron', 'Rhubarbe', 'Herbes aromatiques', 'Minéralité'], bouche: [0, 1] },
+  'Gewurztraminer': { robes: ['Or / Paille'], aromes: ['Litchi', 'Rose', 'Fruit de la passion', 'Épices', 'Miel'], bouche: [3, 4] },
+  'Viognier':       { robes: ['Or / Paille'], aromes: ['Abricot', 'Pêche', 'Fleurs blanches', 'Miel', 'Épices'], bouche: [3, 4] },
+  'Petite Arvine':  { robes: ['Jaune pâle'], aromes: ['Pamplemousse', 'Rhubarbe', 'Citron', 'Fruit de la passion', 'Minéralité'], bouche: [0, 2] },
+  'Heida':          { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pomme', 'Coing', 'Pamplemousse', 'Herbes aromatiques', 'Épices', 'Minéralité'], bouche: [1, 3] },
+  'Müller Thurgau': { robes: ['Jaune pâle'], aromes: ['Pêche', 'Pomme', 'Citron', 'Fleurs blanches', 'Herbes aromatiques'], bouche: [1, 2] },
+  'Johannisberg':   { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pêche', 'Abricot', 'Pomme', 'Fleurs blanches', 'Herbes aromatiques'], bouche: [2, 3] },
+  'Muscat':         { robes: ['Jaune pâle'], aromes: ['Rose', 'Litchi', 'Fleurs blanches', 'Pêche', 'Abricot', 'Citron'], bouche: [1, 2] },
+}
+
+// Classe les cépages du plus proche au plus éloigné de ce que le joueur a noté.
+// Robe et bouche ne comptent que pour rouge/blanc (les échelles rosé/pétillant sont différentes).
+export function rankCepages(
+  cepages: string[],
+  { type, robe, aromes, boucheIndex }: { type: string, robe: string | null, aromes: string[], boucheIndex: number }
+): string[] {
+  const echelle5 = type === 'rouge' || type === 'blanc'
+  const score = (c: string) => {
+    const p = CEPAGE_PROFILS[c]
+    if (!p) return 0
+    let s = aromes.filter(a => p.aromes.includes(a)).length * 2
+    if (echelle5) {
+      if (robe && p.robes.includes(robe)) s += 3
+      const [min, max] = p.bouche
+      const ecart = boucheIndex < min ? min - boucheIndex : boucheIndex > max ? boucheIndex - max : 0
+      s += ecart === 0 ? 3 : ecart === 1 ? 1.5 : 0
+    }
+    return s
+  }
+  // Tri stable : à score égal, on garde l'ordre d'origine
+  return cepages
+    .map((c, i) => ({ c, i, s: score(c) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .map(x => x.c)
+}

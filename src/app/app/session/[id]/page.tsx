@@ -23,6 +23,14 @@ function getChifoumiWinner(moves: Record<string, ChifoumiMove>, tiedIds: string[
   return b
 }
 
+// Tirage pseudo-aléatoire dérivé de l'id de session : tous les joueurs obtiennent
+// le même résultat sans se coordonner (Math.random donnait un chef différent par téléphone)
+function seededIndex(seed: string, n: number): number {
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return h % n
+}
+
 export default function SessionPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -373,7 +381,8 @@ export default function SessionPage() {
     votes.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
 
     const maxVotes = Math.max(...Object.values(tally))
-    const winners = Object.entries(tally).filter(([, v]) => v === maxVotes).map(([id]) => id)
+    // Tri : même ordre sur tous les téléphones (l'ordre des votes renvoyés par la DB n'est pas garanti)
+    const winners = Object.entries(tally).filter(([, v]) => v === maxVotes).map(([id]) => id).sort()
 
     if (winners.length === 2) {
       // Égalité à 2 → chifoumi !
@@ -390,7 +399,7 @@ export default function SessionPage() {
 
     if (winners.length > 2) {
       // Égalité à 3+ → roue de la fortune
-      const winnerId = winners[Math.floor(Math.random() * winners.length)]
+      const winnerId = winners[seededIndex(sessionId, winners.length)]
       const winnerPlayer = currentPlayers.find(p => p.user_id === winnerId)
       const reasons = [
         `L'algorithme a détecté que "${winnerPlayer?.pseudo}" contient exactement le bon nombre de lettres pour commander un grand cru.`,
@@ -399,7 +408,7 @@ export default function SessionPage() {
         `"${winnerPlayer?.pseudo}" a été désigné par les astres, la physique quantique, et une légère intuition de l'IA.`,
         `Égalité parfaite entre ${winners.length} grands esprits. La roue a tranché : "${winnerPlayer?.pseudo}" est le·la chef·fe du soir.`,
       ]
-      const reason = reasons[Math.floor(Math.random() * reasons.length)]
+      const reason = reasons[seededIndex(`${sessionId}-raison`, reasons.length)]
       setTiedPlayerIds(winners)
       setTirageWinner(winnerPlayer ?? null)
       setTirageReason(reason)
@@ -565,8 +574,8 @@ export default function SessionPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
                   { emoji: '👁️', label: 'Robe',      pts: '500 si juste · 200 sinon' },
-                  { emoji: '👃', label: 'Arômes',    pts: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si officiel" },
-                  { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 200 sinon' },
+                  { emoji: '👃', label: 'Arômes',    pts: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes" },
+                  { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 350 si à côté · 200 sinon' },
                   { emoji: '💰', label: 'Prix',      pts: '500 si exact · −50 pts/CHF d\'écart' },
                   { emoji: '📅', label: 'Millésime', pts: '500 si exact · −50 pts par année d\'écart' },
                   { emoji: '🍇', label: 'Cépage',    pts: '1 500 si juste · 300 sinon' },

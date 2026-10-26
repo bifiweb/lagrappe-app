@@ -366,8 +366,8 @@ export default function EveningLobbyPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
             {[
               { emoji: '👁️', label: 'Robe',      pts: '500 si juste · 200 sinon' },
-              { emoji: '👃', label: 'Arômes',    pts: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si officiel" },
-              { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 200 sinon' },
+              { emoji: '👃', label: 'Arômes',    pts: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes" },
+              { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 350 si à côté · 200 sinon' },
               { emoji: '💰', label: 'Prix',      pts: '500 si exact · −50 pts/CHF d\'écart' },
               { emoji: '📅', label: 'Millésime', pts: '500 si exact · −50 pts par année d\'écart' },
               { emoji: '🍇', label: 'Cépage',    pts: '1 500 si juste · 300 sinon' },

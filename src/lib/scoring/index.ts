@@ -1,5 +1,5 @@
-import { SCORING } from '@/types'
-import type { Tasting, GrappisteNotes } from '@/types'
+import { SCORING, WINE_CONTENT } from '@/types'
+import type { Tasting, GrappisteNotes, WineType } from '@/types'
 
 // Calcul côté client pour affichage preview
 // Le calcul officiel est fait côté serveur (SQL function)
@@ -27,7 +27,8 @@ export function calcAromePoints(
 export function calcTotalPoints(
   tasting: Partial<Tasting>,
   notes: GrappisteNotes,
-  allTastings: Tasting[]
+  allTastings: Tasting[],
+  wineType: WineType
 ): {
   pts_robe: number
   pts_aromes: number
@@ -49,8 +50,13 @@ export function calcTotalPoints(
     notes.aromes_officiels
   )
 
-  const pts_bouche = tasting.bouche === notes.bouche
-    ? SCORING.BOUCHE_CORRECT : SCORING.BOUCHE_WRONG
+  // Miroir de la migration 029 : case voisine sur l'échelle = presque juste
+  const boucheScale: readonly string[] = WINE_CONTENT[wineType].bouche
+  const boucheIdx = tasting.bouche ? boucheScale.indexOf(tasting.bouche) : -1
+  const officialIdx = notes.bouche ? boucheScale.indexOf(notes.bouche) : -1
+  const pts_bouche = tasting.bouche === notes.bouche ? SCORING.BOUCHE_CORRECT
+    : boucheIdx >= 0 && officialIdx >= 0 && Math.abs(boucheIdx - officialIdx) === 1 ? SCORING.BOUCHE_CLOSE
+    : SCORING.BOUCHE_WRONG
 
   const prixEstime = tasting.prix_estime ? parseFloat(tasting.prix_estime) : null
   const pts_prix = (prixEstime != null && notes.prix_exact != null && !isNaN(prixEstime))
