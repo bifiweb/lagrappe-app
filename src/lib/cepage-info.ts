@@ -25,10 +25,10 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
     nez: 'Olive noire, poivre, fruits noirs, violette, notes fumées',
     bouche: 'Puissant, tanins fermes, épicé, longue finale',
   },
-  'Cabernet': {
-    robe: 'Rouge sombre à quasi opaque',
-    nez: 'Cassis, poivron vert, cèdre, tabac, épices',
-    bouche: 'Structuré, tanins prononcés, acidité marquée',
+  'Cabernet Franc': {
+    robe: 'Rouge rubis à grenat',
+    nez: 'Poivron vert, framboise, cassis, violette, notes herbacées',
+    bouche: 'Tanins fins mais présents, fraîcheur, finale épicée',
   },
   'Diolinoir': {
     robe: 'Rouge intense, presque opaque',
@@ -49,6 +49,21 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
     robe: 'Rouge rubis, généralement pâle',
     nez: 'Fruits des bois, épices, avec un côté gibier',
     bouche: 'Tanins fins, avec parfois un côté rustique',
+  },
+  'Gamaret': {
+    robe: 'Rouge sombre, reflets violacés',
+    nez: 'Fruits noirs, mûre, cerise noire, poivre, épices',
+    bouche: 'Charnu, tanins présents, belle structure',
+  },
+  'Carminoir': {
+    robe: 'Rouge très profond, presque noir',
+    nez: 'Cassis, fruits noirs, notes végétales et épicées (héritage Cabernet)',
+    bouche: 'Corsé, tanins fermes, bon potentiel de garde',
+  },
+  'Divico': {
+    robe: 'Rouge très foncé, violacé',
+    nez: 'Myrtille, mûre, cassis, notes épicées',
+    bouche: 'Structuré, tanins denses — cépage suisse résistant (PIWI)',
   },
   'Chasselas': {
     robe: 'Jaune pâle, reflets verts',
@@ -110,10 +125,31 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
     nez: 'Rose, raisin frais, fleurs blanches, arômes muscatés',
     bouche: 'Très aromatique, frais, doux à sec, finale florale',
   },
+  'Amigne': {
+    robe: 'Jaune doré',
+    nez: 'Mandarine, agrumes confits, miel, abricot',
+    bouche: 'Ample, souvent avec du sucre résiduel (1 à 3 abeilles), légère amertume',
+  },
+  'Humagne Blanche': {
+    robe: 'Jaune pâle, reflets verts',
+    nez: 'Notes résineuses, tilleul, fleurs blanches, minéral',
+    bouche: 'Sec, tendu, légère amertume en finale',
+  },
+  'Ermitage': {
+    robe: 'Jaune doré',
+    nez: 'Coing, miel, abricot, amande',
+    bouche: 'Gras, ample, puissant, acidité discrète',
+  },
+  'Completer': {
+    robe: 'Jaune or',
+    nez: 'Coing, agrumes, herbes, miel',
+    bouche: 'Acidité vive, structuré, grand potentiel de garde',
+  },
 }
 
 // ---- Profils pour classer les cépages dans la devinette ----
-// Robes et arômes repris des listes du jeu (WINE_CONTENT), bouche = plage d'index
+// Robes et arômes repris des listes du jeu (WINE_CONTENT), arômes du plus au moins typique
+// (les 2 premiers = signature du cépage), bouche = plage d'index
 // sur l'échelle à 5 crans (rouge : structure, blanc : acidité → gras)
 export interface CepageProfil {
   robes: string[]
@@ -122,27 +158,36 @@ export interface CepageProfil {
 }
 
 export const CEPAGE_PROFILS: Record<string, CepageProfil> = {
-  'Pinot Noir':     { robes: ['Rouge pâle', 'Tuilée'], aromes: ['Fraise', 'Framboise', 'Cerise', 'Sous-bois', 'Champignons', 'Vanille', 'Chocolat'], bouche: [0, 2] },
-  'Gamay':          { robes: ['Rouge pâle'], aromes: ['Fraise', 'Framboise', 'Cerise', 'Violette', 'Poivre'], bouche: [0, 2] },
-  'Merlot':         { robes: ['Rouge dense', 'Tuilée'], aromes: ['Cerise', 'Mûre', 'Cassis', 'Figue', 'Chocolat', 'Vanille', 'Réglisse', 'Tabac'], bouche: [2, 4] },
-  'Syrah':          { robes: ['Rouge dense'], aromes: ['Mûre', 'Myrtille', 'Cassis', 'Violette', 'Poivre', 'Réglisse', 'Notes sauvages'], bouche: [3, 4] },
-  'Cabernet':       { robes: ['Rouge dense'], aromes: ['Cassis', 'Mûre', 'Poivron vert', 'Herbes aromatiques', 'Tabac', 'Vanille'], bouche: [3, 4] },
-  'Diolinoir':      { robes: ['Rouge dense'], aromes: ['Mûre', 'Myrtille', 'Cassis', 'Poivre', 'Clou de girofle'], bouche: [3, 4] },
-  'Garanoir':       { robes: ['Rouge pâle', 'Rouge dense'], aromes: ['Cerise', 'Framboise', 'Mûre', 'Poivre'], bouche: [1, 2] },
-  'Cornalin':       { robes: ['Rouge dense'], aromes: ['Cerise', 'Mûre', 'Myrtille', 'Violette', 'Poivre', 'Notes sauvages'], bouche: [2, 4] },
-  'Humagne Rouge':  { robes: ['Rouge pâle', 'Rouge dense'], aromes: ['Myrtille', 'Mûre', 'Violette', 'Sous-bois', 'Poivre', 'Notes sauvages'], bouche: [2, 3] },
-  'Chasselas':      { robes: ['Jaune pâle'], aromes: ['Fleurs blanches', 'Citron', 'Minéralité', 'Pomme', 'Poire'], bouche: [1, 2] },
-  'Chardonnay':     { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pomme', 'Pêche', 'Ananas', 'Vanille', 'Beurre', 'Miel'], bouche: [2, 4] },
-  'Pinot Gris':     { robes: ['Or / Paille'], aromes: ['Poire', 'Pêche', 'Abricot', 'Coing', 'Miel', 'Épices'], bouche: [3, 4] },
-  'Riesling':       { robes: ['Jaune pâle'], aromes: ['Citron', 'Pamplemousse', 'Pomme', 'Pêche', 'Fleurs blanches', 'Minéralité'], bouche: [0, 1] },
-  'Sauvignon':      { robes: ['Jaune pâle'], aromes: ['Pamplemousse', 'Fruit de la passion', 'Citron', 'Rhubarbe', 'Herbes aromatiques', 'Minéralité'], bouche: [0, 1] },
-  'Gewurztraminer': { robes: ['Or / Paille'], aromes: ['Litchi', 'Rose', 'Fruit de la passion', 'Épices', 'Miel'], bouche: [3, 4] },
-  'Viognier':       { robes: ['Or / Paille'], aromes: ['Abricot', 'Pêche', 'Fleurs blanches', 'Miel', 'Épices'], bouche: [3, 4] },
-  'Petite Arvine':  { robes: ['Jaune pâle'], aromes: ['Pamplemousse', 'Rhubarbe', 'Citron', 'Fruit de la passion', 'Minéralité'], bouche: [0, 2] },
-  'Heida':          { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pomme', 'Coing', 'Pamplemousse', 'Herbes aromatiques', 'Épices', 'Minéralité'], bouche: [1, 3] },
-  'Müller Thurgau': { robes: ['Jaune pâle'], aromes: ['Pêche', 'Pomme', 'Citron', 'Fleurs blanches', 'Herbes aromatiques'], bouche: [1, 2] },
-  'Johannisberg':   { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pêche', 'Abricot', 'Pomme', 'Fleurs blanches', 'Herbes aromatiques'], bouche: [2, 3] },
-  'Muscat':         { robes: ['Jaune pâle'], aromes: ['Rose', 'Litchi', 'Fleurs blanches', 'Pêche', 'Abricot', 'Citron'], bouche: [1, 2] },
+  // Rouges
+  'Pinot Noir':      { robes: ['Rouge pâle', 'Tuilée'], aromes: ['Cerise', 'Sous-bois', 'Framboise', 'Fraise', 'Champignons', 'Vanille'], bouche: [0, 2] },
+  'Gamay':           { robes: ['Rouge pâle'], aromes: ['Fraise', 'Framboise', 'Cerise', 'Violette', 'Poivre'], bouche: [0, 2] },
+  'Merlot':          { robes: ['Rouge dense', 'Tuilée'], aromes: ['Cerise', 'Chocolat', 'Mûre', 'Figue', 'Vanille', 'Réglisse', 'Tabac'], bouche: [2, 4] },
+  'Syrah':           { robes: ['Rouge dense'], aromes: ['Poivre', 'Violette', 'Mûre', 'Myrtille', 'Réglisse', 'Notes sauvages'], bouche: [3, 4] },
+  'Cabernet Franc':  { robes: ['Rouge dense'], aromes: ['Poivron vert', 'Framboise', 'Cassis', 'Violette', 'Herbes aromatiques', 'Poivre'], bouche: [2, 3] },
+  'Diolinoir':       { robes: ['Rouge dense'], aromes: ['Mûre', 'Myrtille', 'Cassis', 'Clou de girofle', 'Poivre'], bouche: [3, 4] },
+  'Garanoir':        { robes: ['Rouge pâle', 'Rouge dense'], aromes: ['Cerise', 'Framboise', 'Mûre', 'Poivre'], bouche: [1, 2] },
+  'Cornalin':        { robes: ['Rouge dense'], aromes: ['Cerise', 'Notes sauvages', 'Mûre', 'Violette', 'Poivre', 'Myrtille'], bouche: [2, 4] },
+  'Humagne Rouge':   { robes: ['Rouge pâle', 'Rouge dense'], aromes: ['Notes sauvages', 'Sous-bois', 'Myrtille', 'Mûre', 'Violette', 'Poivre'], bouche: [2, 3] },
+  'Gamaret':         { robes: ['Rouge dense'], aromes: ['Mûre', 'Poivre', 'Cerise', 'Cassis', 'Clou de girofle', 'Violette'], bouche: [3, 4] },
+  'Carminoir':       { robes: ['Rouge dense'], aromes: ['Cassis', 'Poivron vert', 'Mûre', 'Poivre', 'Réglisse'], bouche: [3, 4] },
+  'Divico':          { robes: ['Rouge dense'], aromes: ['Myrtille', 'Mûre', 'Cassis', 'Cerise', 'Poivre', 'Chocolat'], bouche: [3, 4] },
+  // Blancs
+  'Chasselas':       { robes: ['Jaune pâle'], aromes: ['Fleurs blanches', 'Minéralité', 'Citron', 'Pomme', 'Poire'], bouche: [1, 2] },
+  'Chardonnay':      { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Beurre', 'Vanille', 'Pomme', 'Pêche', 'Ananas', 'Miel'], bouche: [2, 4] },
+  'Pinot Gris':      { robes: ['Or / Paille'], aromes: ['Poire', 'Coing', 'Pêche', 'Abricot', 'Miel', 'Épices'], bouche: [3, 4] },
+  'Riesling':        { robes: ['Jaune pâle'], aromes: ['Citron', 'Minéralité', 'Pamplemousse', 'Pomme', 'Pêche', 'Fleurs blanches'], bouche: [0, 1] },
+  'Sauvignon':       { robes: ['Jaune pâle'], aromes: ['Pamplemousse', 'Fruit de la passion', 'Herbes aromatiques', 'Citron', 'Rhubarbe', 'Minéralité'], bouche: [0, 1] },
+  'Gewurztraminer':  { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Litchi', 'Rose', 'Épices', 'Fruit de la passion', 'Miel'], bouche: [3, 4] },
+  'Viognier':        { robes: ['Or / Paille'], aromes: ['Abricot', 'Pêche', 'Fleurs blanches', 'Miel', 'Épices'], bouche: [3, 4] },
+  'Petite Arvine':   { robes: ['Jaune pâle'], aromes: ['Rhubarbe', 'Pamplemousse', 'Fruit de la passion', 'Citron', 'Minéralité'], bouche: [0, 2] },
+  'Heida':           { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pomme', 'Herbes aromatiques', 'Coing', 'Pamplemousse', 'Épices', 'Minéralité'], bouche: [1, 3] },
+  'Müller Thurgau':  { robes: ['Jaune pâle'], aromes: ['Fleurs blanches', 'Pêche', 'Pomme', 'Citron', 'Herbes aromatiques'], bouche: [1, 2] },
+  'Johannisberg':    { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Pomme', 'Herbes aromatiques', 'Fleurs blanches', 'Pêche', 'Miel'], bouche: [2, 3] },
+  'Muscat':          { robes: ['Jaune pâle'], aromes: ['Rose', 'Fleurs blanches', 'Pêche', 'Litchi', 'Abricot', 'Citron'], bouche: [1, 2] },
+  'Amigne':          { robes: ['Or / Paille'], aromes: ['Citron', 'Miel', 'Abricot', 'Coing', 'Épices'], bouche: [3, 4] },
+  'Humagne Blanche': { robes: ['Jaune pâle'], aromes: ['Herbes aromatiques', 'Fleurs blanches', 'Minéralité', 'Citron', 'Épices'], bouche: [1, 3] },
+  'Ermitage':        { robes: ['Or / Paille'], aromes: ['Coing', 'Miel', 'Abricot', 'Pêche', 'Épices'], bouche: [3, 4] },
+  'Completer':       { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Coing', 'Citron', 'Herbes aromatiques', 'Pomme', 'Miel', 'Épices'], bouche: [0, 2] },
 }
 
 // Classe les cépages du plus proche au plus éloigné de ce que le joueur a noté.
@@ -155,12 +200,17 @@ export function rankCepages(
   const score = (c: string) => {
     const p = CEPAGE_PROFILS[c]
     if (!p) return 0
-    let s = aromes.filter(a => p.aromes.includes(a)).length * 2
+    // Les arômes priment : robe et bouche ne font que départager
+    let s = 0
+    for (const a of aromes) {
+      const i = p.aromes.indexOf(a)
+      if (i >= 0) s += i < 2 ? 3 : 1.5
+    }
     if (echelle5) {
-      if (robe && p.robes.includes(robe)) s += 3
+      if (robe && p.robes.includes(robe)) s += 1
       const [min, max] = p.bouche
       const ecart = boucheIndex < min ? min - boucheIndex : boucheIndex > max ? boucheIndex - max : 0
-      s += ecart === 0 ? 3 : ecart === 1 ? 1.5 : 0
+      s += ecart === 0 ? 1 : ecart === 1 ? 0.5 : 0
     }
     return s
   }

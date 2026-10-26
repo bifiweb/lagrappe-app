@@ -210,7 +210,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
     ],
     bouche: ['Très léger', 'Léger', 'Souple, équilibré', 'Puissant', 'Très puissant'],
     accords: ['Salade', 'Charcuterie', 'Raclette/Fondue', 'Poulet au four', 'Burger', 'Côte de boeuf', 'Civet de cerf', 'Fondant au chocolat'],
-    cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah', 'Cabernet', 'Diolinoir', 'Garanoir', 'Cornalin', 'Humagne Rouge'],
+    cepages: ['Pinot Noir', 'Gamay', 'Merlot', 'Syrah', 'Cabernet Franc', 'Diolinoir', 'Garanoir', 'Cornalin', 'Humagne Rouge', 'Gamaret', 'Carminoir', 'Divico'],
     regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs'],
   },
   blanc: {
@@ -223,7 +223,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
     ],
     bouche: ['Acidité vive', 'Acidité', 'Équilibre', 'Gras', 'Très gras, onctueux'],
     accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette/Fondue', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],
-    cepages: ['Chasselas', 'Chardonnay', 'Pinot Gris', 'Riesling', 'Sauvignon', 'Gewurztraminer', 'Viognier', 'Petite Arvine', 'Heida', 'Müller Thurgau', 'Johannisberg', 'Muscat'],
+    cepages: ['Chasselas', 'Chardonnay', 'Pinot Gris', 'Riesling', 'Sauvignon', 'Gewurztraminer', 'Viognier', 'Petite Arvine', 'Heida', 'Müller Thurgau', 'Johannisberg', 'Muscat', 'Amigne', 'Humagne Blanche', 'Ermitage', 'Completer'],
     regions: ['Valais', 'Genève', 'Vaud', 'Tessin', 'Suisse-alémanique', 'Trois-Lacs'],
   },
   rose: {
