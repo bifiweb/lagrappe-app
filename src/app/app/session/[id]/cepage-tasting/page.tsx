@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { WINE_CONTENT, MAX_AROMES } from '@/types'
 import type { Profile, Session, SessionPlayer, Wine, Project } from '@/types'
+import { useT } from '@/lib/i18n'
 
 interface WineDetail {
   aromes: string[]
@@ -40,6 +41,7 @@ export default function CepageTastingPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -162,11 +164,11 @@ export default function CepageTastingPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
-  const cepageName = project?.cepage_name ?? 'Cépage'
+  const cepageName = project?.cepage_name ?? t('Cépage')
   const wineType = wines[0]?.type ?? 'rouge'
   const aromesList = WINE_CONTENT[wineType]?.aromes ?? WINE_CONTENT.rouge.aromes
   const ratedCount = Object.keys(scores).length
@@ -181,7 +183,7 @@ export default function CepageTastingPage() {
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#7a3a5a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '16px' }}>🍇</span>
           </div>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>{cepageName} — Notation</span>
+          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>{cepageName} — {t('Notation')}</span>
           <span style={{ fontSize: '12px', color: '#888' }}>{ratedCount}/{wines.length}</span>
         </div>
       </div>
@@ -191,8 +193,8 @@ export default function CepageTastingPage() {
         {submitted ? (
           <div style={{ textAlign: 'center', padding: '2rem 1.5rem' }}>
             <div style={{ fontSize: '48px', marginBottom: '1rem' }}>✓</div>
-            <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>Dégustation soumise !</div>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '2rem' }}>En attente des autres joueurs...</div>
+            <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>{t('Dégustation soumise !')}</div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '2rem' }}>{t('En attente des autres joueurs...')}</div>
             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
               {[...Array(3)].map((_, i) => (
                 <div key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', background: accent, opacity: 0.3 + i * 0.3 }} />
@@ -219,8 +221,8 @@ export default function CepageTastingPage() {
                           <span style={{ fontSize: '20px', fontWeight: '700', color: typeColor.text }}>{wine.bottle_number}</span>
                         </div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>Bouteille {wine.bottle_number}</div>
-                          <div style={{ fontSize: '12px', color: '#888' }}>{typeColor.label}</div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{t('Bouteille {n}', { n: wine.bottle_number })}</div>
+                          <div style={{ fontSize: '12px', color: '#888' }}>{t(typeColor.label)}</div>
                         </div>
                         {hasScore && (
                           <div style={{ fontSize: '22px', fontWeight: '700', color: accent }}>{score}</div>
@@ -241,7 +243,7 @@ export default function CepageTastingPage() {
                           <span style={{ fontSize: '11px', color: '#aaa' }}>100</span>
                         </div>
                         {!hasScore && (
-                          <div style={{ textAlign: 'center', fontSize: '12px', color: '#bbb' }}>Glisse pour noter</div>
+                          <div style={{ textAlign: 'center', fontSize: '12px', color: '#bbb' }}>{t('Glisse pour noter')}</div>
                         )}
                       </div>
                     </div>
@@ -253,7 +255,7 @@ export default function CepageTastingPage() {
                       <span>
                         {wineDetails?.aromes && wineDetails.aromes.length > 0
                           ? `${wineDetails.aromes.slice(0, 2).join(', ')}${wineDetails.aromes.length > 2 ? '...' : ''}`
-                          : 'Détails optionnels (arômes, région, millésime...)'}
+                          : t('Détails optionnels (arômes, région, millésime...)')}
                       </span>
                       <span style={{ transition: 'transform .2s', transform: isExpanded ? 'rotate(180deg)' : 'none' }}>▾</span>
                     </button>
@@ -274,7 +276,7 @@ export default function CepageTastingPage() {
                               return (
                                 <button key={arome} onClick={() => toggleArome(wine.id, arome)}
                                   style={{ padding: '5px 11px', borderRadius: '20px', border: selected ? 'none' : '0.5px solid #e0e0e0', background: selected ? accent : maxed ? '#f5f5f5' : '#fff', color: selected ? '#fff' : maxed ? '#ccc' : '#666', fontSize: '12px', cursor: maxed ? 'default' : 'pointer' }}>
-                                  {arome}
+                                  {t(arome)}
                                 </button>
                               )
                             })}
@@ -283,30 +285,30 @@ export default function CepageTastingPage() {
 
                         {/* Note libre */}
                         <div style={{ marginBottom: '12px' }}>
-                          <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>Note libre (optionnel)</div>
+                          <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '6px' }}>{t('Note libre (optionnel)')}</div>
                           <textarea
                             value={wineDetails?.tasting_note ?? ''}
                             onChange={e => setDetail(wine.id, 'tasting_note', e.target.value)}
-                            placeholder="Mes impressions sur ce vin..."
+                            placeholder={t('Mes impressions sur ce vin...')}
                             rows={2}
                             style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', resize: 'none', fontFamily: 'system-ui', boxSizing: 'border-box' }} />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                           <div>
-                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>Millésime</div>
+                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>{t('Millésime')}</div>
                             <input type="number" value={wineDetails?.millesime ?? ''} onChange={e => setDetail(wine.id, 'millesime', e.target.value)}
                               placeholder="2019" min={1900} max={2030}
                               style={{ width: '100%', padding: '7px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
                           </div>
                           <div>
-                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>Région</div>
+                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>{t('Région')}</div>
                             <input type="text" value={wineDetails?.region ?? ''} onChange={e => setDetail(wine.id, 'region', e.target.value)}
-                              placeholder="Valais..."
+                              placeholder={t('Valais...')}
                               style={{ width: '100%', padding: '7px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
                           </div>
                           <div>
-                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>Prix CHF</div>
+                            <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '4px' }}>{t('Prix CHF')}</div>
                             <input type="number" value={wineDetails?.prix ?? ''} onChange={e => setDetail(wine.id, 'prix', e.target.value)}
                               placeholder="35" min={0} step={0.5}
                               style={{ width: '100%', padding: '7px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
@@ -325,7 +327,7 @@ export default function CepageTastingPage() {
                 onClick={submitTasting}
                 disabled={!allRated || submitting}
                 style={{ width: '100%', padding: '16px', background: !allRated || submitting ? '#c0a0a0' : accent, color: '#fff', border: 'none', borderRadius: '14px', fontSize: '15px', fontWeight: '600', cursor: !allRated || submitting ? 'default' : 'pointer', boxShadow: '0 4px 12px rgba(141,50,59,0.25)' }}>
-                {submitting ? 'Envoi...' : !allRated ? `Encore ${wines.length - ratedCount} vin${wines.length - ratedCount > 1 ? 's' : ''} à noter` : 'Soumettre ma dégustation →'}
+                {submitting ? t('Envoi...') : !allRated ? (wines.length - ratedCount > 1 ? t('Encore {n} vins à noter', { n: wines.length - ratedCount }) : t('Encore {n} vin à noter', { n: wines.length - ratedCount })) : t('Soumettre ma dégustation →')}
               </button>
             </div>
           </>

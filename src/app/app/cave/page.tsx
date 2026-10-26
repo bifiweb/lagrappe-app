@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile, Tasting, Wine, GrappisteNotes, SessionPlayer } from '@/types'
+import { useT } from '@/lib/i18n'
 
 interface GameEntry {
   type: 'game'
@@ -34,7 +35,8 @@ const DESIGN_LABELS = ['Moche','Pas très joli','Moyen','Joli','Magnifique']
 const PRICE_LABELS = ['Bradé','Abordable','Juste prix','Cher','Trop cher']
 
 function MiniStars({ score, outOf10 = false }: { score: number | null, outOf10?: boolean }) {
-  if (score === null) return <span style={{ fontSize: '12px', color: '#bbb' }}>Non noté</span>
+  const t = useT()
+  if (score === null) return <span style={{ fontSize: '12px', color: '#bbb' }}>{t('Non noté')}</span>
   const stars = outOf10 ? score / 2 : score
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -52,9 +54,10 @@ function AppreciationBlock({ score, notesDeg, design, valeur, racheterait }: {
   score: number | null, notesDeg: string | null,
   design: number | null, valeur: number | null, racheterait: boolean | null
 }) {
+  const t = useT()
   const hasAny = score !== null || notesDeg || design || valeur || racheterait !== null
   if (!hasAny) return (
-    <div style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic', marginBottom: '12px' }}>Aucune appréciation enregistrée</div>
+    <div style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic', marginBottom: '12px' }}>{t('Aucune appréciation enregistrée')}</div>
   )
   return (
     <div style={{ marginBottom: '12px' }}>
@@ -63,7 +66,7 @@ function AppreciationBlock({ score, notesDeg, design, valeur, racheterait }: {
           <span style={{ fontSize: '32px', lineHeight: 1 }}>{SCORE_EMOJIS[score]}</span>
           <div>
             <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{score}/10</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>{SCORE_LABELS[score]}</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>{t(SCORE_LABELS[score])}</div>
           </div>
         </div>
       )}
@@ -77,19 +80,19 @@ function AppreciationBlock({ score, notesDeg, design, valeur, racheterait }: {
           {design && (
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
               <div style={{ fontSize: '12px', fontWeight: '500', color: accent }}>{'★'.repeat(design)}{'☆'.repeat(5 - design)}</div>
-              <div style={{ fontSize: '10px', color: '#888' }}>{DESIGN_LABELS[design - 1]}</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>{t(DESIGN_LABELS[design - 1])}</div>
             </div>
           )}
           {valeur && (
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '12px', fontWeight: '500', color: accent }}>{PRICE_LABELS[valeur - 1]}</div>
-              <div style={{ fontSize: '10px', color: '#888' }}>Prix</div>
+              <div style={{ fontSize: '12px', fontWeight: '500', color: accent }}>{t(PRICE_LABELS[valeur - 1])}</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>{t('Prix')}</div>
             </div>
           )}
           {racheterait !== null && (
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
               <div style={{ fontSize: '16px' }}>{racheterait ? '✅' : '❌'}</div>
-              <div style={{ fontSize: '10px', color: '#888' }}>Racheter</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>{t('Racheter')}</div>
             </div>
           )}
         </div>
@@ -110,6 +113,7 @@ export default function CavePage() {
   const [sort, setSort] = useState<SortType>('recent')
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
 
   async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -205,7 +209,7 @@ export default function CavePage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement de ta cave...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement de ta cave...')}</div>
     </div>
   )
 
@@ -217,15 +221,15 @@ export default function CavePage() {
           <div style={{ display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
             <button onClick={() => router.push('/app/dashboard')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
-            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Ma cave</span>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Ma cave')}</span>
           </div>
           <div style={{ display: 'flex', borderTop: '0.5px solid #f0f0f0', marginBottom: '-1px' }}>
             <button style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '600', color: accent, background: 'none', border: 'none', borderBottom: `2px solid ${accent}`, cursor: 'default' }}>
-              Mes dégustations
+              {t('Mes dégustations')}
             </button>
             <button onClick={() => router.push('/app/cave/pepites')}
               style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '400', color: '#888', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'pointer' }}>
-              Cave à pépites
+              {t('Cave à pépites')}
             </button>
           </div>
         </div>
@@ -238,8 +242,8 @@ export default function CavePage() {
           style={{ background: 'linear-gradient(135deg, #8d323b 0%, #b84d5a 100%)', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{ fontSize: '30px', lineHeight: 1 }}>💎</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500', fontSize: '14px', color: '#fff', marginBottom: '2px' }}>Cave à pépites</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)' }}>Découvrir & noter tous les vins La Grappe</div>
+            <div style={{ fontWeight: '500', fontSize: '14px', color: '#fff', marginBottom: '2px' }}>{t('Cave à pépites')}</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)' }}>{t('Découvrir & noter tous les vins La Grappe')}</div>
           </div>
           <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '20px' }}>›</div>
         </div>
@@ -251,7 +255,7 @@ export default function CavePage() {
               {([['all', 'Tout'], ['game', '🎮 Jeu'], ['rating', '📖 Cave']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setFilter(v)}
                   style={{ flex: 1, padding: '8px 4px', background: filter === v ? accent : 'transparent', color: filter === v ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>
-                  {l}
+                  {t(l)}
                 </button>
               ))}
             </div>
@@ -259,7 +263,7 @@ export default function CavePage() {
               {([['recent', '🕐 Récent'], ['score', '⭐ Note']] as const).map(([v, l]) => (
                 <button key={v} onClick={() => setSort(v)}
                   style={{ padding: '8px 10px', background: sort === v ? accent : 'transparent', color: sort === v ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>
-                  {l}
+                  {t(l)}
                 </button>
               ))}
             </div>
@@ -269,13 +273,13 @@ export default function CavePage() {
         {entries.length === 0 ? (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
             <div style={{ fontSize: '32px', marginBottom: '1rem' }}>🍾</div>
-            <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Ta cave est vide !</div>
+            <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>{t('Ta cave est vide !')}</div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
-              Joue une session ou note un vin dans la cave à pépites
+              {t('Joue une session ou note un vin dans la cave à pépites')}
             </div>
             <button onClick={() => router.push('/app/dashboard')}
               style={{ padding: '10px 20px', background: accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-              Commencer →
+              {t('Commencer →')}
             </button>
           </div>
         ) : (() => {
@@ -290,7 +294,7 @@ export default function CavePage() {
               return new Date(b.date).getTime() - new Date(a.date).getTime()
             })
           if (visible.length === 0) return (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#888', fontSize: '13px' }}>Aucune dégustation pour ce filtre.</div>
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#888', fontSize: '13px' }}>{t('Aucune dégustation pour ce filtre.')}</div>
           )
           return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -319,16 +323,16 @@ export default function CavePage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: '500', fontSize: '15px', color: '#1a1a1a' }}>
                           {isGame
-                            ? (gameEntry?.catalogName ?? (notes ? `${notes.cepage ?? ''} ${notes.millesime ?? ''}`.trim() : `Bouteille #${wine?.bottle_number}`))
-                            : ((wine as any).name ?? wine?.type ?? '—')}
+                            ? (gameEntry?.catalogName ?? (notes ? `${notes.cepage ?? ''} ${notes.millesime ?? ''}`.trim() : t('Bouteille #{n}', { n: wine?.bottle_number ?? '' })))
+                            : ((wine as any).name ?? (wine?.type && t(wine.type)) ?? '—')}
                         </span>
                         <span style={{ fontSize: '10px', background: isGame ? '#edeaf8' : '#e8f5e8', color: isGame ? '#3C3489' : '#27500A', padding: '2px 7px', borderRadius: '6px' }}>
-                          {isGame ? '🎮 Jeu' : '📖 Cave'}
+                          {isGame ? t('🎮 Jeu') : t('📖 Cave')}
                         </span>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>{notes?.region ?? (wine as any)?.region ?? wine?.type}</div>
+                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>{t(notes?.region ?? (wine as any)?.region ?? wine?.type ?? '')}</div>
                       <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '6px' }}>
-                        {new Date(entry.date).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(entry.date).toLocaleDateString(t('fr-CH'), { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
 
                       {isGame && gameEntry?.players && gameEntry.players.length > 0 && (
@@ -366,26 +370,26 @@ export default function CavePage() {
                           />
                           <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal?from=cave`)}
                             style={{ width: '100%', padding: '10px', border: `0.5px solid ${accent}`, borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: '8px' }}>
-                            Modifier ma note →
+                            {t('Modifier ma note →')}
                           </button>
                           {gameEntry.wine?.shopify_url && (
                             <a href={gameEntry.wine.shopify_url} target="_blank" rel="noreferrer"
                               style={{ display: 'block', width: '100%', padding: '10px', background: accent, color: '#fff', borderRadius: '8px', fontSize: '13px', fontWeight: '500', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box', marginBottom: '12px' }}>
-                              Acheter ce vin →
+                              {t('Acheter ce vin →')}
                             </a>
                           )}
                           {/* Bloc jeu */}
                           <div style={{ borderTop: '0.5px solid #e8e8e8', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>Points du jeu</div>
+                            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '8px' }}>{t('Points du jeu')}</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                               {[
-                                { l: 'Robe', v: gameEntry.tasting.pts_robe },
-                                { l: 'Arômes', v: gameEntry.tasting.pts_aromes },
-                                { l: 'Bouche', v: gameEntry.tasting.pts_bouche },
-                                { l: 'Prix', v: gameEntry.tasting.pts_prix },
-                                { l: 'Millésime', v: gameEntry.tasting.pts_millesime },
-                                { l: 'Cépage', v: gameEntry.tasting.pts_cepage },
-                                { l: 'Région', v: gameEntry.tasting.pts_region },
+                                { l: t('Robe'), v: gameEntry.tasting.pts_robe },
+                                { l: t('Arômes'), v: gameEntry.tasting.pts_aromes },
+                                { l: t('Bouche'), v: gameEntry.tasting.pts_bouche },
+                                { l: t('Prix'), v: gameEntry.tasting.pts_prix },
+                                { l: t('Millésime'), v: gameEntry.tasting.pts_millesime },
+                                { l: t('Cépage'), v: gameEntry.tasting.pts_cepage },
+                                { l: t('Région'), v: gameEntry.tasting.pts_region },
                               ].map(({ l, v }) => (
                                 <div key={l} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '8px', padding: '6px 10px', textAlign: 'center' }}>
                                   <div style={{ fontSize: '13px', fontWeight: '500', color: accent }}>{v}</div>
@@ -395,7 +399,7 @@ export default function CavePage() {
                             </div>
                             <button onClick={() => router.push(`/app/session/${gameEntry.sessionId}/reveal`)}
                               style={{ width: '100%', padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
-                              Voir le reveal →
+                              {t('Voir le reveal →')}
                             </button>
                           </div>
                         </>
@@ -410,12 +414,12 @@ export default function CavePage() {
                           />
                           <button onClick={() => router.push('/app/cave/pepites')}
                             style={{ width: '100%', padding: '10px', border: `0.5px solid ${accent}`, borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500', marginBottom: ratingEntry.wine?.shopify_url ? '8px' : 0 }}>
-                            Modifier ma note →
+                            {t('Modifier ma note →')}
                           </button>
                           {ratingEntry.wine?.shopify_url && (
                             <a href={ratingEntry.wine.shopify_url} target="_blank" rel="noreferrer"
                               style={{ display: 'block', width: '100%', padding: '10px', background: accent, color: '#fff', borderRadius: '8px', fontSize: '13px', fontWeight: '500', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>
-                              Acheter ce vin →
+                              {t('Acheter ce vin →')}
                             </a>
                           )}
                         </>

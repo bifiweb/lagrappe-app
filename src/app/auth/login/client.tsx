@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useT, LangSwitch } from '@/lib/i18n'
 
 export default function LoginClient() {
   const [email, setEmail] = useState('')
@@ -14,6 +15,7 @@ export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const t = useT()
 
   useEffect(() => {
     const r = searchParams.get('redirect')
@@ -54,7 +56,7 @@ export default function LoginClient() {
     setLoading(true)
     setError(null)
     const { error } = await supabase.auth.signInAnonymously()
-    if (error) { setError('Impossible de rejoindre en invité.'); setLoading(false); return }
+    if (error) { setError(t('Impossible de rejoindre en invité.')); setLoading(false); return }
     router.push(redirect ?? '/app/dashboard')
   }
 
@@ -64,6 +66,7 @@ export default function LoginClient() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1rem', fontFamily: 'system-ui, sans-serif',
     }}>
+      <LangSwitch style={{ position: 'absolute', top: '16px', right: '16px' }} />
       <div style={{ width: '100%', maxWidth: '400px' }}>
 
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -81,14 +84,14 @@ export default function LoginClient() {
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: 0 }}>La grAPP</h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-            {redirect ? 'Connecte-toi pour rejoindre la session 🍷' : 'Dégustation à l\'aveugle'}
+            {redirect ? t('Connecte-toi pour rejoindre la session 🍷') : t("Dégustation à l'aveugle")}
           </p>
         </div>
 
         {redirect && redirect.includes('/session/') && (
           <div style={{ background: '#edeaf8', border: '0.5px solid #afa9ec', borderRadius: '12px', padding: '12px 16px', marginBottom: '1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', color: '#3C3489', fontWeight: '500' }}>🍾 Tu as été invité à une dégustation !</div>
-            <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '3px' }}>Connecte-toi pour rejoindre</div>
+            <div style={{ fontSize: '13px', color: '#3C3489', fontWeight: '500' }}>{t('🍾 Tu as été invité à une dégustation !')}</div>
+            <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '3px' }}>{t('Connecte-toi pour rejoindre')}</div>
           </div>
         )}
 
@@ -98,25 +101,25 @@ export default function LoginClient() {
             <div style={{ textAlign: 'center', padding: '1rem 0' }}>
               <div style={{ fontSize: '40px', marginBottom: '1rem' }}>📬</div>
               <div style={{ fontSize: '16px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
-                Vérifie ton email !
+                {t('Vérifie ton email !')}
               </div>
               <div style={{ fontSize: '13px', color: '#666', lineHeight: 1.5, marginBottom: '1.5rem' }}>
-                On a envoyé un lien de connexion à<br />
+                {t('On a envoyé un lien de connexion à')}<br />
                 <strong>{email}</strong>.<br />
-                Clique dessus pour accéder à l'appli.
+                {t("Clique dessus pour accéder à l'appli.")}
               </div>
               <button onClick={() => { setSent(false); setEmail('') }}
                 style={{ background: 'none', border: 'none', color: '#8d323b', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}>
-                Renvoyer à une autre adresse
+                {t('Renvoyer à une autre adresse')}
               </button>
             </div>
           ) : (
             <>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                Connexion sans mot de passe
+                {t('Connexion sans mot de passe')}
               </div>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '1.25rem' }}>
-                Entre ton email et reçois un lien de connexion instantané.
+                {t('Entre ton email et reçois un lien de connexion instantané.')}
               </div>
 
               <form onSubmit={handleMagicLink}>
@@ -126,7 +129,7 @@ export default function LoginClient() {
                   </label>
                   <input type="email" required value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="ton@email.com"
+                    placeholder={t('ton@email.com')}
                     style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', background: '#fff', outline: 'none', boxSizing: 'border-box' }} />
                 </div>
 
@@ -143,13 +146,13 @@ export default function LoginClient() {
                   fontSize: '14px', fontWeight: '500',
                   cursor: loading ? 'default' : 'pointer',
                 }}>
-                  {loading ? 'Envoi en cours...' : '✉️ Recevoir le lien de connexion'}
+                  {loading ? t('Envoi en cours...') : t('✉️ Recevoir le lien de connexion')}
                 </button>
               </form>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1.25rem 0' }}>
                 <div style={{ flex: 1, height: '0.5px', background: '#e0e0e0' }} />
-                <span style={{ fontSize: '12px', color: '#aaa' }}>ou</span>
+                <span style={{ fontSize: '12px', color: '#aaa' }}>{t('ou')}</span>
                 <div style={{ flex: 1, height: '0.5px', background: '#e0e0e0' }} />
               </div>
 
@@ -166,14 +169,14 @@ export default function LoginClient() {
                   <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                   <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                 </svg>
-                Continuer avec Google
+                {t('Continuer avec Google')}
               </button>
 
               {guestAllowed && (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '1rem 0' }}>
                     <div style={{ flex: 1, height: '0.5px', background: '#e0e0e0' }} />
-                    <span style={{ fontSize: '12px', color: '#aaa' }}>ou</span>
+                    <span style={{ fontSize: '12px', color: '#aaa' }}>{t('ou')}</span>
                     <div style={{ flex: 1, height: '0.5px', background: '#e0e0e0' }} />
                   </div>
                   <button onClick={handleGuestLogin} disabled={loading} style={{
@@ -182,7 +185,7 @@ export default function LoginClient() {
                     fontSize: '14px', fontWeight: '500', color: '#555',
                     cursor: loading ? 'default' : 'pointer',
                   }}>
-                    👤 Rejoindre en invité
+                    {t('👤 Rejoindre en invité')}
                   </button>
                 </>
               )}
@@ -191,7 +194,7 @@ export default function LoginClient() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>
-          La grAPP — Dégustation de vins suisses à l'aveugle
+          {t("La grAPP — Dégustation de vins suisses à l'aveugle")}
         </p>
       </div>
     </div>

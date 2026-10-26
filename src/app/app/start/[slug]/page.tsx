@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import type { Project } from '@/types'
+import { useT } from '@/lib/i18n'
 
 export default function StartProjectPage() {
   const [project, setProject] = useState<Project | null>(null)
@@ -13,6 +14,7 @@ export default function StartProjectPage() {
   const params = useParams()
   const slug = params.slug as string
   const supabase = createClient()
+  const t = useT()
 
   useEffect(() => {
     async function load() {
@@ -37,7 +39,7 @@ export default function StartProjectPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -45,8 +47,8 @@ export default function StartProjectPage() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif', padding: '1.5rem' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '48px', marginBottom: '1rem' }}>🍾</div>
-        <div style={{ fontSize: '16px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>Projet introuvable</div>
-        <div style={{ fontSize: '14px', color: '#888' }}>Ce lien n'est plus valide ou le projet a été supprimé.</div>
+        <div style={{ fontSize: '16px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>{t('Projet introuvable')}</div>
+        <div style={{ fontSize: '14px', color: '#888' }}>{t("Ce lien n'est plus valide ou le projet a été supprimé.")}</div>
       </div>
     </div>
   )
@@ -66,7 +68,7 @@ export default function StartProjectPage() {
               style={{ width: '40px', height: '40px', objectFit: 'contain' }}
             />
           </div>
-          <div style={{ fontSize: '13px', color: '#888' }}>La Grappe — Dégustation à l'aveugle</div>
+          <div style={{ fontSize: '13px', color: '#888' }}>{t("La Grappe — Dégustation à l'aveugle")}</div>
         </div>
 
         {/* Carte projet */}
@@ -98,12 +100,12 @@ export default function StartProjectPage() {
         {/* CTA connexion */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.5rem', textAlign: 'center' }}>
           <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>
-            Prêt à déguster ?
+            {t('Prêt à déguster ?')}
           </div>
           <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
             {project?.guest_access
-              ? 'Rejoins directement sans compte, ou connecte-toi pour sauvegarder ton historique.'
-              : 'Connecte-toi ou crée un compte gratuit pour rejoindre ce projet.'}
+              ? t('Rejoins directement sans compte, ou connecte-toi pour sauvegarder ton historique.')
+              : t('Connecte-toi ou crée un compte gratuit pour rejoindre ce projet.')}
           </div>
           <button
             onClick={() => {
@@ -111,12 +113,12 @@ export default function StartProjectPage() {
               router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}${guestParam}`)
             }}
             style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-            Rejoindre la dégustation →
+            {t('Rejoindre la dégustation →')}
           </button>
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>
-          La grAPP — Dégustation de vins suisses à l'aveugle
+          {t("La grAPP — Dégustation de vins suisses à l'aveugle")}
         </p>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import type { Profile, Wine } from '@/types'
+import { useT } from '@/lib/i18n'
 
 export default function NewSessionClient() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -18,6 +19,7 @@ export default function NewSessionClient() {
   const router = useRouter()
   const params = useSearchParams()
   const supabase = createClient()
+  const t = useT()
   const wineId = params.get('wine')
   const projectId = params.get('project')
 
@@ -79,7 +81,7 @@ export default function NewSessionClient() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -93,7 +95,7 @@ export default function NewSessionClient() {
             ‹
           </button>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
-            Bouteille {wine?.bottle_number}
+            {t('Bouteille {n}', { n: wine?.bottle_number ?? '' })}
           </span>
         </div>
       </div>
@@ -106,13 +108,13 @@ export default function NewSessionClient() {
           </div>
           <div>
             <div style={{ fontSize: '12px', color: '#888', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.04em' }}>
-              Vin mystère
+              {t('Vin mystère')}
             </div>
             <div style={{ fontWeight: '500', fontSize: '18px', color: '#8d323b' }}>
-              Bouteille #{wine?.bottle_number}
+              {t('Bouteille #{n}', { n: wine?.bottle_number ?? '' })}
             </div>
             <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>
-              {wine?.type === 'rouge' ? 'Vin rouge' : wine?.type === 'blanc' ? 'Vin blanc' : wine?.type}
+              {wine?.type === 'rouge' ? t('Vin rouge') : wine?.type === 'blanc' ? t('Vin blanc') : wine?.type && t(wine.type)}
             </div>
           </div>
         </div>
@@ -120,7 +122,7 @@ export default function NewSessionClient() {
         {/* Avatar */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>
-            Ton personnage Wine Mode
+            {t('Ton personnage Wine Mode')}
           </label>
           {(() => {
             const char = selectedAvatar ? getCharacter(selectedAvatar) : null
@@ -136,10 +138,10 @@ export default function NewSessionClient() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
-                    {char ? char.label : 'Aucun personnage'}
+                    {char ? t(char.label) : t('Aucun personnage')}
                   </div>
                   <button onClick={() => setEditingAvatar(v => !v)} style={{ marginTop: '4px', padding: '4px 12px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
-                    {editingAvatar ? 'Fermer' : '✏️ Changer'}
+                    {editingAvatar ? t('Fermer') : t('✏️ Changer')}
                   </button>
                 </div>
               </div>
@@ -150,7 +152,7 @@ export default function NewSessionClient() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', justifyItems: 'center' }}>
                 {CHARACTERS.map(char => (
                   <button key={char.seed} onClick={() => { setSelectedAvatar(char.seed); setEditingAvatar(false) }}
-                    title={char.label}
+                    title={t(char.label)}
                     style={{ position: 'relative', width: '50px', height: '50px', padding: 0, borderRadius: '50%', overflow: 'visible', border: selectedAvatar === char.seed ? `3px solid ${accent}` : '3px solid transparent', background: 'transparent', cursor: 'pointer' }}>
                     <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: '#f5ede8' }}>
                       <img src={avatarUrl(char.seed, char.skinColor)} width={50} height={50} alt={char.label} loading="lazy" style={{ display: 'block' }} />
@@ -165,16 +167,16 @@ export default function NewSessionClient() {
 
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '6px' }}>
-            Ton pseudo pour cette session
+            {t('Ton pseudo pour cette session')}
           </label>
           <p style={{ fontSize: '13px', color: '#888', margin: '0 0 12px' }}>
-            C'est le nom qui apparaîtra dans le classement
+            {t("C'est le nom qui apparaîtra dans le classement")}
           </p>
           <input
             type="text"
             value={pseudo}
             onChange={e => setPseudo(e.target.value)}
-            placeholder="Ex: Sophie M., Le Sommelier, Bacchus..."
+            placeholder={t('Ex: Sophie M., Le Sommelier, Bacchus...')}
             maxLength={30}
             style={{
               width: '100%', padding: '10px 12px',
@@ -188,10 +190,10 @@ export default function NewSessionClient() {
 
         <div style={{ background: '#edeaf8', border: '0.5px solid #afa9ec', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <div style={{ fontSize: '14px', fontWeight: '500', color: '#3C3489', marginBottom: '4px' }}>
-            Tu joues seul ou à plusieurs ?
+            {t('Tu joues seul ou à plusieurs ?')}
           </div>
           <div style={{ fontSize: '13px', color: '#534AB7', lineHeight: '1.5' }}>
-            Lance la session et partage le lien à tes amis — ils pourront rejoindre et déguster en même temps que toi !
+            {t('Lance la session et partage le lien à tes amis — ils pourront rejoindre et déguster en même temps que toi !')}
           </div>
         </div>
 
@@ -205,7 +207,7 @@ export default function NewSessionClient() {
             borderRadius: '12px', fontSize: '15px',
             fontWeight: '500', cursor: !pseudo.trim() || creating ? 'default' : 'pointer',
           }}>
-          {creating ? 'Création...' : 'Lancer la session →'}
+          {creating ? t('Création...') : t('Lancer la session →')}
         </button>
 
       </div>

@@ -7,6 +7,7 @@ import { useSessionRealtime } from '@/hooks/useRealtime'
 import { useWineMode } from '@/store/wineMode'
 import type { Session, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { useT } from '@/lib/i18n'
 
 export default function WaitingPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -21,6 +22,7 @@ export default function WaitingPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function WaitingPage() {
   }
 
   async function removePlayer(playerId: string, pseudo: string) {
-    if (!confirm(`Retirer ${pseudo} de la session ?`)) return
+    if (!confirm(t('Retirer {nom} de la session ?', { nom: pseudo }))) return
     await supabase.from('session_players').delete().eq('id', playerId)
     setPlayers(prev => prev.filter(p => p.id !== playerId))
   }
@@ -136,7 +138,7 @@ export default function WaitingPage() {
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
-            Bouteille #{session?.bottle_number}
+            {t('Bouteille #{n}', { n: session?.bottle_number ?? '' })}
           </span>
         </div>
       </div>
@@ -158,7 +160,7 @@ export default function WaitingPage() {
           wineMode ? (
             <div style={{ textAlign: 'center', padding: '3rem 0', position: 'relative' }}>
               <div style={{ fontSize: '14px', color: '#FFBE0B', marginBottom: '1rem', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                🎊 Le vin mystère se révèle...
+                {t('🎊 Le vin mystère se révèle...')}
               </div>
               <div style={{
                 fontSize: '160px', fontWeight: '900', lineHeight: 1,
@@ -195,7 +197,7 @@ export default function WaitingPage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '4rem 0' }}>
               <div style={{ fontSize: '14px', color: '#888', marginBottom: '1.5rem' }}>
-                Le vin mystère se révèle...
+                {t('Le vin mystère se révèle...')}
               </div>
               <div style={{
                 fontSize: '120px', fontWeight: '700',
@@ -213,7 +215,7 @@ export default function WaitingPage() {
           <>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                {allDone ? 'Tout le monde a terminé !' : 'En attente des joueurs...'}
+                {allDone ? t('Tout le monde a terminé !') : t('En attente des joueurs...')}
               </div>
               <div style={{ fontSize: '13px', color: '#888' }}>
                 {doneCount} / {players.length} dégustations soumises
@@ -231,12 +233,12 @@ export default function WaitingPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.tasting_done ? '#3B6D11' : '#e0c070' }}></div>
                     <span style={{ fontSize: '12px', color: p.tasting_done ? '#3B6D11' : '#888' }}>
-                      {p.tasting_done ? 'Terminé' : 'En cours...'}
+                      {p.tasting_done ? t('Terminé') : t('En cours...')}
                     </span>
                     {isChef && !p.tasting_done && (
                       <button
                         onClick={() => removePlayer(p.id, p.pseudo)}
-                        title="Retirer ce joueur"
+                        title={t('Retirer ce joueur')}
                         style={{ marginLeft: '4px', padding: '2px 7px', background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '6px', fontSize: '11px', color: '#8d323b', cursor: 'pointer', lineHeight: 1.4 }}>
                         ✕
                       </button>
@@ -251,8 +253,8 @@ export default function WaitingPage() {
                 {allDone && (
                   <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '10px 14px', marginBottom: '12px', textAlign: 'center', fontSize: '12px', color: '#7a5020', lineHeight: 1.5 }}>
                     {session?.evening_id
-                      ? '🎉 Tu es l\'organisateur·ice — c\'est toi qui lances la révélation !'
-                      : '👑 Tu es le·la chef·fe — c\'est toi qui lances la révélation !'}
+                      ? t("🎉 Tu es l'organisateur·ice — c'est toi qui lances la révélation !")
+                      : t("👑 Tu es le·la chef·fe — c'est toi qui lances la révélation !")}
                   </div>
                 )}
                 <button
@@ -265,7 +267,7 @@ export default function WaitingPage() {
                     borderRadius: '12px', fontSize: '15px', fontWeight: '500',
                     cursor: allDone ? 'pointer' : 'default',
                   }}>
-                  {allDone ? 'Révéler le vin mystère ! 🍾' : `En attente... (${doneCount}/${players.length})`}
+                  {allDone ? t('Révéler le vin mystère ! 🍾') : t('En attente... ({n}/{total})', { n: doneCount, total: players.length })}
                 </button>
                 {!allDone && (
                   <button
@@ -286,17 +288,19 @@ export default function WaitingPage() {
               <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '12px', padding: '1rem 1.25rem', textAlign: 'center' }}>
                 <div style={{ fontSize: '28px', marginBottom: '8px' }}>{session?.evening_id ? '🎉' : '👑'}</div>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                  {session?.evening_id ? 'En attente de l\'organisateur·ice...' : 'En attente du·de la chef·fe...'}
+                  {session?.evening_id ? t("En attente de l'organisateur·ice...") : t('En attente du·de la chef·fe...')}
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', lineHeight: 1.5 }}>
-                  Tout le monde a terminé ! C'est {session?.evening_id ? 'à l\'organisateur·ice' : 'au·à la chef·fe'} de lancer<br />la révélation du vin mystère. 🍾
+                  {session?.evening_id
+                    ? t("Tout le monde a terminé ! C'est à l'organisateur·ice de lancer la révélation du vin mystère. 🍾")
+                    : t("Tout le monde a terminé ! C'est au·à la chef·fe de lancer la révélation du vin mystère. 🍾")}
                 </div>
               </div>
             )}
 
             {!isChef && !allDone && (
               <div style={{ textAlign: 'center', fontSize: '13px', color: '#888', padding: '1rem' }}>
-                Ta dégustation est soumise — en attente des autres joueurs...
+                {t('Ta dégustation est soumise — en attente des autres joueurs...')}
               </div>
             )}
 
@@ -310,13 +314,13 @@ export default function WaitingPage() {
               }}>
                 <div style={{ fontSize: '22px', marginBottom: '6px' }}>🍾✨</div>
                 <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFBE0B', marginBottom: '4px' }}>
-                  En attendant... Wine Mode !
+                  {t('En attendant... Wine Mode !')}
                 </div>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '10px' }}>
-                  Lance un jeu de bouchons multijoueur en temps réel avec les autres joueurs !
+                  {t('Lance un jeu de bouchons multijoueur en temps réel avec les autres joueurs !')}
                 </div>
                 <div style={{ fontSize: '11px', color: 'rgba(255,190,11,0.7)' }}>
-                  Clique sur le bouton 🍷 à droite de l'écran pour activer le Wine Mode
+                  {t("Clique sur le bouton 🍷 à droite de l'écran pour activer le Wine Mode")}
                 </div>
               </div>
             )}
@@ -331,10 +335,10 @@ export default function WaitingPage() {
               }}>
                 <div style={{ fontSize: '22px', marginBottom: '6px' }}>🍾</div>
                 <div style={{ fontSize: '14px', fontWeight: '600', color: '#FFBE0B', marginBottom: '4px' }}>
-                  Wine Mode activé !
+                  {t('Wine Mode activé !')}
                 </div>
                 <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
-                  Clique sur 🍾 à droite pour lancer le jeu de bouchons !
+                  {t('Clique sur 🍾 à droite pour lancer le jeu de bouchons !')}
                 </div>
               </div>
             )}

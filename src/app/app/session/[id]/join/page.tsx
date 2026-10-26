@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import type { Session, Wine } from '@/types'
+import { useT } from '@/lib/i18n'
 
 export default function JoinSessionPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -20,6 +21,7 @@ export default function JoinSessionPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function JoinSessionPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -119,7 +121,7 @@ export default function JoinSessionPage() {
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#8d323b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Rejoindre la session</span>
+          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Rejoindre la session')}</span>
         </div>
       </div>
 
@@ -128,7 +130,7 @@ export default function JoinSessionPage() {
         {/* Badge invité */}
         {!isLoggedIn && guestAccess && (
           <div style={{ background: '#faeeda', border: '0.5px solid #e0c080', borderRadius: '10px', padding: '10px 14px', marginBottom: '1.5rem', fontSize: '13px', color: '#633806' }}>
-            👤 Tu rejoins en tant qu'<strong>invité</strong> — pas besoin de compte !
+            👤 Tu rejoins en tant qu'<strong>{t('invité')}</strong> — pas besoin de compte !
           </div>
         )}
 
@@ -137,10 +139,10 @@ export default function JoinSessionPage() {
             🍾
           </div>
           <div>
-            <div style={{ fontSize: '12px', color: '#888', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.04em' }}>Tu es invité à déguster</div>
-            <div style={{ fontWeight: '500', fontSize: '18px', color: '#8d323b' }}>Bouteille #{session?.bottle_number}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.04em' }}>{t('Tu es invité à déguster')}</div>
+            <div style={{ fontWeight: '500', fontSize: '18px', color: '#8d323b' }}>{t('Bouteille #{n}', { n: session?.bottle_number ?? '' })}</div>
             <div style={{ fontSize: '13px', color: '#888', marginTop: '2px' }}>
-              {wine?.type === 'rouge' ? 'Vin rouge' : wine?.type === 'blanc' ? 'Vin blanc' : wine?.type}
+              {wine?.type === 'rouge' ? t('Vin rouge') : wine?.type === 'blanc' ? t('Vin blanc') : wine?.type && t(wine.type)}
             </div>
           </div>
         </div>
@@ -148,7 +150,7 @@ export default function JoinSessionPage() {
         {/* Avatar */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>
-            Ton personnage Wine Mode
+            {t('Ton personnage Wine Mode')}
           </label>
           {(() => {
             const char = selectedAvatar ? getCharacter(selectedAvatar) : null
@@ -164,10 +166,10 @@ export default function JoinSessionPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
-                    {char ? char.label : 'Aucun personnage'}
+                    {char ? t(char.label) : t('Aucun personnage')}
                   </div>
                   <button onClick={() => setEditingAvatar(v => !v)} style={{ marginTop: '4px', padding: '4px 12px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
-                    {editingAvatar ? 'Fermer' : '✏️ Changer'}
+                    {editingAvatar ? t('Fermer') : t('✏️ Changer')}
                   </button>
                 </div>
               </div>
@@ -193,16 +195,16 @@ export default function JoinSessionPage() {
 
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '6px' }}>
-            Ton pseudo
+            {t('Ton pseudo')}
           </label>
           <p style={{ fontSize: '13px', color: '#888', margin: '0 0 12px' }}>
-            C'est le nom qui apparaîtra dans le classement
+            {t("C'est le nom qui apparaîtra dans le classement")}
           </p>
           <input
             type="text"
             value={pseudo}
             onChange={e => setPseudo(e.target.value)}
-            placeholder="Ex: Sophie M., Le Sommelier..."
+            placeholder={t('Ex: Sophie M., Le Sommelier...')}
             maxLength={30}
             style={{
               width: '100%', padding: '10px 12px',
@@ -224,7 +226,7 @@ export default function JoinSessionPage() {
             borderRadius: '12px', fontSize: '15px',
             fontWeight: '500', cursor: !pseudo.trim() || joining ? 'default' : 'pointer',
           }}>
-          {joining ? 'Connexion...' : 'Rejoindre la dégustation →'}
+          {joining ? t('Connexion...') : t('Rejoindre la dégustation →')}
         </button>
 
         {/* Option créer un compte si invité */}
@@ -232,7 +234,7 @@ export default function JoinSessionPage() {
           <button
             onClick={() => router.push(`/auth/login?redirect=/app/session/${sessionId}/join`)}
             style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#888', border: '0.5px solid #e0e0e0', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>
-            J'ai un compte — se connecter
+            {t("J'ai un compte — se connecter")}
           </button>
         )}
       </div>

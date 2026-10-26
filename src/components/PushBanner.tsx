@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { useT } from '@/lib/i18n'
 
 export default function PushBanner() {
   const { state, subscribe, unsubscribe } = usePushNotifications()
   const [ready, setReady] = useState(false)
+  const t = useT()
 
   useEffect(() => { setReady(true) }, [])
 
@@ -28,14 +30,14 @@ export default function PushBanner() {
       <span style={{ fontSize: '20px' }}>🔔</span>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>
-          Notifications La Grappe
+          {t('Notifications La Grappe')}
         </div>
         <div style={{ fontSize: '12px', color: '#888', marginTop: '1px' }}>
-          {isDenied ? 'Bloqué dans les paramètres du navigateur' : 'Annonces, nouveaux jeux, suggestions…'}
+          {isDenied ? t('Bloqué dans les paramètres du navigateur') : t('Annonces, nouveaux jeux, suggestions…')}
         </div>
       </div>
       {isDenied ? (
-        <span style={{ fontSize: '12px', color: '#aaa' }}>Bloqué</span>
+        <span style={{ fontSize: '12px', color: '#aaa' }}>{t('Bloqué')}</span>
       ) : (
         <button
           onClick={() => isOn ? unsubscribe() : subscribe()}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
+import { useT } from '@/lib/i18n'
 
 export default function JoinProjectPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'already'>('loading')
@@ -10,6 +11,7 @@ export default function JoinProjectPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const token = params.token as string
 
   useEffect(() => {
@@ -82,10 +84,10 @@ export default function JoinProjectPage() {
         {status === 'loading' && (
           <>
             <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
-              Vérification en cours...
+              {t('Vérification en cours...')}
             </div>
             <div style={{ fontSize: '14px', color: '#888' }}>
-              On vérifie ton invitation 🍷
+              {t('On vérifie ton invitation 🍷')}
             </div>
           </>
         )}
@@ -94,10 +96,10 @@ export default function JoinProjectPage() {
           <>
             <div style={{ fontSize: '32px', marginBottom: '1rem' }}>🎉</div>
             <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
-              Bienvenue dans {projectName} !
+              {t('Bienvenue dans {projet} !', { projet: projectName })}
             </div>
             <div style={{ fontSize: '14px', color: '#888' }}>
-              Tu as accès au projet. Redirection en cours...
+              {t('Tu as accès au projet. Redirection en cours...')}
             </div>
           </>
         )}
@@ -106,10 +108,10 @@ export default function JoinProjectPage() {
           <>
             <div style={{ fontSize: '32px', marginBottom: '1rem' }}>✅</div>
             <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
-              Tu as déjà accès à {projectName} !
+              {t('Tu as déjà accès à {projet} !', { projet: projectName })}
             </div>
             <div style={{ fontSize: '14px', color: '#888' }}>
-              Redirection en cours...
+              {t('Redirection en cours...')}
             </div>
           </>
         )}
@@ -118,14 +120,14 @@ export default function JoinProjectPage() {
           <>
             <div style={{ fontSize: '32px', marginBottom: '1rem' }}>❌</div>
             <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
-              Lien invalide
+              {t('Lien invalide')}
             </div>
             <div style={{ fontSize: '14px', color: '#888', marginBottom: '1.5rem' }}>
-              Ce lien d'invitation n'est pas valide ou a expiré.
+              {t("Ce lien d'invitation n'est pas valide ou a expiré.")}
             </div>
             <button onClick={() => router.push('/app/dashboard')}
               style={{ padding: '10px 20px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-              Retour au dashboard
+              {t('Retour au dashboard')}
             </button>
           </>
         )}

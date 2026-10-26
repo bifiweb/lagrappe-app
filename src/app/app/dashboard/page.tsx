@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { Profile, Project } from '@/types'
 import { avatarUrl } from '@/lib/gameCharacters'
 import PushBanner from '@/components/PushBanner'
+import { useT, LangSwitch } from '@/lib/i18n'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -13,6 +14,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
 
   useEffect(() => {
     async function load() {
@@ -42,7 +44,7 @@ export default function DashboardPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -60,18 +62,19 @@ export default function DashboardPage() {
                 style={{ width: '22px', height: '22px', objectFit: 'contain' }}
               />
             </div>
-            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>La grAPP</span>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('La grAPP')}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <LangSwitch />
             {profile?.role === 'admin' && (
               <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>
-                Admin
+                {t('Admin')}
               </span>
             )}
             {(() => {
               return (
                 <button onClick={() => router.push('/app/profile')}
-                  title="Mon profil"
+                  title={t('Mon profil')}
                   style={{ position: 'relative', width: '36px', height: '36px', padding: 0, border: 'none', background: 'none', cursor: 'pointer', flexShrink: 0 }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: profile?.avatar ? '#f5ede8' : '#8d323b', border: profile?.avatar ? '2px solid #8d323b' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '600', color: '#fff', overflow: 'hidden' }}>
                     {profile?.avatar
@@ -93,15 +96,15 @@ export default function DashboardPage() {
         {/* Salutation */}
         <div style={{ marginBottom: '2rem' }}>
           <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: '0 0 4px' }}>
-            Bonjour {profile?.display_name ?? profile?.email?.split('@')[0]} 👋
+            {t('Bonjour {nom} 👋', { nom: profile?.display_name ?? profile?.email?.split('@')[0] ?? '' })}
           </h1>
           <p style={{ fontSize: '14px', color: '#888', margin: '0 0 12px' }}>
-            Choisis un projet pour commencer à déguster
+            {t('Choisis un projet pour commencer à déguster')}
           </p>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => router.push('/app/cave')}
               style={{ padding: '8px 14px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', fontSize: '13px', color: '#444', cursor: 'pointer' }}>
-              🍷 Ma cave
+              {t('🍷 Ma cave')}
             </button>
           </div>
         </div>
@@ -111,12 +114,12 @@ export default function DashboardPage() {
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
             <div style={{ fontSize: '32px', marginBottom: '1rem' }}>🍾</div>
             <p style={{ color: '#888', fontSize: '14px', margin: '0 0 1rem' }}>
-              Aucun projet disponible pour l'instant.
+              {t("Aucun projet disponible pour l'instant.")}
             </p>
             {profile?.role === 'admin' && (
               <button onClick={() => router.push('/app/admin/projects')}
                 style={{ padding: '10px 20px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}>
-                Créer un projet →
+                {t('Créer un projet →')}
               </button>
             )}
           </div>
@@ -158,7 +161,7 @@ export default function DashboardPage() {
         {profile?.role === 'admin' && (
           <div style={{ marginTop: '2rem' }}>
             <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '.04em' }}>
-              Administration
+              {t('Administration')}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
               {[

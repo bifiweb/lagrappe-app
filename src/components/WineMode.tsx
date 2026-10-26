@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useWineMode } from '@/store/wineMode'
 import WineModeGame from './WineModeGame'
+import { useT } from '@/lib/i18n'
 
 const PARTICLES = ['🍷', '🍾', '🫧', '✨', '🎊', '🎉', '⭐', '💫', '🌟', '🍇']
 const PARTICLE_COUNT = 22
@@ -29,6 +30,7 @@ export default function WineMode() {
   const [mounted, setMounted] = useState(false)
   const [gameOpen, setGameOpen] = useState(false)
   const pathname = usePathname()
+  const t = useT()
   // Toggle visible sur la page waiting, ou partout si wine mode déjà actif (pour pouvoir l'éteindre)
   const showToggle = wineMode || pathname?.includes('/waiting')
 
@@ -105,14 +107,14 @@ export default function WineMode() {
           animation: wineMode ? 'label-pulse 2s ease infinite' : 'none',
           marginBottom: '4px', textTransform: 'uppercase',
         }}>
-          {wineMode ? '🎊 Wine Mode ON' : 'Activer le Wine Mode ?'}
+          {wineMode ? '🎊 Wine Mode ON' : t('Activer le Wine Mode ?')}
         </div>
 
         {/* Game launch button — only in Wine Mode */}
         {wineMode && !gameOpen && (
           <button
             onClick={() => setGameOpen(true)}
-            title="Lancer le jeu de bouchons"
+            title={t('Lancer le jeu de bouchons')}
             style={{
               width: '44px', height: '44px', borderRadius: '22px 0 0 22px',
               border: 'none', cursor: 'pointer',
@@ -127,7 +129,7 @@ export default function WineMode() {
           </button>
         )}
 
-        <button onClick={toggleWineMode} title={wineMode ? 'Désactiver le Wine Mode' : 'Activer le Wine Mode'}
+        <button onClick={toggleWineMode} title={wineMode ? t('Désactiver le Wine Mode') : t('Activer le Wine Mode')}
           style={{
             width: '44px', height: '80px', borderRadius: '22px 0 0 22px',
             border: 'none', cursor: 'pointer',

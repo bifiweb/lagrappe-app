@@ -1,9 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useT } from '@/lib/i18n'
 
 export default function NotFound() {
   const router = useRouter()
+  const t = useT()
 
   return (
     <div style={{
@@ -20,14 +22,14 @@ export default function NotFound() {
           404
         </div>
         <div style={{ fontSize: '18px', fontWeight: '500', color: '#1a1a1a', marginBottom: '8px' }}>
-          Ce vin n'existe pas 🍷
+          {t("Ce vin n'existe pas 🍷")}
         </div>
         <div style={{ fontSize: '14px', color: '#888', marginBottom: '2rem', lineHeight: 1.6 }}>
-          La bouteille que tu cherches s'est peut-être évaporée... ou tu t'es trompé de chemin après le 3ème verre.
+          {t("La bouteille que tu cherches s'est peut-être évaporée... ou tu t'es trompé de chemin après le 3ème verre.")}
         </div>
         <button onClick={() => router.push('/app/dashboard')}
           style={{ padding: '12px 24px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }}>
-          Retour au dashboard →
+          {t('Retour au dashboard →')}
         </button>
       </div>
     </div>

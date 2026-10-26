@@ -4,11 +4,13 @@ import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { useT } from '@/lib/i18n'
 
 function CallbackHandler() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
+  const t = useT()
 
   useEffect(() => {
     async function handle() {
@@ -32,7 +34,7 @@ function CallbackHandler() {
     }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '32px', marginBottom: '1rem' }}>🍷</div>
-        <div style={{ fontSize: '15px', color: '#888' }}>Connexion en cours...</div>
+        <div style={{ fontSize: '15px', color: '#888' }}>{t('Connexion en cours...')}</div>
       </div>
     </div>
   )

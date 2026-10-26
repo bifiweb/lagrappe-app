@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import type { Evening, Session, SessionPlayer, Wine } from '@/types'
+import { useT } from '@/lib/i18n'
 
 type FinalEntry = {
   user_id: string
@@ -29,6 +30,7 @@ export default function EveningFinalePage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const eveningId = params.id as string
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export default function EveningFinalePage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement du podium...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement du podium...')}</div>
     </div>
   )
 
@@ -156,8 +158,8 @@ export default function EveningFinalePage() {
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f5c518', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>🏆</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Soirée terminée !</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>{completedSessions.length} bouteilles dégustées</div>
+            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Soirée terminée !')}</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>{t('{n} bouteilles dégustées', { n: completedSessions.length })}</div>
           </div>
         </div>
       </div>
@@ -167,9 +169,9 @@ export default function EveningFinalePage() {
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ fontSize: '48px', marginBottom: '8px' }}>🎉</div>
-          <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 6px' }}>Bravo à tous !</h1>
+          <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 6px' }}>{t('Bravo à tous !')}</h1>
           <p style={{ fontSize: '14px', color: '#888', margin: 0 }}>
-            {leaderboard[0]?.pseudo} remporte la soirée avec {leaderboard[0]?.total_points.toLocaleString()} pts
+            {t('{nom} remporte la soirée avec {pts} pts', { nom: leaderboard[0]?.pseudo ?? '', pts: leaderboard[0]?.total_points.toLocaleString() ?? '' })}
           </p>
         </div>
 
@@ -209,7 +211,7 @@ export default function EveningFinalePage() {
                       border: `0.5px solid ${isMe ? '#6B4FAE' : '#e0e0e0'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <div style={{ fontSize: '24px', fontWeight: '800', color: textColor }}>{label}</div>
+                      <div style={{ fontSize: '24px', fontWeight: '800', color: textColor }}>{t(label)}</div>
                     </div>
                   </div>
                 )
@@ -246,18 +248,18 @@ export default function EveningFinalePage() {
         {completedSessions.length > 0 && leaderboard.length > 0 && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.5rem', overflowX: 'auto' }}>
             <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>
-              Détail par bouteille
+              {t('Détail par bouteille')}
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '4px 6px', color: '#888', fontWeight: '500' }}>Joueur</th>
+                  <th style={{ textAlign: 'left', padding: '4px 6px', color: '#888', fontWeight: '500' }}>{t('Joueur')}</th>
                   {completedSessions.map((sess, i) => (
                     <th key={sess.id} style={{ textAlign: 'center', padding: '4px 6px', color: '#888', fontWeight: '500', minWidth: '48px' }}>
                       🍾{i + 1}
                     </th>
                   ))}
-                  <th style={{ textAlign: 'right', padding: '4px 6px', color: '#6B4FAE', fontWeight: '600' }}>Total</th>
+                  <th style={{ textAlign: 'right', padding: '4px 6px', color: '#6B4FAE', fontWeight: '600' }}>{t('Total')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -288,7 +290,7 @@ export default function EveningFinalePage() {
 
         <button onClick={() => router.push('/app/dashboard')}
           style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', marginBottom: '8px' }}>
-          Retour au dashboard
+          {t('Retour au dashboard')}
         </button>
 
       </div>

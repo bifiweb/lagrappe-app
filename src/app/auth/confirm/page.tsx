@@ -3,10 +3,12 @@
 import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { useT } from '@/lib/i18n'
 
 function ConfirmHandler() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const t = useT()
 
   useEffect(() => {
     const redirect = searchParams.get('redirect')
@@ -24,9 +26,9 @@ function ConfirmHandler() {
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '32px', marginBottom: '1rem' }}>✅</div>
         <div style={{ fontSize: '16px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-          Email confirmé !
+          {t('Email confirmé !')}
         </div>
-        <div style={{ fontSize: '13px', color: '#888' }}>Redirection en cours...</div>
+        <div style={{ fontSize: '13px', color: '#888' }}>{t('Redirection en cours...')}</div>
       </div>
     </div>
   )

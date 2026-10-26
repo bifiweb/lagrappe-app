@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import type { Profile, Session, SessionPlayer, Evening, Project } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { QRCodeSVG } from 'qrcode.react'
+import { useT } from '@/lib/i18n'
 
 type ChifoumiMove = 'pierre' | 'feuille' | 'ciseaux'
 const CHIFOUMI_EMOJI: Record<ChifoumiMove, string> = { pierre: '✊', feuille: '🖐️', ciseaux: '✌️' }
@@ -71,6 +72,7 @@ export default function SessionPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -214,7 +216,7 @@ export default function SessionPage() {
     const winnerId = getChifoumiWinner(moves, ids)
 
     if (winnerId === 'tie') {
-      setChifoumiResult('Égalité ! Nouvelle manche...')
+      setChifoumiResult(t('Égalité ! Nouvelle manche...'))
       setTimeout(() => {
         chifoumiResolvedRef.current = false
         chifoumiRoundRef.current += 1
@@ -229,7 +231,7 @@ export default function SessionPage() {
       const loserIds = ids.filter(id => id !== winnerId)
       const winMove = moves[winnerId]
       const loseMove = moves[loserIds[0]]
-      setChifoumiResult(`${CHIFOUMI_EMOJI[winMove]} bat ${CHIFOUMI_EMOJI[loseMove]} — ${winnerPlayer?.pseudo} est le·la chef·fe !`)
+      setChifoumiResult(t('{a} bat {b} — {nom} est le·la chef·fe !', { a: CHIFOUMI_EMOJI[winMove], b: CHIFOUMI_EMOJI[loseMove], nom: winnerPlayer?.pseudo ?? '' }))
       // Seul le premier tied player écrit en DB pour éviter les doublons
       if (profile?.id === ids[0]) {
         setTimeout(async () => {
@@ -324,9 +326,9 @@ export default function SessionPage() {
   function shareLink() {
     const url = getShareUrl()
     if (navigator.share) {
-      navigator.share({ title: 'La Grappe — Dégustation à l\'aveugle', text: 'Rejoins ma session de dégustation !', url })
+      navigator.share({ title: t("La Grappe — Dégustation à l'aveugle"), text: t('Rejoins ma session de dégustation !'), url })
     } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(`Rejoins ma session de dégustation La Grappe ! ${url}`)}`, '_blank')
+      window.open(`https://wa.me/?text=${encodeURIComponent(`${t('Rejoins ma session de dégustation La Grappe !')} ${url}`)}`, '_blank')
     }
   }
 
@@ -401,12 +403,13 @@ export default function SessionPage() {
       // Égalité à 3+ → roue de la fortune
       const winnerId = winners[seededIndex(sessionId, winners.length)]
       const winnerPlayer = currentPlayers.find(p => p.user_id === winnerId)
+      const vars = { nom: winnerPlayer?.pseudo ?? '', n: winners.length }
       const reasons = [
-        `L'algorithme a détecté que "${winnerPlayer?.pseudo}" contient exactement le bon nombre de lettres pour commander un grand cru.`,
-        `Après analyse des ondes vibratoires du groupe, "${winnerPlayer?.pseudo}" émet la fréquence la plus proche du Pinot Noir.`,
-        `Le hasard a parlé — et visiblement il avait très envie que "${winnerPlayer?.pseudo}" tienne le tire-bouchon.`,
-        `"${winnerPlayer?.pseudo}" a été désigné par les astres, la physique quantique, et une légère intuition de l'IA.`,
-        `Égalité parfaite entre ${winners.length} grands esprits. La roue a tranché : "${winnerPlayer?.pseudo}" est le·la chef·fe du soir.`,
+        t(`L'algorithme a détecté que "{nom}" contient exactement le bon nombre de lettres pour commander un grand cru.`, vars),
+        t(`Après analyse des ondes vibratoires du groupe, "{nom}" émet la fréquence la plus proche du Pinot Noir.`, vars),
+        t(`Le hasard a parlé — et visiblement il avait très envie que "{nom}" tienne le tire-bouchon.`, vars),
+        t(`"{nom}" a été désigné par les astres, la physique quantique, et une légère intuition de l'IA.`, vars),
+        t(`Égalité parfaite entre {n} grands esprits. La roue a tranché : "{nom}" est le·la chef·fe du soir.`, vars),
       ]
       const reason = reasons[seededIndex(`${sessionId}-raison`, reasons.length)]
       setTiedPlayerIds(winners)
@@ -465,7 +468,7 @@ export default function SessionPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -476,7 +479,7 @@ export default function SessionPage() {
     ? evening?.chef_id === profile?.id
     : players.find(p => p.user_id === profile?.id)?.is_chef ?? false
   const totalBottles = evening ? (evening.bottle_order as unknown as string[]).length : 1
-  const cepageName = project?.cepage_name ?? 'Cépage'
+  const cepageName = project?.cepage_name ?? t('Cépage')
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
@@ -488,11 +491,11 @@ export default function SessionPage() {
           </div>
           <div style={{ flex: 1 }}>
             <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>
-              {isCepageSession ? cepageName : `Bouteille #${session?.bottle_number}`}
+              {isCepageSession ? cepageName : t('Bouteille #{n}', { n: session?.bottle_number ?? '' })}
             </span>
             {session?.evening_id && (
               <div style={{ fontSize: '11px', color: '#6B4FAE', fontWeight: '500' }}>
-                Soirée — {session.order_in_evening}/{totalBottles}
+                {t('Soirée')} — {session.order_in_evening}/{totalBottles}
               </div>
             )}
           </div>
@@ -512,9 +515,9 @@ export default function SessionPage() {
         {phase === 'lobby' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Lobby</div>
+              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>{t('Lobby')}</div>
               <div style={{ fontSize: '13px', color: '#888' }}>
-                {players.length} joueur{players.length > 1 ? 's' : ''} connecté{players.length > 1 ? 's' : ''}
+                {players.length > 1 ? t('{n} joueurs connectés', { n: players.length }) : t('{n} joueur connecté', { n: players.length })}
               </div>
             </div>
 
@@ -530,10 +533,10 @@ export default function SessionPage() {
 
             {!isEveningSession && <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '600', color: '#8d323b', marginBottom: '4px' }}>
-                {isCepageSession ? '🍇 Partage le lien !' : '🎉 Invite tes amis !'}
+                {isCepageSession ? t('🍇 Partage le lien !') : t('🎉 Invite tes amis !')}
               </div>
               <div style={{ fontSize: '12px', color: '#7a4030', marginBottom: '12px' }}>
-                Plus on est de fous, plus le jeu est fun — partage le lien pour qu'ils rejoignent la session.
+                {t("Plus on est de fous, plus le jeu est fun — partage le lien pour qu'ils rejoignent la session.")}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
                 <div style={{ background: '#fff', border: '0.5px solid #d0a090', borderRadius: '12px', padding: '12px', display: 'inline-block' }}>
@@ -546,42 +549,42 @@ export default function SessionPage() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={copyLink}
                   style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', background: copied ? '#27500A' : '#8d323b', color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: '500', transition: 'background .2s' }}>
-                  {copied ? '✓ Copié !' : '📋 Copier'}
+                  {copied ? t('✓ Copié !') : t('📋 Copier')}
                 </button>
                 <button onClick={shareLink}
                   style={{ flex: 1, padding: '10px', border: '0.5px solid #d0a090', borderRadius: '8px', background: '#fff', color: '#8d323b', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
-                  💬 Partager
+                  {t('💬 Partager')}
                 </button>
               </div>
             </div>}
 
             {!isEveningSession && !isCepageSession && <div style={{ background: '#fdf8f5', border: '0.5px solid #e8d8c8', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '8px' }}>
-                👑 Le rôle du·de la chef·fe
+                {t('👑 Le rôle du·de la chef·fe')}
               </div>
               <p style={{ margin: '0 0 6px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                Le groupe vote pour désigner un·e chef·fe parmi les joueurs. Ce rôle est purement cérémoniel : tout le monde joue sur un pied d'égalité et marque des points de la même façon.
+                {t("Le groupe vote pour désigner un·e chef·fe parmi les joueurs. Ce rôle est purement cérémoniel : tout le monde joue sur un pied d'égalité et marque des points de la même façon.")}
               </p>
               <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                <strong>Son seul privilège ?</strong> C'est lui·elle — et lui·elle seul·e — qui peut lancer la révélation du vin mystère une fois que tout le monde a soumis sa dégustation. 🍾
+                <strong>{t('Son seul privilège ?')}</strong> {t("C'est lui·elle — et lui·elle seul·e — qui peut lancer la révélation du vin mystère une fois que tout le monde a soumis sa dégustation. 🍾")}
               </p>
             </div>}
 
             {!isEveningSession && !isCepageSession && <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>
-                📊 Barème des points
+                {t('📊 Barème des points')}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {[
-                  { emoji: '👁️', label: 'Robe',      pts: '500 si juste · 200 sinon' },
-                  { emoji: '👃', label: 'Arômes',    pts: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes" },
-                  { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 350 si à côté · 200 sinon' },
-                  { emoji: '💰', label: 'Prix',      pts: '500 si exact · −50 pts/CHF d\'écart' },
-                  { emoji: '📅', label: 'Millésime', pts: '500 si exact · −50 pts par année d\'écart' },
-                  { emoji: '🍇', label: 'Cépage',    pts: '1 500 si juste · 300 sinon' },
-                  { emoji: '📍', label: 'Région',    pts: '500 si juste · 100 sinon' },
-                  { emoji: '🪣', label: 'Élevage',   pts: '500 si juste · 100 sinon' },
-                  { emoji: '💡', label: 'Aide',      pts: '−300 pts par aide utilisée' },
+                  { emoji: '👁️', label: t('Robe'),      pts: t('500 si juste · 200 sinon') },
+                  { emoji: '👃', label: t('Arômes'),    pts: t("jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes") },
+                  { emoji: '👄', label: t('Bouche'),    pts: t('500 si juste · 350 si à côté · 200 sinon') },
+                  { emoji: '💰', label: t('Prix'),      pts: t("500 si exact · −50 pts/CHF d'écart") },
+                  { emoji: '📅', label: t('Millésime'), pts: t("500 si exact · −50 pts par année d'écart") },
+                  { emoji: '🍇', label: t('Cépage'),    pts: t('1 500 si juste · 300 sinon') },
+                  { emoji: '📍', label: t('Région'),    pts: t('500 si juste · 100 sinon') },
+                  { emoji: '🪣', label: t('Élevage'),   pts: t('500 si juste · 100 sinon') },
+                  { emoji: '💡', label: t('Aide'),      pts: t('−300 pts par aide utilisée') },
                 ].map(({ emoji, label, pts }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                     <span style={{ fontSize: '14px', lineHeight: 1.4, flexShrink: 0 }}>{emoji}</span>
@@ -600,22 +603,22 @@ export default function SessionPage() {
                   <span style={{ fontSize: '18px', flexShrink: 0 }}>🍇</span>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#8d323b', marginBottom: '2px' }}>
-                      Dégustation {cepageName} à l'aveugle
+                      {t("Dégustation {cepage} à l'aveugle", { cepage: cepageName })}
                     </div>
                     <div style={{ fontSize: '12px', color: '#7a4030', lineHeight: 1.5 }}>
-                      Chaque joueur a apporté une bouteille. L'organisateur lance quand tout le monde est prêt.
+                      {t("Chaque joueur a apporté une bouteille. L'organisateur lance quand tout le monde est prêt.")}
                     </div>
                   </div>
                 </div>
                 {isChef ? (
                   <button onClick={launchCepageInfo}
                     style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                    Tout le monde est là ? Lancer →
+                    {t('Tout le monde est là ? Lancer →')}
                   </button>
                 ) : (
                   <div style={{ background: '#f5f5f5', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '14px', color: '#444', fontWeight: '500' }}>⏳ En attente de l'organisateur·ice...</div>
-                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>La dégustation démarrera dans quelques instants</div>
+                    <div style={{ fontSize: '14px', color: '#444', fontWeight: '500' }}>{t("⏳ En attente de l'organisateur·ice...")}</div>
+                    <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{t('La dégustation démarrera dans quelques instants')}</div>
                   </div>
                 )}
               </>
@@ -625,10 +628,10 @@ export default function SessionPage() {
                   <span style={{ fontSize: '18px', flexShrink: 0 }}>🎉</span>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#5B3D9E', marginBottom: '2px' }}>
-                      Bouteille {session?.order_in_evening}/{totalBottles} — Même équipe !
+                      {t('Bouteille {n}/{total} — Même équipe !', { n: session?.order_in_evening ?? '', total: totalBottles })}
                     </div>
                     <div style={{ fontSize: '12px', color: '#6B4FAE', lineHeight: 1.5 }}>
-                      Tout le monde est en place. L'organisateur·ice peut lancer la prochaine dégustation.
+                      {t("Tout le monde est en place. L'organisateur·ice peut lancer la prochaine dégustation.")}
                     </div>
                   </div>
                 </div>
@@ -636,12 +639,12 @@ export default function SessionPage() {
                 {isChef ? (
                   <button onClick={launchSubSession}
                     style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                    Lancer la dégustation →
+                    {t('Lancer la dégustation →')}
                   </button>
                 ) : (
                   <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '14px', color: '#3C3489', fontWeight: '500' }}>⏳ En attente de l'organisateur·ice...</div>
-                    <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '4px' }}>La dégustation démarrera dans quelques instants</div>
+                    <div style={{ fontSize: '14px', color: '#3C3489', fontWeight: '500' }}>{t("⏳ En attente de l'organisateur·ice...")}</div>
+                    <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '4px' }}>{t('La dégustation démarrera dans quelques instants')}</div>
                   </div>
                 )}
               </>
@@ -651,23 +654,23 @@ export default function SessionPage() {
                   <span style={{ fontSize: '18px', flexShrink: 0 }}>⏳</span>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#3C3489', marginBottom: '2px' }}>
-                      Attends que tout le monde soit là !
+                      {t('Attends que tout le monde soit là !')}
                     </div>
                     <div style={{ fontSize: '12px', color: '#534AB7', lineHeight: 1.5 }}>
-                      Prends le temps de lire les règles ci-dessus, puis lance le vote quand tous les joueurs sont connectés.
+                      {t('Prends le temps de lire les règles ci-dessus, puis lance le vote quand tous les joueurs sont connectés.')}
                     </div>
                   </div>
                 </div>
 
                 <button onClick={launchVote}
                   style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-                  Lancer le vote du·de la chef·fe →
+                  {t('Lancer le vote du·de la chef·fe →')}
                 </button>
 
                 {profile?.role === 'admin' && (
                   <button onClick={leaveSession}
                     style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#aaa', border: '0.5px solid #e0e0e0', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}>
-                    Quitter la session
+                    {t('Quitter la session')}
                   </button>
                 )}
               </>
@@ -679,15 +682,15 @@ export default function SessionPage() {
         {phase === 'voting' && (
           <>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>Qui sera le·la chef·fe ? 👑</div>
+              <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>{t('Qui sera le·la chef·fe ? 👑')}</div>
               <div style={{ fontSize: '13px', color: '#888', lineHeight: 1.5 }}>
-                Tout le monde joue à égalité — le·la chef·fe sera simplement<br />celui·celle qui appuiera sur le bouton de révélation 🍾
+                {t('Tout le monde joue à égalité — le·la chef·fe sera simplement')}<br />{t('celui·celle qui appuiera sur le bouton de révélation 🍾')}
               </div>
             </div>
 
             {hasVoted ? (
               <div style={{ background: '#e8f0e8', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', textAlign: 'center', fontSize: '14px', color: '#27500A' }}>
-                ✓ Vote enregistré — en attente des autres joueurs...
+                {t('✓ Vote enregistré — en attente des autres joueurs...')}
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.5rem' }}>
@@ -707,12 +710,12 @@ export default function SessionPage() {
               <button onClick={submitVote}
                 disabled={!myVote && players.length > 1}
                 style={{ width: '100%', padding: '14px', background: (!myVote && players.length > 1) ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: (!myVote && players.length > 1) ? 'default' : 'pointer' }}>
-                {players.length === 1 ? 'Je suis le·la chef·fe, on commence ! →' : 'Confirmer mon vote'}
+                {players.length === 1 ? t('Je suis le·la chef·fe, on commence ! →') : t('Confirmer mon vote')}
               </button>
             )}
 
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1rem' }}>
-              {votesIn} / {players.length} votes
+              {votesIn} / {players.length} {t('votes')}
             </div>
           </>
         )}
@@ -739,9 +742,9 @@ export default function SessionPage() {
           const fontSize = N <= 4 ? 13 : N <= 6 ? 11 : 9
           return (
             <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-              <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>Égalité à {N} joueurs</div>
+              <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>{t('Égalité à {n} joueurs', { n: N })}</div>
               <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '1.5rem' }}>
-                La roue décide ! 🎡
+                {t('La roue décide ! 🎡')}
               </div>
 
               <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -785,15 +788,15 @@ export default function SessionPage() {
         {phase === 'chifoumi' && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
-              Manche {chifoumiRound}
+              {t('Manche {n}', { n: chifoumiRound })}
             </div>
             <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-              Égalité ! Chifoumi 🤜
+              {t('Égalité ! Chifoumi 🤜')}
             </div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '2rem' }}>
               {amInTiebreak
-                ? 'Choisis ton coup pour devenir chef·fe !'
-                : `Duel en cours entre ${tiedPlayerIds.map(id => players.find(p => p.user_id === id)?.pseudo).join(' et ')}...`}
+                ? t('Choisis ton coup pour devenir chef·fe !')
+                : t('Duel en cours entre {noms}...', { noms: tiedPlayerIds.map(id => players.find(p => p.user_id === id)?.pseudo).join(t(' et ')) })}
             </div>
 
             {amInTiebreak && !myChifoumiMove && !chifoumiResult && (
@@ -804,7 +807,7 @@ export default function SessionPage() {
                     onMouseEnter={e => { e.currentTarget.style.border = '2px solid #8d323b'; e.currentTarget.style.background = '#f5ede8' }}
                     onMouseLeave={e => { e.currentTarget.style.border = '0.5px solid #e0e0e0'; e.currentTarget.style.background = '#fff' }}>
                     {CHIFOUMI_EMOJI[move]}
-                    <span style={{ fontSize: '10px', color: '#888', fontWeight: '500' }}>{move}</span>
+                    <span style={{ fontSize: '10px', color: '#888', fontWeight: '500' }}>{t(move)}</span>
                   </button>
                 ))}
               </div>
@@ -814,7 +817,7 @@ export default function SessionPage() {
               <div style={{ marginBottom: '2rem' }}>
                 <div style={{ fontSize: '56px', marginBottom: '8px' }}>{CHIFOUMI_EMOJI[myChifoumiMove]}</div>
                 <div style={{ fontSize: '13px', color: '#888' }}>
-                  Tu as choisi <strong>{myChifoumiMove}</strong> — en attente de l'adversaire...
+                  {t('Tu as choisi')} <strong>{t(myChifoumiMove)}</strong> — {t("en attente de l'adversaire...")}
                 </div>
               </div>
             )}
@@ -851,18 +854,18 @@ export default function SessionPage() {
         {/* COUNTDOWN */}
         {phase === 'countdown' && (
           <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>Chef·fe désigné·e</div>
+            <div style={{ fontSize: '13px', color: '#888', marginBottom: '1rem' }}>{t('Chef·fe désigné·e')}</div>
             <div style={{ fontSize: '48px', marginBottom: '.25rem' }}>👑</div>
             <div style={{ fontSize: '36px', fontWeight: '500', color: '#8d323b', marginBottom: '.5rem' }}>
               {chef?.pseudo}
             </div>
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '1.5rem' }}>
-              élu·e chef·fe par le groupe
+              {t('élu·e chef·fe par le groupe')}
             </div>
             <div style={{ fontSize: '72px', fontWeight: '500', color: '#8d323b', lineHeight: 1, margin: '1.5rem 0' }}>
               {countdown <= 0 ? '🍷' : countdown}
             </div>
-            <div style={{ fontSize: '14px', color: '#888' }}>La dégustation commence...</div>
+            <div style={{ fontSize: '14px', color: '#888' }}>{t('La dégustation commence...')}</div>
           </div>
         )}
 

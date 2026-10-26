@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { Profile, Tasting } from '@/types'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { useT, LangSwitch } from '@/lib/i18n'
 
 const accent = '#8d323b'
 
@@ -59,6 +60,7 @@ export default function ProfilePage() {
 
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
   const { state: pushState, subscribe: pushSubscribe, unsubscribe: pushUnsubscribe } = usePushNotifications()
 
   useEffect(() => {
@@ -72,10 +74,10 @@ export default function ProfilePage() {
       setDisplayName(prof?.display_name ?? '')
       setSelectedAvatar(prof?.avatar ?? null)
 
-      const { data: t } = await supabase
+      const { data: tst } = await supabase
         .from('tastings').select('*').eq('user_id', user.id)
         .not('submitted_at', 'is', null)
-      setTastings(t ?? [])
+      setTastings(tst ?? [])
 
       const { data: cr } = await supabase
         .from('cave_ratings').select('stars, racheterait, wine_id').eq('user_id', user.id)
@@ -120,13 +122,13 @@ export default function ProfilePage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
   // --- Stats ---
-  const totalPtsJeu = tastings.reduce((sum, t) => sum + (t.total_points ?? 0), 0)
-  const sessionScores = tastings.filter(t => t.score_perso !== null).map(t => t.score_perso as number)
+  const totalPtsJeu = tastings.reduce((sum, x) => sum + (x.total_points ?? 0), 0)
+  const sessionScores = tastings.filter(x => x.score_perso !== null).map(x => x.score_perso as number)
   const caveScores = caveRatings.filter(r => r.stars !== null).map((r: any) => r.stars as number)
   const allScores = [...sessionScores, ...caveScores]
   const avgAll = allScores.length
@@ -135,15 +137,15 @@ export default function ProfilePage() {
   const totalDegustations = tastings.length + caveRatings.length
   const moyParSession = tastings.length ? Math.round(totalPtsJeu / tastings.length) : null
 
-  const cepageCorrect  = tastings.filter(t => t.pts_cepage === 1500).length
-  const regionCorrect  = tastings.filter(t => t.pts_region === 500).length
-  const millesimeCorrect = tastings.filter(t => t.pts_millesime === 500).length
-  const prixCorrect    = tastings.filter(t => t.pts_prix === 500).length
-  const aromesAvecPts  = tastings.filter(t => (t.pts_aromes ?? 0) > 0).length
+  const cepageCorrect  = tastings.filter(x => x.pts_cepage === 1500).length
+  const regionCorrect  = tastings.filter(x => x.pts_region === 500).length
+  const millesimeCorrect = tastings.filter(x => x.pts_millesime === 500).length
+  const prixCorrect    = tastings.filter(x => x.pts_prix === 500).length
+  const aromesAvecPts  = tastings.filter(x => (x.pts_aromes ?? 0) > 0).length
   const aromesRate     = tastings.length ? Math.round(aromesAvecPts / tastings.length * 100) : 0
 
   const aromeCounts: Record<string, number> = {}
-  tastings.forEach(t => (t.aromes ?? []).forEach(a => { aromeCounts[a] = (aromeCounts[a] || 0) + 1 }))
+  tastings.forEach(x => (x.aromes ?? []).forEach(a => { aromeCounts[a] = (aromeCounts[a] || 0) + 1 }))
   const topAromes = Object.entries(aromeCounts).sort((a, b) => b[1] - a[1]).slice(0, 6)
 
   // --- Badges ---
@@ -156,9 +158,9 @@ export default function ProfilePage() {
   if (tastings.length >= 5)  unlockedIds.add('regular')
   if (tastings.length >= 15) unlockedIds.add('vigneron')
   if (tastings.length >= 30) unlockedIds.add('sommelier')
-  if (tastings.some(t => t.total_points > 800)) unlockedIds.add('grand_cru')
-  if (tastings.filter(t => t.pts_millesime === 500).length >= 3) unlockedIds.add('millesime_master')
-  if (tastings.filter(t => t.pts_prix === 500).length >= 3) unlockedIds.add('price_hunter')
+  if (tastings.some(x => x.total_points > 800)) unlockedIds.add('grand_cru')
+  if (tastings.filter(x => x.pts_millesime === 500).length >= 3) unlockedIds.add('millesime_master')
+  if (tastings.filter(x => x.pts_prix === 500).length >= 3) unlockedIds.add('price_hunter')
   if (nez_fin_ok) unlockedIds.add('nez_fin')
   if (caveRatings.length >= 1)  unlockedIds.add('first_gem')
   if (collector_ok) unlockedIds.add('collector')
@@ -185,7 +187,7 @@ export default function ProfilePage() {
         <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <button onClick={() => router.push('/app/dashboard')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Mon profil</span>
+          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>{t('Mon profil')}</span>
         </div>
       </div>
 
@@ -205,19 +207,19 @@ export default function ProfilePage() {
           </div>
 
           <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '2px' }}>
-            {char ? char.label : '—'}
+            {char ? t(char.label) : '—'}
           </div>
           <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '14px', cursor: 'pointer' }} onClick={() => setEditingAvatar(true)}>
-            ✏️ Changer d'avatar
+            {t("✏️ Changer d'avatar")}
           </div>
 
           {editingAvatar && (
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '13px', color: '#444', marginBottom: '12px', fontWeight: '500' }}>Choisis ton avatar</div>
+              <div style={{ fontSize: '13px', color: '#444', marginBottom: '12px', fontWeight: '500' }}>{t('Choisis ton avatar')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
                 {CHARACTERS.map(c => (
                   <button key={c.seed} onClick={() => saveAvatar(c.seed)}
-                    title={c.label}
+                    title={t(c.label)}
                     style={{ padding: '4px', borderRadius: '10px', border: selectedAvatar === c.seed ? `2px solid ${accent}` : '2px solid transparent', background: selectedAvatar === c.seed ? '#fdf0ee' : 'transparent', cursor: 'pointer' }}>
                     <div style={{ width: '100%', aspectRatio: '1', borderRadius: '50%', overflow: 'hidden', background: '#f5ede8' }}>
                       <img src={avatarUrl(c.seed)} width={56} height={56} alt={c.label} loading="lazy" style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -227,7 +229,7 @@ export default function ProfilePage() {
               </div>
               <button onClick={() => setEditingAvatar(false)}
                 style={{ marginTop: '12px', padding: '6px 16px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
-                Annuler
+                {t('Annuler')}
               </button>
             </div>
           )}
@@ -235,7 +237,7 @@ export default function ProfilePage() {
           {editingName ? (
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center' }}>
               <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-                placeholder="Ton prénom ou pseudo" autoFocus
+                placeholder={t('Ton prénom ou pseudo')} autoFocus
                 onKeyDown={e => { if (e.key === 'Enter') saveName() }}
                 style={{ padding: '8px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '15px', outline: 'none', textAlign: 'center', width: '180px' }} />
               <button onClick={saveName} disabled={saving}
@@ -248,32 +250,32 @@ export default function ProfilePage() {
           ) : (
             <div>
               <div style={{ fontSize: '20px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                {profile?.display_name ?? 'Pas de pseudo'}
+                {profile?.display_name ?? t('Pas de pseudo')}
               </div>
               <div style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{profile?.email}</div>
               <button onClick={() => setEditingName(true)}
                 style={{ padding: '7px 16px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#444', fontSize: '13px', cursor: 'pointer' }}>
-                ✏️ Modifier le pseudo
+                {t('✏️ Modifier le pseudo')}
               </button>
             </div>
           )}
 
-          {success && <div style={{ marginTop: '10px', fontSize: '13px', color: '#27500A' }}>✓ Pseudo mis à jour !</div>}
+          {success && <div style={{ marginTop: '10px', fontSize: '13px', color: '#27500A' }}>{t('✓ Pseudo mis à jour !')}</div>}
         </div>
 
         {/* Notifications */}
         {pushState !== 'unsupported' && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>Notifications</div>
+            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>{t('Notifications')}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>Annonces La Grappe</div>
+                <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>{t('Annonces La Grappe')}</div>
                 <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
-                  {pushState === 'denied' ? 'Bloqué dans les paramètres du navigateur' : 'Nouveaux jeux, vins à noter, suggestions…'}
+                  {pushState === 'denied' ? t('Bloqué dans les paramètres du navigateur') : t('Nouveaux jeux, vins à noter, suggestions…')}
                 </div>
               </div>
               {pushState === 'denied' ? (
-                <span style={{ fontSize: '12px', color: '#aaa' }}>Bloqué</span>
+                <span style={{ fontSize: '12px', color: '#aaa' }}>{t('Bloqué')}</span>
               ) : (
                 <button onClick={() => pushState === 'subscribed' ? pushUnsubscribe() : pushSubscribe()}
                   disabled={pushState === 'loading'}
@@ -287,12 +289,12 @@ export default function ProfilePage() {
 
         {/* Stats */}
         <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>Mes chiffres</div>
+          <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>{t('Mes chiffres')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '8px' }}>
             {[
-              { label: 'Vins dégustés', value: totalDegustations, emoji: '🍷' },
-              { label: 'Cépages',       value: cepages.length || '—', emoji: '🍇' },
-              { label: 'Note moy.',     value: avgAll !== null ? `${avgAll}/10` : '—', emoji: '⭐' },
+              { label: t('Vins dégustés'), value: totalDegustations, emoji: '🍷' },
+              { label: t('Cépages'), value: cepages.length || '—', emoji: '🍇' },
+              { label: t('Note moy.'), value: avgAll !== null ? `${avgAll}/10` : '—', emoji: '⭐' },
             ].map(({ label, value, emoji }) => (
               <div key={label} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '12px 6px', textAlign: 'center' }}>
                 <div style={{ fontSize: '18px', marginBottom: '4px' }}>{emoji}</div>
@@ -303,9 +305,9 @@ export default function ProfilePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             {[
-              { label: 'Sessions jeu',  value: tastings.length, emoji: '🎮' },
-              { label: 'Points totaux', value: totalPtsJeu.toLocaleString(), emoji: '🏆' },
-              { label: 'Moy./session',  value: moyParSession?.toLocaleString() ?? '—', emoji: '📊' },
+              { label: t('Sessions jeu'), value: tastings.length, emoji: '🎮' },
+              { label: t('Points totaux'), value: totalPtsJeu.toLocaleString(), emoji: '🏆' },
+              { label: t('Moy./session'), value: moyParSession?.toLocaleString() ?? '—', emoji: '📊' },
             ].map(({ label, value, emoji }) => (
               <div key={label} style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '12px 6px', textAlign: 'center' }}>
                 <div style={{ fontSize: '18px', marginBottom: '4px' }}>{emoji}</div>
@@ -319,13 +321,13 @@ export default function ProfilePage() {
         {/* Taux de réussite */}
         {tastings.length > 0 && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>Taux de réussite</div>
+            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px' }}>{t('Taux de réussite')}</div>
             {[
-              { label: 'Cépage',    correct: cepageCorrect,   emoji: '🍇' },
-              { label: 'Région',    correct: regionCorrect,   emoji: '📍' },
-              { label: 'Millésime', correct: millesimeCorrect, emoji: '📅' },
-              { label: 'Prix',      correct: prixCorrect,     emoji: '💰' },
-              { label: 'Arômes',   correct: aromesAvecPts,   emoji: '👃' },
+              { label: t('Cépage'), correct: cepageCorrect,   emoji: '🍇' },
+              { label: t('Région'), correct: regionCorrect,   emoji: '📍' },
+              { label: t('Millésime'), correct: millesimeCorrect, emoji: '📅' },
+              { label: t('Prix'), correct: prixCorrect,     emoji: '💰' },
+              { label: t('Arômes'), correct: aromesAvecPts,   emoji: '👃' },
             ].map(({ label, correct, emoji }) => {
               const pct = tastings.length ? Math.round(correct / tastings.length * 100) : 0
               return (
@@ -349,11 +351,11 @@ export default function ProfilePage() {
         {/* Arômes favoris */}
         {topAromes.length > 0 && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>Mes arômes préférés</div>
+            <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>{t('Mes arômes préférés')}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {topAromes.map(([arome, count]) => (
                 <span key={arome} style={{ fontSize: '12px', padding: '4px 12px', borderRadius: '12px', background: '#f5ede8', color: accent, fontWeight: '500' }}>
-                  {arome} · {count}×
+                  {t(arome)} · {count}×
                 </span>
               ))}
             </div>
@@ -363,7 +365,7 @@ export default function ProfilePage() {
         {/* Badges */}
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ fontSize: '12px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>
-            Badges · {unlockedIds.size}/{BADGE_DEFS.length}
+            {t('Badges')} · {unlockedIds.size}/{BADGE_DEFS.length}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
             {sortedBadges.map(b => {
@@ -379,18 +381,24 @@ export default function ProfilePage() {
                   transition: 'opacity .3s',
                 }}>
                   <div style={{ fontSize: '28px', marginBottom: '5px' }}>{b.icon}</div>
-                  <div style={{ fontSize: '11px', fontWeight: '600', color: '#1a1a1a', marginBottom: '3px', lineHeight: '1.2' }}>{b.name}</div>
-                  <div style={{ fontSize: '9px', color: '#aaa', lineHeight: '1.3' }}>{b.desc}</div>
+                  <div style={{ fontSize: '11px', fontWeight: '600', color: '#1a1a1a', marginBottom: '3px', lineHeight: '1.2' }}>{t(b.name)}</div>
+                  <div style={{ fontSize: '9px', color: '#aaa', lineHeight: '1.3' }}>{t(b.desc)}</div>
                 </div>
               )
             })}
           </div>
         </div>
 
+        {/* Langue */}
+        <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>{t('Langue')}</div>
+          <LangSwitch />
+        </div>
+
         {/* Actions */}
         <button onClick={handleLogout}
           style={{ width: '100%', padding: '12px', border: '0.5px solid #fca5a5', borderRadius: '10px', background: '#fff', color: '#dc2626', fontSize: '14px', cursor: 'pointer', textAlign: 'left' }}>
-          Se déconnecter →
+          {t('Se déconnecter →')}
         </button>
 
       </div>

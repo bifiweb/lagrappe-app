@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { SCORING } from '@/types'
 import type { Session, Wine, GrappisteNotes, Tasting, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
+import { useT } from '@/lib/i18n'
 
 export default function RevealPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -35,6 +36,7 @@ export default function RevealPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -151,7 +153,7 @@ export default function RevealPage() {
     }).eq('id', myTasting.id)
     setSavingPostReveal(false)
     if (error) {
-      alert(`Erreur lors de la sauvegarde : ${error.message}\n\nSi le problème persiste, la migration 017 doit être appliquée en production.`)
+      alert(`${t('Erreur lors de la sauvegarde :')} ${error.message}`)
       return
     }
     setMyTasting({ ...myTasting, score_perso: postRevealScore, notes_degustation: postRevealNotesDeg.trim() || null, design_rating: postRevealDesign, valeur_rating: postRevealValeur, racheterait: postRevealRachete })
@@ -196,7 +198,7 @@ export default function RevealPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Calcul des scores...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Calcul des scores...')}</div>
     </div>
   )
 
@@ -253,10 +255,10 @@ export default function RevealPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
         <div style={{ fontSize: '12px', color: '#888', minWidth: '70px' }}>{label}</div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{mine ?? '—'}</div>
+          <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{mine ? t(mine) : '—'}</div>
           {!correct && official && (
             <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
-              Réponse : <span style={{ color: accent, fontWeight: '500' }}>{official}</span>
+              {t('Réponse :')} <span style={{ color: accent, fontWeight: '500' }}>{t(official)}</span>
             </div>
           )}
         </div>
@@ -275,7 +277,7 @@ export default function RevealPage() {
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>
-            Révélation — Bouteille #{session?.bottle_number}
+            {t('Révélation — Bouteille #{n}', { n: session?.bottle_number ?? '' })}
           </span>
         </div>
       </div>
@@ -285,7 +287,7 @@ export default function RevealPage() {
         {/* Vin révélé */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>
           <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            Vin mystère révélé
+            {t('Vin mystère révélé')}
           </div>
           {notes?.image_url ? (
             <img src={notes.image_url} alt={`${notes.cepage} ${notes.millesime}`}
@@ -299,12 +301,12 @@ export default function RevealPage() {
           {notes?.cave && (
             <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>{notes.cave}</div>
           )}
-          <div style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{notes?.region}</div>
+          <div style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{notes?.region && t(notes.region)}</div>
           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {notes?.region && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>📍 {notes.region}</span>}
+            {notes?.region && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>📍 {t(notes.region)}</span>}
             {notes?.cepage && <span style={{ background: '#edeaf8', color: '#3C3489', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>🍇 {notes.cepage}</span>}
             {notes?.millesime && <span style={{ background: '#e8f0e8', color: '#27500A', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>📅 {notes.millesime}</span>}
-            {notes?.elevage && <span style={{ background: '#f0f0e8', color: '#5a5200', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>🪣 {notes.elevage}</span>}
+            {notes?.elevage && <span style={{ background: '#f0f0e8', color: '#5a5200', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>🪣 {t(notes.elevage)}</span>}
             {notes?.prix_exact && <span style={{ background: '#f5ede8', color: '#712B13', fontSize: '12px', padding: '3px 12px', borderRadius: '12px', fontWeight: '500' }}>🏷️ CHF {notes.prix_exact.toFixed(2)}</span>}
           </div>
         </div>
@@ -313,14 +315,14 @@ export default function RevealPage() {
         {myTasting && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
             <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>
-              Ton appréciation
+              {t('Ton appréciation')}
             </div>
 
             <div style={{ background: '#f0f5ff', border: '0.5px solid #d0dcf5', borderRadius: '10px', padding: '10px 12px', marginBottom: '14px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
               <span style={{ fontSize: '16px', lineHeight: 1.4, flexShrink: 0 }}>✍️</span>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: '500', color: '#3b5bdb', marginBottom: '2px' }}>Donne ton avis au vigneron</div>
-                <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.4 }}>Les avis sont anonymes. C'est aussi le meilleur moyen de retrouver les vins que tu aimes !</div>
+                <div style={{ fontSize: '12px', fontWeight: '500', color: '#3b5bdb', marginBottom: '2px' }}>{t('Donne ton avis au vigneron')}</div>
+                <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.4 }}>{t("Les avis sont anonymes. C'est aussi le meilleur moyen de retrouver les vins que tu aimes !")}</div>
               </div>
             </div>
 
@@ -333,10 +335,10 @@ export default function RevealPage() {
                 <StarRating score={postRevealScore} onRate={s => setPostRevealScore(s)} />
                 {postRevealScore !== null ? (
                   <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
-                    {postRevealScore}/10 · {SCORE_LABELS_R[postRevealScore]}
+                    {postRevealScore}/10 · {t(SCORE_LABELS_R[postRevealScore])}
                   </div>
                 ) : (
-                  <div style={{ fontSize: '11px', color: '#bbb', marginTop: '5px' }}>Tape sur les étoiles pour noter</div>
+                  <div style={{ fontSize: '11px', color: '#bbb', marginTop: '5px' }}>{t('Tape sur les étoiles pour noter')}</div>
                 )}
               </div>
             </div>
@@ -351,27 +353,27 @@ export default function RevealPage() {
 
             {/* Notes de dégustation */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Notes de dégustation</label>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{t('Notes de dégustation')}</label>
               <textarea value={postRevealNotesDeg} onChange={e => setPostRevealNotesDeg(e.target.value)}
-                placeholder="Robe, arôme, texture, longueur..."
+                placeholder={t('Robe, arôme, texture, longueur...')}
                 style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', color: '#444', resize: 'none', minHeight: '68px', fontFamily: 'system-ui, sans-serif', boxSizing: 'border-box', outline: 'none' }} />
             </div>
 
             {/* Design bouteille */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Design bouteille</label>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>{t('Design bouteille')}</label>
               <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
                 {[1,2,3,4,5].map(i => (
                   <button key={i} onClick={() => setPostRevealDesign(i)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '1px', lineHeight: 1, color: (postRevealDesign ?? 0) >= i ? '#f0a000' : '#ddd' }}>★</button>
                 ))}
               </div>
-              {postRevealDesign && <div style={{ fontSize: '10px', color: '#888' }}>{['Moche','Pas très joli','Moyen','Joli','Magnifique'][postRevealDesign - 1]}</div>}
+              {postRevealDesign && <div style={{ fontSize: '10px', color: '#888' }}>{t(['Moche','Pas très joli','Moyen','Joli','Magnifique'][postRevealDesign - 1])}</div>}
             </div>
 
             {/* Prix — spectre pas assez cher ↔ trop cher */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Prix</label>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{t('Prix')}</label>
               <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
                 {[1,2,3,4,5].map(i => {
                   const colors = ['#3B82F6','#6EBA70','#27500A','#f0a000','#e53e3e']
@@ -383,17 +385,17 @@ export default function RevealPage() {
                 })}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '10px', color: '#888' }}>Pas assez cher</span>
+                <span style={{ fontSize: '10px', color: '#888' }}>{t('Pas assez cher')}</span>
                 <span style={{ fontSize: '10px', color: postRevealValeur ? '#555' : '#bbb', fontWeight: postRevealValeur ? '500' : '400' }}>
-                  {postRevealValeur ? ['Bradé','Abordable','Juste prix','Cher','Trop cher'][postRevealValeur - 1] : '—'}
+                  {postRevealValeur ? t(['Bradé','Abordable','Juste prix','Cher','Trop cher'][postRevealValeur - 1]) : '—'}
                 </span>
-                <span style={{ fontSize: '10px', color: '#888' }}>Trop cher</span>
+                <span style={{ fontSize: '10px', color: '#888' }}>{t('Trop cher')}</span>
               </div>
             </div>
 
             {/* Tu le rachèterais ? */}
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Tu le rachèterais ?</label>
+              <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{t('Tu le rachèterais ?')}</label>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {([{ v: true, l: '✅ Oui' }, { v: false, l: '❌ Non' }] as const).map(({ v, l }) => (
                   <button key={String(v)} onClick={() => setPostRevealRachete(v)}
@@ -407,11 +409,11 @@ export default function RevealPage() {
             {isDirty && (
               <button onClick={savePostReveal} disabled={savingPostReveal}
                 style={{ width: '100%', padding: '10px', background: savingPostReveal ? '#c0a0a0' : accent, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: savingPostReveal ? 'default' : 'pointer' }}>
-                {savingPostReveal ? 'Enregistrement…' : '✓ Sauvegarder mon appréciation'}
+                {savingPostReveal ? t('Enregistrement…') : t('✓ Sauvegarder mon appréciation')}
               </button>
             )}
             {postRevealSaved && (
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#27500A', textAlign: 'center' }}>✓ Enregistré !</div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#27500A', textAlign: 'center' }}>{t('✓ Enregistré !')}</div>
             )}
           </div>
         )}
@@ -422,22 +424,22 @@ export default function RevealPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: alreadyInCave ? 0 : '12px' }}>
               <span style={{ fontSize: '28px', lineHeight: 1 }}>💎</span>
               <div>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Ce vin est dans la cave à pépites</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('Ce vin est dans la cave à pépites')}</div>
                 <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
                   {alreadyInCave
-                    ? addedToCave ? 'Ajouté avec ta note du jeu !' : 'Tu l\'as déjà noté dans ta cave'
-                    : 'Enregistre ta note du jeu dans ta cave'}
+                    ? addedToCave ? t('Ajouté avec ta note du jeu !') : t("Tu l'as déjà noté dans ta cave")
+                    : t('Enregistre ta note du jeu dans ta cave')}
                 </div>
               </div>
             </div>
             {!alreadyInCave && (
               <button onClick={addToCave} disabled={addingToCave}
                 style={{ width: '100%', padding: '10px', background: addingToCave ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '500', cursor: addingToCave ? 'default' : 'pointer' }}>
-                {addingToCave ? 'Ajout en cours...' : '💎 Ajouter à ma cave à pépites'}
+                {addingToCave ? t('Ajout en cours...') : t('💎 Ajouter à ma cave à pépites')}
               </button>
             )}
             {alreadyInCave && addedToCave && (
-              <div style={{ fontSize: '13px', color: '#27500A', fontWeight: '500', textAlign: 'center', marginTop: '8px' }}>✓ Ajouté !</div>
+              <div style={{ fontSize: '13px', color: '#27500A', fontWeight: '500', textAlign: 'center', marginTop: '8px' }}>{t('✓ Ajouté !')}</div>
             )}
           </div>
         )}
@@ -445,18 +447,18 @@ export default function RevealPage() {
         {/* Mon score */}
         {myTasting && (
           <div style={{ background: accent, borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem', color: '#fff' }}>
-            <div style={{ fontSize: '12px', opacity: .8, marginBottom: '4px' }}>Ton score</div>
+            <div style={{ fontSize: '12px', opacity: .8, marginBottom: '4px' }}>{t('Ton score')}</div>
             <div style={{ fontSize: '32px', fontWeight: '500' }}>{myTasting.total_points.toLocaleString()} pts</div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '10px', flexWrap: 'wrap' }}>
               {[
-                { l: 'Robe', v: myTasting.pts_robe },
-                { l: 'Arômes', v: myTasting.pts_aromes },
-                { l: 'Bouche', v: myTasting.pts_bouche },
-                { l: 'Prix', v: myTasting.pts_prix },
-                { l: 'Millésime', v: myTasting.pts_millesime },
-                { l: 'Cépage', v: myTasting.pts_cepage },
-                { l: 'Région', v: myTasting.pts_region },
-                { l: 'Élevage', v: myTasting.pts_elevage },
+                { l: t('Robe'), v: myTasting.pts_robe },
+                { l: t('Arômes'), v: myTasting.pts_aromes },
+                { l: t('Bouche'), v: myTasting.pts_bouche },
+                { l: t('Prix'), v: myTasting.pts_prix },
+                { l: t('Millésime'), v: myTasting.pts_millesime },
+                { l: t('Cépage'), v: myTasting.pts_cepage },
+                { l: t('Région'), v: myTasting.pts_region },
+                { l: t('Élevage'), v: myTasting.pts_elevage },
               ].map(({ l, v }) => (
                 <div key={l} style={{ fontSize: '12px', opacity: .9 }}>
                   <span style={{ opacity: .7 }}>{l} </span>{v}
@@ -468,10 +470,10 @@ export default function RevealPage() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden', marginBottom: '1rem' }}>
-          {(['groupe', 'aromes', 'moi', 'vin'] as const).map(t => (
-            <button key={t} onClick={() => setActiveTab(t)}
-              style={{ flex: 1, padding: '9px', background: activeTab === t ? accent : 'transparent', color: activeTab === t ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>
-              {t === 'groupe' ? 'Groupe' : t === 'aromes' ? 'Arômes' : t === 'moi' ? 'Moi' : 'Le vin'}
+          {(['groupe', 'aromes', 'moi', 'vin'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              style={{ flex: 1, padding: '9px', background: activeTab === tab ? accent : 'transparent', color: activeTab === tab ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}>
+              {tab === 'groupe' ? t('Groupe') : tab === 'aromes' ? t('Arômes') : tab === 'moi' ? t('Moi') : t('Le vin')}
             </button>
           ))}
         </div>
@@ -479,9 +481,9 @@ export default function RevealPage() {
         {/* TAB GROUPE */}
         {activeTab === 'groupe' && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
-            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Classement</div>
+            <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Classement')}</div>
             {players.map((p, i) => {
-              const t = tastings.find(x => x.user_id === p.user_id)
+              const tp = tastings.find(x => x.user_id === p.user_id)
               return (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '0.5px solid #f0f0f0' }}>
                   <div style={{ fontSize: '13px', fontWeight: '500', color: '#888', minWidth: '16px' }}>{i + 1}</div>
@@ -491,7 +493,7 @@ export default function RevealPage() {
                       {p.pseudo} {i === 0 ? '👑' : ''}
                     </div>
                     <div style={{ fontSize: '11px', color: '#888' }}>
-                      {t?.cepage_guess} · {t?.region_guess}
+                      {tp?.cepage_guess} · {tp?.region_guess && t(tp.region_guess)}
                     </div>
                   </div>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>
@@ -510,7 +512,7 @@ export default function RevealPage() {
             {/* Mes arômes */}
             {myTasting && myTasting.aromes.length > 0 && (
               <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
-                <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Mes arômes</div>
+                <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Mes arômes')}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {myTasting.aromes.map(a => {
                     const isOfficial = notes?.aromes_officiels?.includes(a)
@@ -522,27 +524,27 @@ export default function RevealPage() {
                         fontWeight: '500',
                         border: isOfficial ? '0.5px solid #c8e6c9' : '0.5px solid #f5c6c6',
                       }}>
-                        {a} {isOfficial ? '✓' : ''}
+                        {t(a)} {isOfficial ? '✓' : ''}
                       </span>
                     )
                   })}
                 </div>
                 <div style={{ fontSize: '11px', color: '#888', marginTop: '8px' }}>
-                  ✓ = arôme des grappistes
+{t('✓ = arôme des grappistes')}
                 </div>
               </div>
             )}
 
             {/* Arômes du groupe */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
-              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Arômes du groupe</div>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Arômes du groupe')}</div>
               {aromeCounts.map(([arome, count]) => {
                 const isOfficial = notes?.aromes_officiels?.includes(arome)
                 const isMine = myTasting?.aromes?.includes(arome)
                 return (
                   <div key={arome} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <div style={{ fontSize: '12px', color: isMine ? accent : '#444', minWidth: '100px', fontWeight: isMine ? '500' : '400' }}>
-                      {arome} {isMine ? '👤' : ''}
+                      {t(arome)} {isMine ? '👤' : ''}
                     </div>
                     <div style={{ flex: 1, height: '5px', background: '#f0f0f0', borderRadius: '3px' }}>
                       <div style={{ height: '5px', borderRadius: '3px', background: isOfficial ? '#7a6a1a' : accent, width: `${Math.round(count / maxArome * 100)}%`, transition: 'width .6s' }} />
@@ -553,7 +555,7 @@ export default function RevealPage() {
                 )
               })}
               <div style={{ marginTop: '1rem', fontSize: '12px', color: '#888' }}>
-                👤 = ton arôme · ✓ = arôme des grappistes
+                {t('👤 = ton arôme · ✓ = arôme des grappistes')}
               </div>
             </div>
           </div>
@@ -565,16 +567,16 @@ export default function RevealPage() {
 
             {/* Dégustation */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
-              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Ta dégustation</div>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Ta dégustation')}</div>
 
               <CompareRow
-                label="Robe"
+                label={t('Robe')}
                 mine={myTasting.robe}
                 official={notes?.robe ?? null}
                 correct={myTasting.robe === notes?.robe}
               />
               <CompareRow
-                label="Bouche"
+                label={t('Bouche')}
                 mine={myTasting.bouche}
                 official={notes?.bouche ?? null}
                 correct={myTasting.bouche === notes?.bouche}
@@ -583,7 +585,7 @@ export default function RevealPage() {
 
               {/* Arômes */}
               <div style={{ padding: '10px 0', borderBottom: '0.5px solid #f0f0f0' }}>
-                <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>Arômes</div>
+                <div style={{ fontSize: '12px', color: '#888', marginBottom: '6px' }}>{t('Arômes')}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {myTasting.aromes.map(a => {
                     const isOfficial = notes?.aromes_officiels?.includes(a)
@@ -594,14 +596,14 @@ export default function RevealPage() {
                         color: isOfficial ? '#27500A' : '#666',
                         fontWeight: isOfficial ? '500' : '400',
                       }}>
-                        {a} {isOfficial ? '✓' : ''}
+                        {t(a)} {isOfficial ? '✓' : ''}
                       </span>
                     )
                   })}
                 </div>
                 {notes?.aromes_officiels && (
                   <div style={{ fontSize: '11px', color: '#888', marginTop: '6px' }}>
-                    ✓ = arôme des grappistes
+{t('✓ = arôme des grappistes')}
                   </div>
                 )}
               </div>
@@ -610,34 +612,34 @@ export default function RevealPage() {
 
             {/* Devinettes */}
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem' }}>
-              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Tes devinettes</div>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Tes devinettes')}</div>
 
               <CompareRow
-                label="Cépage"
+                label={t('Cépage')}
                 mine={myTasting.cepage_guess}
                 official={notes?.cepage ?? null}
                 correct={myTasting.cepage_guess === notes?.cepage}
               />
               <CompareRow
-                label="Région"
+                label={t('Région')}
                 mine={myTasting.region_guess}
                 official={notes?.region ?? null}
                 correct={myTasting.region_guess === notes?.region}
               />
               <CompareRow
-                label="Millésime"
+                label={t('Millésime')}
                 mine={myTasting.millesime_estime?.toString() ?? null}
                 official={notes?.millesime?.toString() ?? null}
                 correct={myTasting.millesime_estime === notes?.millesime}
               />
               <CompareRow
-                label="Élevage"
+                label={t('Élevage')}
                 mine={myTasting.elevage_guess}
                 official={notes?.elevage ?? null}
                 correct={myTasting.elevage_guess === notes?.elevage}
               />
               <CompareRow
-                label="Prix"
+                label={t('Prix')}
                 mine={myTasting.prix_estime ? `CHF ${myTasting.prix_estime}` : null}
                 official={notes?.prix_exact != null ? `CHF ${notes.prix_exact.toFixed(2)}` : (notes?.prix_chf ? `CHF ${notes.prix_chf}` : null)}
                 correct={
@@ -653,7 +655,7 @@ export default function RevealPage() {
         {/* TAB MOI — pas de dégustation */}
         {activeTab === 'moi' && !myTasting && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', color: '#888' }}>Tu n'as pas soumis de dégustation pour cette session.</div>
+            <div style={{ fontSize: '13px', color: '#888' }}>{t("Tu n'as pas soumis de dégustation pour cette session.")}</div>
           </div>
         )}
 
@@ -661,7 +663,7 @@ export default function RevealPage() {
         {activeTab === 'vin' && notes && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Note des grappistes</div>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Note des grappistes')}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '.75rem' }}>
                 <div style={{ fontSize: '32px', fontWeight: '500', color: accent }}>{notes.note}</div>
                 <div style={{ flex: 1, height: '6px', background: '#f0f0f0', borderRadius: '3px' }}>
@@ -675,21 +677,21 @@ export default function RevealPage() {
             </div>
 
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>Prix & commande</div>
+              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Prix & commande')}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                 <div>
                   <div style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a' }}>{prixAffiche}</div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>Bouteille 75cl</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>{t('Bouteille 75cl')}</div>
                 </div>
                 <div style={{ fontSize: '12px', color: '#888', textAlign: 'right' }}>
-                  Ton estimation :<br />
+                  {t('Ton estimation :')}<br />
                   <span style={{ color: '#1a1a1a', fontWeight: '500' }}>{myTasting?.prix_estime ? `CHF ${myTasting.prix_estime}` : '—'}</span>
                 </div>
               </div>
               {wine?.shopify_url && (
                 <a href={wine.shopify_url} target="_blank" rel="noreferrer"
                   style={{ display: 'block', width: '100%', padding: '13px', background: accent, color: '#fff', borderRadius: '10px', fontSize: '14px', fontWeight: '500', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}>
-                  Commander sur La Grappe →
+                  {t('Commander sur La Grappe →')}
                 </a>
               )}
             </div>
@@ -701,19 +703,19 @@ export default function RevealPage() {
           <>
             <button onClick={() => router.push(`/app/evening/${session.evening_id}/leaderboard`)}
               style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', marginTop: '1rem' }}>
-              Suite et classement →
+              {t('Suite et classement →')}
             </button>
             {session.order_in_evening === (evening?.bottle_order as unknown as string[])?.length && (
               <button onClick={() => router.push('/app/dashboard')}
                 style={{ width: '100%', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer', marginTop: '8px' }}>
-                Retour au dashboard
+                {t('Retour au dashboard')}
               </button>
             )}
           </>
         ) : (
           <button onClick={() => router.push('/app/dashboard')}
             style={{ width: '100%', padding: '13px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#888', fontSize: '14px', cursor: 'pointer', marginTop: '1rem' }}>
-            Retour au dashboard
+            {t('Retour au dashboard')}
           </button>
         )}
 

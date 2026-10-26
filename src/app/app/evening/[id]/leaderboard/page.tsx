@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import type { Evening, Session, SessionPlayer, Wine } from '@/types'
+import { useT } from '@/lib/i18n'
 
 type LeaderboardEntry = {
   user_id: string
@@ -37,6 +38,7 @@ export default function EveningLeaderboardPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const eveningId = params.id as string
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -234,7 +236,7 @@ export default function EveningLeaderboardPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Calcul des scores...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Calcul des scores...')}</div>
     </div>
   )
 
@@ -254,9 +256,9 @@ export default function EveningLeaderboardPage() {
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#6B4FAE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>🏆</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Classement</div>
+            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Classement')}</div>
             <div style={{ fontSize: '11px', color: '#6B4FAE', fontWeight: '500' }}>
-              Bouteille {currentSessionOrder}/{totalBottles} terminée
+              {t('Bouteille {n}/{total} terminée', { n: currentSessionOrder, total: totalBottles })}
             </div>
           </div>
         </div>
@@ -267,7 +269,7 @@ export default function EveningLeaderboardPage() {
         {/* Progress bar */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a' }}>Progression de la soirée</span>
+            <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a' }}>{t('Progression de la soirée')}</span>
             <span style={{ fontSize: '12px', color: '#6B4FAE', fontWeight: '600' }}>{currentSessionOrder}/{totalBottles}</span>
           </div>
           <div style={{ height: '8px', background: '#f0edf8', borderRadius: '4px', overflow: 'hidden', marginBottom: '10px' }}>
@@ -342,7 +344,7 @@ export default function EveningLeaderboardPage() {
                 <PlayerAvatar avatar={entry.avatar} pseudo={entry.pseudo} size={36} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {entry.pseudo}{isMe ? ' (moi)' : ''}
+                    {entry.pseudo}{isMe ? t(' (moi)') : ''}
                   </div>
                   <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
                     {entry.per_bottle.map((pts, i) => (
@@ -390,21 +392,21 @@ export default function EveningLeaderboardPage() {
           isLastBottle ? (
             <button onClick={goToFinale}
               style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
-              Voir le podium final 🏆
+              {t('Voir le podium final 🏆')}
             </button>
           ) : (
             <button onClick={createNextSession} disabled={creating}
               style={{ width: '100%', padding: '14px', background: creating ? '#a08ab8' : '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: creating ? 'default' : 'pointer' }}>
-              {creating ? 'Préparation...' : `Bouteille ${currentSessionOrder + 1}/${totalBottles} →`}
+              {creating ? t('Préparation...') : t('Bouteille {n}/{total} →', { n: currentSessionOrder + 1, total: totalBottles })}
             </button>
           )
         ) : (
           <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
             <div style={{ fontSize: '14px', color: '#3C3489', fontWeight: '500' }}>
-              {isLastBottle ? '🏆 En attente du podium...' : '⏳ En attente de la prochaine bouteille...'}
+              {isLastBottle ? t('🏆 En attente du podium...') : t('⏳ En attente de la prochaine bouteille...')}
             </div>
             <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '4px' }}>
-              L'organisateur va lancer {isLastBottle ? 'le podium final' : 'la suite'}
+              {isLastBottle ? t("L'organisateur va lancer le podium final") : t("L'organisateur va lancer la suite")}
             </div>
           </div>
         )}
@@ -412,14 +414,14 @@ export default function EveningLeaderboardPage() {
         {!isOrganizer && isLastBottle && (
           <button onClick={() => router.push(`/app/evening/${eveningId}/finale`)}
             style={{ width: '100%', marginTop: '8px', padding: '12px', border: '0.5px solid #c5b8f0', borderRadius: '12px', background: '#fff', color: '#6B4FAE', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
-            Voir le podium →
+            {t('Voir le podium →')}
           </button>
         )}
 
         {isLastBottle && (
           <button onClick={() => router.push('/app/dashboard')}
             style={{ width: '100%', marginTop: '8px', padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#aaa', fontSize: '13px', cursor: 'pointer' }}>
-            Retour au dashboard
+            {t('Retour au dashboard')}
           </button>
         )}
 

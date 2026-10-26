@@ -8,6 +8,7 @@ import { getAromeIcon } from '@/lib/arome-icons'
 import { getAccordIcon } from '@/lib/accord-icons'
 import { CEPAGE_INFO, rankCepages } from '@/lib/cepage-info'
 import type { Session, Wine } from '@/types'
+import { useT } from '@/lib/i18n'
 
 
 const ROBE_COLORS: Record<string, string> = {
@@ -31,20 +32,21 @@ const SCORE_LABELS = ['Imbuvable','Très mauvais','Mauvais','Bof','Correct','Moy
 
 
 function HintBanner({ used, onUse }: { used: number, onUse: () => void }) {
+  const t = useT()
   if (used >= 2) return null
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: '#fffbf0', border: '1px solid #f0d080', borderRadius: '10px', marginBottom: '12px' }}>
       <span style={{ fontSize: '18px' }}>💡</span>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: '12px', fontWeight: '600', color: '#7a5000' }}>
-          Aide disponible {used > 0 ? `(${used}/2 utilisée)` : ''}
+          {t('Aide disponible')} {used > 0 ? t('({n}/2 utilisée)', { n: used }) : ''}
         </div>
         <div style={{ fontSize: '11px', color: '#a07820', lineHeight: 1.3 }}>
-          Élimine ~1/3 des mauvaises réponses · coûte <strong>300 pts</strong>
+          {t('Élimine ~1/3 des mauvaises réponses · coûte')} <strong>{t('300 pts')}</strong>
         </div>
       </div>
       <button onClick={onUse} style={{ padding: '6px 14px', background: '#f0a000', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-        Utiliser
+        {t('Utiliser')}
       </button>
     </div>
   )
@@ -136,8 +138,9 @@ export default function TastingPage() {
   const params = useParams()
   const supabase = createClient()
   const sessionId = params.id as string
+  const t = useT()
 
-  const steps = ['Vue', 'Nez', 'Bouche', 'Accords', 'Notes', 'Devinette']
+  const steps = ['Vue', 'Nez', 'Bouche', 'Accords', 'Notes', 'Devinette'].map(s => t(s))
   const stepIcons = ['👁️', '👃', '👄', '🍴', '📝', '🔮']
 
   useEffect(() => {
@@ -247,7 +250,7 @@ export default function TastingPage() {
 
   if (loading || !wine) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -266,18 +269,18 @@ export default function TastingPage() {
   })()
 
   const stepMissing = (() => {
-    if (step === 0 && !robe) return 'Sélectionne une robe pour continuer'
-    if (step === 1 && aromes.length === 0) return 'Sélectionne au moins un arôme'
-    if (step === 3 && accords.length === 0) return 'Choisis au moins un accord mets-vin'
-    if (step === 4 && scorePerso === null) return 'Donne une note pour continuer'
+    if (step === 0 && !robe) return t('Sélectionne une robe pour continuer')
+    if (step === 1 && aromes.length === 0) return t('Sélectionne au moins un arôme')
+    if (step === 3 && accords.length === 0) return t('Choisis au moins un accord mets-vin')
+    if (step === 4 && scorePerso === null) return t('Donne une note pour continuer')
     if (step === 5) {
       const missing: string[] = []
-      if (!cepage) missing.push('cépage')
-      if (!region) missing.push('région')
-      if (!millesime.trim()) missing.push('millésime')
-      if (!prix.trim()) missing.push('prix')
-      if (!elevage) missing.push('élevage')
-      if (missing.length > 0) return `Il manque : ${missing.join(', ')}`
+      if (!cepage) missing.push(t('cépage'))
+      if (!region) missing.push(t('région'))
+      if (!millesime.trim()) missing.push(t('millésime'))
+      if (!prix.trim()) missing.push(t('prix'))
+      if (!elevage) missing.push(t('élevage'))
+      if (missing.length > 0) return t('Il manque : {liste}', { liste: missing.join(', ') })
     }
     return null
   })()
@@ -291,9 +294,9 @@ export default function TastingPage() {
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '16px' }}>🍷</span>
           </div>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Bouteille #{session?.bottle_number}</span>
+          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>{t('Bouteille #{n}', { n: session?.bottle_number ?? '' })}</span>
           <button onClick={() => setShowBareme(v => !v)}
-            title="Barème des points"
+            title={t('Barème des points')}
             style={{ background: showBareme ? accent : '#f5f5f5', border: 'none', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', color: showBareme ? '#fff' : '#888', cursor: 'pointer', fontWeight: '500' }}>
             📊
           </button>
@@ -303,7 +306,7 @@ export default function TastingPage() {
           {steps.map((s, i) => (
             <div key={i} onClick={() => i < step && goStep(i)}
               style={{ flex: 1, height: '3px', borderRadius: '2px', background: i <= step ? accent : '#e0e0e0', transition: 'background .3s', cursor: i < step ? 'pointer' : 'default' }}
-              title={i < step ? `Retour à ${s}` : s} />
+              title={i < step ? t('Retour à {etape}', { etape: s }) : s} />
           ))}
         </div>
       </div>
@@ -312,18 +315,18 @@ export default function TastingPage() {
       {showBareme && (
         <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1.5rem' }}>
           <div style={{ background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', padding: '1rem', margin: '12px 0 0' }}>
-            <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>📊 Barème des points</div>
+            <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '.04em' }}>{t('📊 Barème des points')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
               {[
-                { icon: '👁️', label: 'Robe', detail: '500 pts si juste · 200 pts sinon' },
-                { icon: '👃', label: 'Arômes', detail: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes" },
-                { icon: '👄', label: 'Bouche', detail: '500 pts si juste · 350 pts si à côté · 200 pts sinon' },
-                { icon: '🍇', label: 'Cépage', detail: '1 500 pts si juste · 300 pts sinon' },
-                { icon: '📍', label: 'Région', detail: '500 pts si juste · 100 pts sinon' },
-                { icon: '📅', label: 'Millésime', detail: '500 pts si exact · −50 pts par année d\'écart' },
-                { icon: '🪣', label: 'Élevage', detail: '500 pts si juste · 100 pts sinon' },
-                { icon: '💰', label: 'Prix', detail: '500 pts si exact · −50 pts par CHF d\'écart' },
-                { icon: '💡', label: 'Aide', detail: '−300 pts par aide utilisée' },
+                { icon: '👁️', label: t('Robe'), detail: t('500 pts si juste · 200 pts sinon') },
+                { icon: '👃', label: t('Arômes'), detail: t("jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes") },
+                { icon: '👄', label: t('Bouche'), detail: t('500 pts si juste · 350 pts si à côté · 200 pts sinon') },
+                { icon: '🍇', label: t('Cépage'), detail: t('1 500 pts si juste · 300 pts sinon') },
+                { icon: '📍', label: t('Région'), detail: t('500 pts si juste · 100 pts sinon') },
+                { icon: '📅', label: t('Millésime'), detail: t("500 pts si exact · −50 pts par année d'écart") },
+                { icon: '🪣', label: t('Élevage'), detail: t('500 pts si juste · 100 pts sinon') },
+                { icon: '💰', label: t('Prix'), detail: t("500 pts si exact · −50 pts par CHF d'écart") },
+                { icon: '💡', label: t('Aide'), detail: t('−300 pts par aide utilisée') },
               ].map(({ icon, label, detail }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
                   <span style={{ fontSize: '13px', flexShrink: 0 }}>{icon}</span>
@@ -353,12 +356,12 @@ export default function TastingPage() {
             )}
             {step > 1 && aromes.length > 0 && (
               <span onClick={() => goStep(1)} style={{ cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: '#fff', border: '0.5px solid #e0e0e0', color: '#666' }}>
-                👃 {aromes.length} arôme{aromes.length > 1 ? 's' : ''}
+                👃 {aromes.length > 1 ? t('{n} arômes', { n: aromes.length }) : t('{n} arôme', { n: aromes.length })}
               </span>
             )}
             {step > 2 && (
               <span onClick={() => goStep(2)} style={{ cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '10px', background: '#fff', border: '0.5px solid #e0e0e0', color: '#666' }}>
-                👄 {content.bouche[boucheIndex]}
+                👄 {t(content.bouche[boucheIndex])}
               </span>
             )}
             {step > 3 && accords.length > 0 && (
@@ -366,7 +369,7 @@ export default function TastingPage() {
                 {getAccordIcon(accords[0])
                   ? <img src={getAccordIcon(accords[0])!} alt={accords[0]} style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
                   : '🍴'}
-                {accords[0]}{accords.length > 1 ? ` +${accords.length - 1}` : ''}
+                {t(accords[0])}{accords.length > 1 ? ` +${accords.length - 1}` : ''}
               </span>
             )}
             {step > 4 && scorePerso !== null && (
@@ -393,12 +396,12 @@ export default function TastingPage() {
           <div>
             <div style={{ fontWeight: '500', fontSize: '18px', color: '#1a1a1a' }}>{steps[step]}</div>
             <div style={{ fontSize: '12px', color: '#888' }}>
-              {step === 0 && 'Observe la couleur du vin'}
-              {step === 1 && 'Fais tourner le verre et inspire'}
-              {step === 2 && 'Garde le vin quelques secondes'}
-              {step === 3 && 'Avec quoi tu boirais ce vin ?'}
-              {step === 4 && 'Ton ressenti sans filtre'}
-              {step === 5 && 'Montre ce que tu as dans le ventre !'}
+              {step === 0 && t('Observe la couleur du vin')}
+              {step === 1 && t('Fais tourner le verre et inspire')}
+              {step === 2 && t('Garde le vin quelques secondes')}
+              {step === 3 && t('Avec quoi tu boirais ce vin ?')}
+              {step === 4 && t('Ton ressenti sans filtre')}
+              {step === 5 && t('Montre ce que tu as dans le ventre !')}
             </div>
           </div>
         </div>
@@ -412,22 +415,22 @@ export default function TastingPage() {
               )}
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                  Un simple coup d'œil peut déjà te révéler plein d'indices : l'âge du vin, sa douceur ou même le type de cépage.
+                  {t("Un simple coup d'œil peut déjà te révéler plein d'indices : l'âge du vin, sa douceur ou même le type de cépage.")}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
                   <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5, flex: 1 }}>
-                    💡 <strong>Astuce de pro :</strong> éclaire bien la pièce, place une feuille blanche derrière ton verre et incline-le légèrement… magie garantie ! ✨
+                    💡 <strong>{t('Astuce de pro :')}</strong> {t('éclaire bien la pièce, place une feuille blanche derrière ton verre et incline-le légèrement… magie garantie ! ✨')}
                   </div>
                   <button onClick={() => setGifOpenStep(gifOpenStep === 0 ? null : 0)}
                     style={{ flexShrink: 0, padding: '6px 10px', background: gifOpenStep === 0 ? '#f0f0f0' : '#f5ede8', border: 'none', borderRadius: '8px', fontSize: '11px', color: gifOpenStep === 0 ? '#888' : accent, cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                    {gifOpenStep === 0 ? '✕ Fermer' : '▶ Voir'}
+                    {gifOpenStep === 0 ? t('✕ Fermer') : t('▶ Voir')}
                   </button>
                 </div>
               </div>
             </div>
             <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Un mot sur la robe ?</div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 200 pts sinon</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('Un mot sur la robe ?')}</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t('500 pts si juste · 200 pts sinon')}</div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', marginBottom: '1.25rem' }}>
               {content.robes.map(r => {
@@ -438,7 +441,7 @@ export default function TastingPage() {
                     style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '10px', borderRadius: '12px', border: selected ? `2px solid ${accent}` : '0.5px solid #e0e0e0', background: selected ? '#fdf5f5' : '#fff', transition: 'all .15s ease', transform: selected ? 'scale(1.05)' : 'scale(1)', minWidth: '72px' }}>
                     <WineGlass color={robeColor} size={36} animate={selected} />
                     <span style={{ fontSize: '11px', fontWeight: selected ? '500' : '400', color: selected ? accent : '#666', textAlign: 'center', lineHeight: 1.2 }}>
-                      {r}
+                      {t(r)}
                     </span>
                   </div>
                 )
@@ -448,8 +451,8 @@ export default function TastingPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px' }}>
                 <WineGlass color={ROBE_COLORS[robe] ?? '#ccc'} size={28} />
                 <div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>Robe sélectionnée</div>
-                  <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>{robe}</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>{t('Robe sélectionnée')}</div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', color: accent }}>{t(robe)}</div>
                 </div>
               </div>
             )}
@@ -465,36 +468,36 @@ export default function TastingPage() {
               )}
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                  C'est ton nez qui va révéler toute la palette d'arômes du vin.
+                  {t("C'est ton nez qui va révéler toute la palette d'arômes du vin.")}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
                   <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5, flex: 1 }}>
-                    💡 <strong>Astuce :</strong> sens ton verre une première fois. Puis, fais-le tournoyer pour libérer ses arômes et sens-le à nouveau. Ce sont les fameux <strong>1er et 2ème nez</strong>.
+                    💡 <strong>{t('Astuce :')}</strong> {t('sens ton verre une première fois. Puis, fais-le tournoyer pour libérer ses arômes et sens-le à nouveau. Ce sont les fameux')} <strong>{t('1er et 2ème nez')}</strong>.
                   </div>
                   <button onClick={() => setGifOpenStep(gifOpenStep === 1 ? null : 1)}
                     style={{ flexShrink: 0, padding: '6px 10px', background: gifOpenStep === 1 ? '#f0f0f0' : '#f5ede8', border: 'none', borderRadius: '8px', fontSize: '11px', color: gifOpenStep === 1 ? '#888' : accent, cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                    {gifOpenStep === 1 ? '✕ Fermer' : '▶ Voir'}
+                    {gifOpenStep === 1 ? t('✕ Fermer') : t('▶ Voir')}
                   </button>
                 </div>
               </div>
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>Intensité du nez</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '10px' }}>{t('Intensité du nez')}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '12px', color: '#888' }}>Discret</span>
+                <span style={{ fontSize: '12px', color: '#888' }}>{t('Discret')}</span>
                 <input type="range" min={1} max={5} value={nezIntensite} onChange={e => setNezIntensite(Number(e.target.value))} style={{ flex: 1, accentColor: accent }} />
-                <span style={{ fontSize: '12px', color: '#888' }}>Expressif</span>
+                <span style={{ fontSize: '12px', color: '#888' }}>{t('Expressif')}</span>
               </div>
               <div style={{ textAlign: 'center', fontSize: '13px', color: accent, marginTop: '6px', fontWeight: '500' }}>
-                {['', 'Très discret', 'Discret', 'Moyen', 'Expressif', 'Très expressif'][nezIntensite]}
+                {t(['', 'Très discret', 'Discret', 'Moyen', 'Expressif', 'Très expressif'][nezIntensite])}
               </div>
             </div>
             <div>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
-                  Arômes perçus <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
+                  {t('Arômes perçus')} <span style={{ fontWeight: '400', color: '#888' }}>{t('(max {max}, tu en as {n})', { max: MAX_AROMES, n: aromes.length })}</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>Jusqu'à 1 000 pts par arôme selon la part des autres joueurs qui l'ont aussi trouvé · +200 pts si arôme des grappistes</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t("Jusqu'à 1 000 pts par arôme selon la part des autres joueurs qui l'ont aussi trouvé · +200 pts si arôme des grappistes")}</div>
               </div>
               <HintBanner used={hintCounts.aromes} onUse={() => useHint('aromes')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -521,20 +524,20 @@ export default function TastingPage() {
                       {icon && (
                         <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: eliminated ? 'grayscale(1) opacity(0.3)' : selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />
                       )}
-                      {a}
+                      {t(a)}
                     </button>
                   )
                 })}
               </div>
               {aromes.length > 0 && (
                 <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>Tes arômes :</span>
+                  <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>{t('Tes arômes :')}</span>
                   {aromes.map(a => {
                     const icon = getAromeIcon(a)
                     return (
                       <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', background: '#f5ede8', color: accent, padding: '4px 10px', borderRadius: '10px', fontWeight: '500' }}>
                         {icon && <img src={icon} alt={a} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
-                        {a}
+                        {t(a)}
                       </span>
                     )
                   })}
@@ -553,29 +556,29 @@ export default function TastingPage() {
               )}
               <div style={{ padding: '1rem' }}>
                 <p style={{ margin: '0 0 10px', fontSize: '13px', color: '#555', lineHeight: 1.6 }}>
-                  C'est ici que tout s'anime : les saveurs (sucré, salé, acide, amer), mais aussi les sensations tactiles (alcool, fraîcheur, bulles, tanins). Après avoir avalé ou recraché, mesure la <strong>persistance</strong> : combien de temps le vin reste présent après la gorgée ? ⏳
+                  {t("C'est ici que tout s'anime : les saveurs (sucré, salé, acide, amer), mais aussi les sensations tactiles (alcool, fraîcheur, bulles, tanins). Après avoir avalé ou recraché, mesure la")} <strong>{t('persistance')}</strong>{t(' : combien de temps le vin reste présent après la gorgée ? ⏳')}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
                   <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5, flex: 1 }}>
-                    💡 <strong>Astuce :</strong> teste la rétro-olfaction ! Aspire légèrement de l'air avec le vin en bouche… et laisse exploser les arômes. 🚀
+                    💡 <strong>{t('Astuce :')}</strong> {t("teste la rétro-olfaction ! Aspire légèrement de l'air avec le vin en bouche… et laisse exploser les arômes. 🚀")}
                   </div>
                   <button onClick={() => setGifOpenStep(gifOpenStep === 2 ? null : 2)}
                     style={{ flexShrink: 0, padding: '6px 10px', background: gifOpenStep === 2 ? '#f0f0f0' : '#f5ede8', border: 'none', borderRadius: '8px', fontSize: '11px', color: gifOpenStep === 2 ? '#888' : accent, cursor: 'pointer', fontWeight: '500', whiteSpace: 'nowrap' }}>
-                    {gifOpenStep === 2 ? '✕ Fermer' : '▶ Voir'}
+                    {gifOpenStep === 2 ? t('✕ Fermer') : t('▶ Voir')}
                   </button>
                 </div>
               </div>
             </div>
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>Structure en bouche</div>
-              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 350 pts si à côté · 200 pts sinon</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('Structure en bouche')}</div>
+              <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t('500 pts si juste · 350 pts si à côté · 200 pts sinon')}</div>
             </div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 {content.bouche.map((opt, i) => (
                   <div key={i} style={{ textAlign: i === 0 ? 'left' : i === content.bouche.length - 1 ? 'right' : 'center', flex: 1 }}>
                     <div style={{ fontSize: '11px', color: boucheIndex === i ? accent : '#aaa', fontWeight: boucheIndex === i ? '500' : '400', transition: 'color .2s' }}>
-                      {opt.split(',')[0]}
+                      {t(opt).split(',')[0]}
                     </div>
                   </div>
                 ))}
@@ -584,16 +587,16 @@ export default function TastingPage() {
                 onChange={e => { setBoucheIndex(Number(e.target.value)); haptic() }}
                 style={{ width: '100%', accentColor: accent, height: '6px' }} />
               <div style={{ textAlign: 'center', fontSize: '15px', fontWeight: '500', color: accent, marginTop: '12px', transition: 'all .2s' }}>
-                {content.bouche[boucheIndex]}
+                {t(content.bouche[boucheIndex])}
               </div>
             </div>
 
             <div style={{ marginTop: '1.5rem' }}>
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
-                  Arômes en bouche <span style={{ fontWeight: '400', color: '#888' }}>(max {MAX_AROMES}, tu en as {aromes.length})</span>
+                  {t('Arômes en bouche')} <span style={{ fontWeight: '400', color: '#888' }}>{t('(max {max}, tu en as {n})', { max: MAX_AROMES, n: aromes.length })}</span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>Confirme, ajoute ou retire des arômes détectés au nez</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t('Confirme, ajoute ou retire des arômes détectés au nez')}</div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {content.aromes.map(a => {
@@ -619,20 +622,20 @@ export default function TastingPage() {
                       {icon && (
                         <img src={icon} alt={a} style={{ width: '20px', height: '20px', objectFit: 'contain', filter: eliminated ? 'grayscale(1) opacity(0.3)' : selected ? 'brightness(0) invert(1)' : 'none', transition: 'filter .15s ease' }} />
                       )}
-                      {a}
+                      {t(a)}
                     </button>
                   )
                 })}
               </div>
               {aromes.length > 0 && (
                 <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>Tes arômes :</span>
+                  <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>{t('Tes arômes :')}</span>
                   {aromes.map(a => {
                     const icon = getAromeIcon(a)
                     return (
                       <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', background: '#f5ede8', color: accent, padding: '4px 10px', borderRadius: '10px', fontWeight: '500' }}>
                         {icon && <img src={icon} alt={a} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
-                        {a}
+                        {t(a)}
                       </span>
                     )
                   })}
@@ -646,10 +649,10 @@ export default function TastingPage() {
         {step === 3 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666', lineHeight: 1.5 }}>
-              💡 Quel plat mettrait ce vin en valeur ? Fais confiance à ton instinct !
+              {t('💡 Quel plat mettrait ce vin en valeur ? Fais confiance à ton instinct !')}
             </div>
             <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>
-              Accord idéal <span style={{ fontWeight: '400', color: '#888' }}>(plusieurs choix possibles)</span>
+              {t('Accord idéal')} <span style={{ fontWeight: '400', color: '#888' }}>{t('(plusieurs choix possibles)')}</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
               {content.accords.map(a => {
@@ -664,7 +667,7 @@ export default function TastingPage() {
                       <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>🍽</div>
                     )}
                     <span style={{ fontSize: '11px', fontWeight: selected ? '500' : '400', color: selected ? accent : '#666', textAlign: 'center', lineHeight: 1.2, maxWidth: '72px' }}>
-                      {a}
+                      {t(a)}
                     </span>
                   </div>
                 )
@@ -672,11 +675,11 @@ export default function TastingPage() {
             </div>
             {accords.length > 0 && (
               <div style={{ marginTop: '14px', padding: '10px 14px', background: '#fff', border: `0.5px solid ${accent}30`, borderRadius: '12px', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>Tes accords :</span>
+                <span style={{ fontSize: '11px', color: '#888', width: '100%', marginBottom: '2px' }}>{t('Tes accords :')}</span>
                 {accords.map(a => (
                   <span key={a} style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', background: '#f5ede8', color: accent, padding: '4px 10px', borderRadius: '10px', fontWeight: '500' }}>
                     {getAccordIcon(a) && <img src={getAccordIcon(a)!} alt={a} style={{ width: '16px', height: '16px', objectFit: 'contain' }} />}
-                    {a}
+                    {t(a)}
                   </span>
                 ))}
               </div>
@@ -688,7 +691,7 @@ export default function TastingPage() {
         {step === 4 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>Top ou flop ?</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '12px' }}>{t('Top ou flop ?')}</div>
               <div style={{ fontSize: '48px', textAlign: 'center', marginBottom: '12px', lineHeight: 1 }}>
                 {scorePerso !== null ? SCORE_EMOJIS[scorePerso] : '🤔'}
               </div>
@@ -702,12 +705,12 @@ export default function TastingPage() {
               </div>
               {scorePerso !== null && (
                 <div style={{ textAlign: 'center', fontSize: '13px', color: '#888', marginTop: '10px' }}>
-                  {SCORE_LABELS[scorePerso]}
+                  {t(SCORE_LABELS[scorePerso])}
                 </div>
               )}
             </div>
             <div style={{ background: '#fffbf0', border: '0.5px solid #f0d080', borderRadius: '12px', padding: '12px 14px', fontSize: '12px', color: '#7a5000', lineHeight: 1.5 }}>
-              💡 Tu pourras ajouter ton commentaire de dégustation une fois le vin révélé — quand tu sauras ce que tu avais dans le verre !
+              {t('💡 Tu pourras ajouter ton commentaire de dégustation une fois le vin révélé — quand tu sauras ce que tu avais dans le verre !')}
             </div>
           </>
         )}
@@ -716,13 +719,13 @@ export default function TastingPage() {
         {step === 5 && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', fontSize: '13px', color: '#666' }}>
-              💡 Pas de panique — c'est une intuition, pas un examen. Même les pros se plantent !
+              {t("💡 Pas de panique — c'est une intuition, pas un examen. Même les pros se plantent !")}
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🍇 Cépage ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>1 500 pts si juste · 300 pts sinon</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>Classés du plus proche au plus éloigné de ta dégustation</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('🍇 Cépage ?')}</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t('1 500 pts si juste · 300 pts sinon')}</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{t('Classés du plus proche au plus éloigné de ta dégustation')}</div>
               </div>
               <HintBanner used={hintCounts.cepage} onUse={() => useHint('cepage')} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
@@ -731,31 +734,31 @@ export default function TastingPage() {
                   return (
                     <button key={c} onClick={() => { if (!eliminated) { setCepage(c); haptic() } }}
                       style={{ padding: '8px 14px', borderRadius: '20px', border: cepage === c ? 'none' : '0.5px solid #e0e0e0', background: eliminated ? '#f5f5f5' : cepage === c ? accent : '#fff', color: eliminated ? '#ccc' : cepage === c ? '#fff' : '#666', fontSize: '13px', cursor: eliminated ? 'default' : 'pointer', transition: 'all .15s', transform: cepage === c ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : 'none' }}>
-                      {c}
+                      {t(c)}
                     </button>
                   )
                 })}
               </div>
               {cepage && CEPAGE_INFO[cepage] && (
                 <div style={{ background: bg, border: `0.5px solid ${accent}30`, borderRadius: '12px', padding: '12px 14px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '8px' }}>📚 {cepage} — indices</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: accent, marginBottom: '8px' }}>📚 {cepage} — {t('indices')}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '12px', color: '#444' }}>
-                    <div><span style={{ color: '#888', fontWeight: '500' }}>Robe · </span>{CEPAGE_INFO[cepage].robe}</div>
-                    <div><span style={{ color: '#888', fontWeight: '500' }}>Nez · </span>{CEPAGE_INFO[cepage].nez}</div>
-                    <div><span style={{ color: '#888', fontWeight: '500' }}>Bouche · </span>{CEPAGE_INFO[cepage].bouche}</div>
+                    <div><span style={{ color: '#888', fontWeight: '500' }}>{t('Robe ·')} </span>{t(CEPAGE_INFO[cepage].robe)}</div>
+                    <div><span style={{ color: '#888', fontWeight: '500' }}>{t('Nez ·')} </span>{t(CEPAGE_INFO[cepage].nez)}</div>
+                    <div><span style={{ color: '#888', fontWeight: '500' }}>{t('Bouche ·')} </span>{t(CEPAGE_INFO[cepage].bouche)}</div>
                   </div>
                 </div>
               )}
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📍 Région ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('📍 Région ?')}</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t('500 pts si juste · 100 pts sinon')}</div>
               </div>
               <HintBanner used={hintCounts.region} onUse={() => useHint('region')} />
               {projectTemplate === 'valais_wine' && (
                 <div style={{ background: '#faeeda', border: '0.5px solid #d0a070', borderRadius: '8px', padding: '8px 12px', marginBottom: '10px', fontSize: '12px', color: '#633806' }}>
-                  🏔️ Template Vin du Valais — seule la région Valais est disponible
+                  {t('🏔️ Template Vin du Valais — seule la région Valais est disponible')}
                 </div>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -765,7 +768,7 @@ export default function TastingPage() {
                   return (
                     <button key={r} onClick={() => { if (!eliminated && !lockedOut) { setRegion(r); haptic() } }}
                       style={{ padding: '8px 14px', borderRadius: '20px', border: region === r ? 'none' : '0.5px solid #e0e0e0', background: eliminated || lockedOut ? '#f5f5f5' : region === r ? accent : '#fff', color: eliminated || lockedOut ? '#ccc' : region === r ? '#fff' : '#666', fontSize: '13px', cursor: eliminated || lockedOut ? 'default' : 'pointer', transition: 'all .15s', transform: region === r ? 'scale(1.05)' : 'scale(1)', textDecoration: eliminated ? 'line-through' : lockedOut ? 'none' : 'none', opacity: lockedOut ? 0.4 : 1 }}>
-                      {r}
+                      {t(r)}
                     </button>
                   )
                 })}
@@ -773,8 +776,8 @@ export default function TastingPage() {
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>📅 Millésime ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si exact · −50 pts par année d'écart</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('📅 Millésime ?')}</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t("500 pts si exact · −50 pts par année d'écart")}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
                 <button onClick={() => { setMillesime(m => m === '' ? '2025' : String(Math.max(1990, parseInt(m) - 1))); haptic() }}
@@ -789,8 +792,8 @@ export default function TastingPage() {
             </div>
             <div style={{ marginBottom: '1.25rem' }}>
               <div style={{ marginBottom: '10px' }}>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>🪣 Élevage ?</div>
-                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>500 pts si juste · 100 pts sinon</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{t('🪣 Élevage ?')}</div>
+                <div style={{ fontSize: '11px', color: '#888', marginTop: '3px' }}>{t('500 pts si juste · 100 pts sinon')}</div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {ELEVAGE_OPTIONS.map(e => (
@@ -804,7 +807,7 @@ export default function TastingPage() {
                       transition: 'all .15s',
                       transform: elevage === e ? 'scale(1.05)' : 'scale(1)',
                     }}>
-                    {e}
+                    {t(e)}
                   </button>
                 ))}
               </div>
@@ -812,9 +815,9 @@ export default function TastingPage() {
 
 
             <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>💰 Prix estimé ?</div>
+              <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>{t('💰 Prix estimé ?')}</div>
               <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-                500 pts si exact · −50 pts par CHF d'écart
+                {t("500 pts si exact · −50 pts par CHF d'écart")}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', border: '0.5px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
                 <button onClick={() => { setPrix(p => p === '' ? '24.5' : String(Math.max(0.5, Math.round((parseFloat(p) - 0.5) * 2) / 2))); haptic() }}
@@ -836,7 +839,7 @@ export default function TastingPage() {
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '0.5px solid #e0e0e0', padding: '1rem 1.5rem' }}>
         {hintsUsed > 0 && (
           <div style={{ maxWidth: '500px', margin: '0 auto 8px', textAlign: 'center', fontSize: '11px', color: '#8a6000', background: '#fffbf0', borderRadius: '8px', padding: '4px 0' }}>
-            💡 {hintsUsed} aide{hintsUsed > 1 ? 's' : ''} utilisée{hintsUsed > 1 ? 's' : ''} — malus : −{hintsUsed * 200} pts
+            💡 {hintsUsed > 1 ? t('{n} aides utilisées', { n: hintsUsed }) : t('{n} aide utilisée', { n: hintsUsed })} — {t('malus : −{pts} pts', { pts: hintsUsed * 200 })}
           </div>
         )}
         {stepMissing && (
@@ -848,19 +851,19 @@ export default function TastingPage() {
           {step > 0 && (
             <button onClick={() => goStep(step - 1)}
               style={{ flex: 1, padding: '12px', border: '0.5px solid #e0e0e0', borderRadius: '10px', background: '#fff', color: '#666', fontSize: '14px', cursor: 'pointer' }}>
-              ← Retour
+              {t('← Retour')}
             </button>
           )}
           {step < steps.length - 1 ? (
             <button onClick={() => { if (stepValid) goStep(step + 1) }}
               disabled={!stepValid}
               style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: stepValid ? accent : '#d0c0c0', color: '#fff', fontSize: '14px', fontWeight: '500', cursor: stepValid ? 'pointer' : 'default', transition: 'background .2s' }}>
-              Continuer →
+              {t('Continuer →')}
             </button>
           ) : (
             <button onClick={submitTasting} disabled={!stepValid || saving}
               style={{ flex: 2, padding: '12px', border: 'none', borderRadius: '10px', background: (!stepValid || saving) ? '#c0a0a0' : accent, color: '#fff', fontSize: '14px', fontWeight: '500', cursor: (!stepValid || saving) ? 'default' : 'pointer', transition: 'background .2s' }}>
-              {saving ? 'Envoi...' : 'Soumettre ma dégustation 🍷'}
+              {saving ? t('Envoi...') : t('Soumettre ma dégustation 🍷')}
             </button>
           )}
         </div>

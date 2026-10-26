@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useT } from '@/lib/i18n'
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -12,15 +13,16 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const t = useT()
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
     if (password !== confirm) {
-      setError('Les mots de passe ne correspondent pas.')
+      setError(t('Les mots de passe ne correspondent pas.'))
       return
     }
     if (password.length < 6) {
-      setError('Le mot de passe doit faire au moins 6 caractères.')
+      setError(t('Le mot de passe doit faire au moins 6 caractères.'))
       return
     }
     setLoading(true)
@@ -57,10 +59,10 @@ export default function ResetPasswordPage() {
             />
           </div>
           <h1 style={{ fontSize: '22px', fontWeight: '500', color: '#1a1a1a', margin: 0 }}>
-            Nouveau mot de passe
+            {t('Nouveau mot de passe')}
           </h1>
           <p style={{ fontSize: '13px', color: '#888', marginTop: '4px' }}>
-            Choisis un nouveau mot de passe
+            {t('Choisis un nouveau mot de passe')}
           </p>
         </div>
 
@@ -69,17 +71,17 @@ export default function ResetPasswordPage() {
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '1rem' }}>✅</div>
               <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '4px' }}>
-                Mot de passe mis à jour !
+                {t('Mot de passe mis à jour !')}
               </div>
               <div style={{ fontSize: '13px', color: '#888' }}>
-                Redirection en cours...
+                {t('Redirection en cours...')}
               </div>
             </div>
           ) : (
             <form onSubmit={handleReset}>
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
-                  Nouveau mot de passe
+                  {t('Nouveau mot de passe')}
                 </label>
                 <input type="password" required value={password}
                   onChange={e => setPassword(e.target.value)}
@@ -88,7 +90,7 @@ export default function ResetPasswordPage() {
               </div>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label style={{ fontSize: '13px', fontWeight: '500', color: '#444', display: 'block', marginBottom: '6px' }}>
-                  Confirmer le mot de passe
+                  {t('Confirmer le mot de passe')}
                 </label>
                 <input type="password" required value={confirm}
                   onChange={e => setConfirm(e.target.value)}
@@ -106,14 +108,14 @@ export default function ResetPasswordPage() {
                 color: '#fff', border: 'none', borderRadius: '8px',
                 fontSize: '14px', fontWeight: '500', cursor: loading ? 'default' : 'pointer',
               }}>
-                {loading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
+                {loading ? t('Mise à jour...') : t('Mettre à jour le mot de passe')}
               </button>
             </form>
           )}
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>
-          La grAPP — Dégustation de vins suisses à l'aveugle
+          {t("La grAPP — Dégustation de vins suisses à l'aveugle")}
         </p>
       </div>
     </div>

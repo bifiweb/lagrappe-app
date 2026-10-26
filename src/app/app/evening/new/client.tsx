@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import type { Profile, Wine, Project } from '@/types'
+import { useT } from '@/lib/i18n'
 
 const accent = '#8d323b'
 
@@ -22,6 +23,7 @@ export default function NewEveningClient() {
   const router = useRouter()
   const params = useSearchParams()
   const supabase = createClient()
+  const t = useT()
   const projectId = params.get('project')
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function NewEveningClient() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -131,11 +133,11 @@ export default function NewEveningClient() {
             ‹
           </button>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Créer une soirée</div>
+            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Créer une soirée')}</div>
             <div style={{ fontSize: '11px', color: '#888' }}>{project?.name}</div>
           </div>
           <div style={{ background: '#edeaf8', borderRadius: '8px', padding: '4px 10px', fontSize: '12px', color: '#6B4FAE', fontWeight: '500' }}>
-            🎉 Soirée
+            {t('🎉 Soirée')}
           </div>
         </div>
       </div>
@@ -145,11 +147,11 @@ export default function NewEveningClient() {
         {/* Sélection des vins */}
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '4px' }}>
-            Quelles bouteilles ce soir ?
+            {t('Quelles bouteilles ce soir ?')}
           </div>
           <div style={{ fontSize: '12px', color: '#888', marginBottom: '12px' }}>
-            {selectedWineIds.length} bouteille{selectedWineIds.length > 1 ? 's' : ''} sélectionnée{selectedWineIds.length > 1 ? 's' : ''}
-            {selectedWineIds.length > 1 ? ` — dans l'ordre du catalogue` : ''}
+            {selectedWineIds.length > 1 ? t('{n} bouteilles sélectionnées', { n: selectedWineIds.length }) : t('{n} bouteille sélectionnée', { n: selectedWineIds.length })}
+            {selectedWineIds.length > 1 ? t(" — dans l'ordre du catalogue") : ''}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
             {wines.map(wine => {
@@ -182,7 +184,7 @@ export default function NewEveningClient() {
                     {wine.bottle_number}
                   </div>
                   <div style={{ fontSize: '10px', color: selected ? '#888' : '#ccc', marginTop: '2px' }}>
-                    {wine.type}
+                    {t(wine.type)}
                   </div>
                 </div>
               )
@@ -193,7 +195,7 @@ export default function NewEveningClient() {
         {/* Avatar */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.25rem' }}>
           <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>
-            Ton personnage
+            {t('Ton personnage')}
           </label>
           {(() => {
             const char = selectedAvatar ? getCharacter(selectedAvatar) : null
@@ -208,9 +210,9 @@ export default function NewEveningClient() {
                   {char && <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '18px', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>{char.emoji}</span>}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{char ? char.label : 'Aucun personnage'}</div>
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{char ? t(char.label) : t('Aucun personnage')}</div>
                   <button onClick={() => setEditingAvatar(v => !v)} style={{ marginTop: '4px', padding: '4px 12px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
-                    {editingAvatar ? 'Fermer' : '✏️ Changer'}
+                    {editingAvatar ? t('Fermer') : t('✏️ Changer')}
                   </button>
                 </div>
               </div>
@@ -220,7 +222,7 @@ export default function NewEveningClient() {
             <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', justifyItems: 'center' }}>
               {CHARACTERS.map(char => (
                 <button key={char.seed} onClick={() => { setSelectedAvatar(char.seed); setEditingAvatar(false) }}
-                  title={char.label}
+                  title={t(char.label)}
                   style={{ position: 'relative', width: '50px', height: '50px', padding: 0, borderRadius: '50%', overflow: 'visible', border: selectedAvatar === char.seed ? `3px solid ${accent}` : '3px solid transparent', background: 'transparent', cursor: 'pointer' }}>
                   <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', background: '#f5ede8' }}>
                     <img src={avatarUrl(char.seed, char.skinColor)} width={50} height={50} alt={char.label} loading="lazy" style={{ display: 'block' }} />
@@ -235,13 +237,13 @@ export default function NewEveningClient() {
         {/* Pseudo */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '6px' }}>
-            Ton pseudo
+            {t('Ton pseudo')}
           </label>
           <input
             type="text"
             value={pseudo}
             onChange={e => setPseudo(e.target.value)}
-            placeholder="Ex: Sophie M., Le Sommelier..."
+            placeholder={t('Ex: Sophie M., Le Sommelier...')}
             maxLength={30}
             style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', background: '#fff', outline: 'none', boxSizing: 'border-box' }}
           />
@@ -249,7 +251,7 @@ export default function NewEveningClient() {
 
         {selectedWineIds.length < 2 && (
           <div style={{ background: '#fff8e1', border: '0.5px solid #ffe082', borderRadius: '12px', padding: '12px 16px', marginBottom: '1rem', fontSize: '13px', color: '#8a6900' }}>
-            Sélectionne au moins 2 bouteilles pour une soirée continue
+            {t('Sélectionne au moins 2 bouteilles pour une soirée continue')}
           </div>
         )}
 
@@ -263,7 +265,7 @@ export default function NewEveningClient() {
             fontSize: '15px', fontWeight: '500',
             cursor: (!pseudo.trim() || selectedWineIds.length < 2 || creating) ? 'default' : 'pointer',
           }}>
-          {creating ? 'Création...' : `Créer la soirée (${selectedWineIds.length} bouteilles) →`}
+          {creating ? t('Création...') : t('Créer la soirée ({n} bouteilles) →', { n: selectedWineIds.length })}
         </button>
 
       </div>

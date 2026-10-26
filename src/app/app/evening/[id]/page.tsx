@@ -7,6 +7,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import type { Profile, Evening, Session, SessionPlayer, Wine } from '@/types'
+import { useT } from '@/lib/i18n'
 
 const accent = '#8d323b'
 const eveningAccent = '#6B4FAE'
@@ -35,6 +36,7 @@ export default function EveningLobbyPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const eveningId = params.id as string
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -199,7 +201,7 @@ export default function EveningLobbyPage() {
   function shareLink() {
     const url = getEveningUrl()
     if (navigator.share) {
-      navigator.share({ title: 'La Grappe — Soirée dégustation', text: 'Rejoins ma soirée de dégustation à l\'aveugle !', url })
+      navigator.share({ title: t('La Grappe — Soirée dégustation'), text: t("Rejoins ma soirée de dégustation à l'aveugle !"), url })
     } else {
       copyLink()
     }
@@ -207,7 +209,7 @@ export default function EveningLobbyPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -234,8 +236,8 @@ export default function EveningLobbyPage() {
           <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: eveningAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>🎉</div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Rejoindre la soirée</div>
-              <div style={{ fontSize: '11px', color: '#888' }}>{orderedWines.length} bouteilles ce soir</div>
+              <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Rejoindre la soirée')}</div>
+              <div style={{ fontSize: '11px', color: '#888' }}>{t('{n} bouteilles ce soir', { n: orderedWines.length })}</div>
             </div>
           </div>
         </div>
@@ -243,12 +245,12 @@ export default function EveningLobbyPage() {
         <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>
           {!isLoggedIn && guestAccess && (
             <div style={{ background: '#faeeda', border: '0.5px solid #e0c080', borderRadius: '10px', padding: '10px 14px', marginBottom: '1.25rem', fontSize: '13px', color: '#633806' }}>
-              👤 Tu rejoins en tant qu&apos;<strong>invité</strong> — pas besoin de compte !
+              👤 {t("Tu rejoins en tant qu'")}<strong>{t('invité')}</strong>{t(' — pas besoin de compte !')}
             </div>
           )}
           <div style={{ background: '#edeaf8', border: '0.5px solid #c5b8f0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1.5rem', textAlign: 'center' }}>
             <div style={{ fontSize: '13px', color: '#5B3D9E', fontWeight: '500' }}>
-              {players.length} joueur{players.length > 1 ? 's' : ''} déjà connecté{players.length > 1 ? 's' : ''}
+              {players.length > 1 ? t('{n} joueurs déjà connectés', { n: players.length }) : t('{n} joueur déjà connecté', { n: players.length })}
             </div>
             {players.length > 0 && (
               <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
@@ -262,7 +264,7 @@ export default function EveningLobbyPage() {
 
           {/* Avatar */}
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.25rem' }}>
-            <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>Ton personnage</label>
+            <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>{t('Ton personnage')}</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: editingAvatar ? '16px' : 0 }}>
               <div onClick={() => setEditingAvatar(v => !v)} style={{ position: 'relative', width: '52px', height: '52px', cursor: 'pointer', flexShrink: 0 }}>
                 <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: selectedAvatar ? 'transparent' : accent, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: `2px solid ${selectedAvatar ? accent : 'transparent'}` }}>
@@ -273,9 +275,9 @@ export default function EveningLobbyPage() {
                 {char && <span style={{ position: 'absolute', bottom: -2, right: -2, fontSize: '18px', lineHeight: 1, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>{char.emoji}</span>}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{char ? char.label : 'Aucun personnage'}</div>
+                <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{char ? t(char.label) : t('Aucun personnage')}</div>
                 <button onClick={() => setEditingAvatar(v => !v)} style={{ marginTop: '4px', padding: '4px 12px', background: '#f5f5f5', border: 'none', borderRadius: '8px', color: '#888', fontSize: '12px', cursor: 'pointer' }}>
-                  {editingAvatar ? 'Fermer' : '✏️ Changer'}
+                  {editingAvatar ? t('Fermer') : t('✏️ Changer')}
                 </button>
               </div>
             </div>
@@ -296,15 +298,15 @@ export default function EveningLobbyPage() {
 
           {/* Pseudo */}
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
-            <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '6px' }}>Ton pseudo</label>
+            <label style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a', display: 'block', marginBottom: '6px' }}>{t('Ton pseudo')}</label>
             <input type="text" value={pseudo} onChange={e => setPseudo(e.target.value)}
-              placeholder="Ex: Sophie M., Le Sommelier..." maxLength={30}
+              placeholder={t('Ex: Sophie M., Le Sommelier...')} maxLength={30}
               style={{ width: '100%', padding: '10px 12px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', background: '#fff', outline: 'none', boxSizing: 'border-box' }} />
           </div>
 
           <button onClick={joinEvening} disabled={!pseudo.trim() || joining}
             style={{ width: '100%', padding: '14px', background: !pseudo.trim() || joining ? '#c0a0a0' : eveningAccent, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: !pseudo.trim() || joining ? 'default' : 'pointer' }}>
-            {joining ? 'Connexion...' : 'Rejoindre la soirée →'}
+            {joining ? t('Connexion...') : t('Rejoindre la soirée →')}
           </button>
         </div>
       </div>
@@ -319,8 +321,8 @@ export default function EveningLobbyPage() {
         <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: eveningAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>🎉</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Soirée continue</div>
-            <div style={{ fontSize: '11px', color: '#888' }}>{orderedWines.length} bouteilles</div>
+            <div style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Soirée continue')}</div>
+            <div style={{ fontSize: '11px', color: '#888' }}>{t('{n} bouteilles', { n: orderedWines.length })}</div>
           </div>
         </div>
       </div>
@@ -330,7 +332,7 @@ export default function EveningLobbyPage() {
         {/* Preview des bouteilles */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
           <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>
-            Au programme ce soir
+            {t('Au programme ce soir')}
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {orderedWines.map((wine, i) => (
@@ -346,7 +348,7 @@ export default function EveningLobbyPage() {
         {/* Players */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
           <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '10px' }}>
-            {players.length} joueur{players.length > 1 ? 's' : ''} connecté{players.length > 1 ? 's' : ''}
+            {players.length > 1 ? t('{n} joueurs connectés', { n: players.length }) : t('{n} joueur connecté', { n: players.length })}
           </div>
           {players.map(p => (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 0', borderBottom: '0.5px solid #f5f5f5' }}>
@@ -356,24 +358,24 @@ export default function EveningLobbyPage() {
             </div>
           ))}
           {players.length === 0 && (
-            <div style={{ fontSize: '13px', color: '#aaa', textAlign: 'center', padding: '8px 0' }}>En attente de joueurs...</div>
+            <div style={{ fontSize: '13px', color: '#aaa', textAlign: 'center', padding: '8px 0' }}>{t('En attente de joueurs...')}</div>
           )}
         </div>
 
         {/* Barème des points */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>📊 Barème des points</div>
+          <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>{t('📊 Barème des points')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
             {[
-              { emoji: '👁️', label: 'Robe',      pts: '500 si juste · 200 sinon' },
-              { emoji: '👃', label: 'Arômes',    pts: "jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes" },
-              { emoji: '👄', label: 'Bouche',    pts: '500 si juste · 350 si à côté · 200 sinon' },
-              { emoji: '💰', label: 'Prix',      pts: '500 si exact · −50 pts/CHF d\'écart' },
-              { emoji: '📅', label: 'Millésime', pts: '500 si exact · −50 pts par année d\'écart' },
-              { emoji: '🍇', label: 'Cépage',    pts: '1 500 si juste · 300 sinon' },
-              { emoji: '📍', label: 'Région',    pts: '500 si juste · 100 sinon' },
-              { emoji: '🪣', label: 'Élevage',   pts: '500 si juste · 100 sinon' },
-              { emoji: '💡', label: 'Aide',      pts: '−300 pts par aide utilisée' },
+              { emoji: '👁️', label: t('Robe'),      pts: t('500 si juste · 200 sinon') },
+              { emoji: '👃', label: t('Arômes'),    pts: t("jusqu'à 1 000 pts si les autres joueurs l'ont aussi · +200 si arôme des grappistes") },
+              { emoji: '👄', label: t('Bouche'),    pts: t('500 si juste · 350 si à côté · 200 sinon') },
+              { emoji: '💰', label: t('Prix'),      pts: t("500 si exact · −50 pts/CHF d'écart") },
+              { emoji: '📅', label: t('Millésime'), pts: t("500 si exact · −50 pts par année d'écart") },
+              { emoji: '🍇', label: t('Cépage'),    pts: t('1 500 si juste · 300 sinon') },
+              { emoji: '📍', label: t('Région'),    pts: t('500 si juste · 100 sinon') },
+              { emoji: '🪣', label: t('Élevage'),   pts: t('500 si juste · 100 sinon') },
+              { emoji: '💡', label: t('Aide'),      pts: t('−300 pts par aide utilisée') },
             ].map(({ emoji, label, pts }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                 <span style={{ fontSize: '14px', lineHeight: 1.4, flexShrink: 0 }}>{emoji}</span>
@@ -388,9 +390,9 @@ export default function EveningLobbyPage() {
 
         {/* QR + Partage */}
         <div style={{ background: '#f5ede8', border: '0.5px solid #d0a090', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-          <div style={{ fontSize: '14px', fontWeight: '600', color: accent, marginBottom: '4px' }}>🎉 Invite tes amis !</div>
+          <div style={{ fontSize: '14px', fontWeight: '600', color: accent, marginBottom: '4px' }}>{t('🎉 Invite tes amis !')}</div>
           <div style={{ fontSize: '12px', color: '#7a4030', marginBottom: '12px' }}>
-            Partage ce lien pour qu'ils rejoignent la soirée directement.
+            {t("Partage ce lien pour qu'ils rejoignent la soirée directement.")}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
             <div style={{ background: '#fff', border: '0.5px solid #d0a090', borderRadius: '12px', padding: '12px', display: 'inline-block' }}>
@@ -403,11 +405,11 @@ export default function EveningLobbyPage() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={copyLink}
               style={{ flex: 1, padding: '10px', border: 'none', borderRadius: '8px', background: copied ? '#27500A' : accent, color: '#fff', fontSize: '13px', cursor: 'pointer', fontWeight: '500', transition: 'background .2s' }}>
-              {copied ? '✓ Copié !' : '📋 Copier'}
+              {copied ? t('✓ Copié !') : t('📋 Copier')}
             </button>
             <button onClick={shareLink}
               style={{ flex: 1, padding: '10px', border: '0.5px solid #d0a090', borderRadius: '8px', background: '#fff', color: accent, fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>
-              💬 Partager
+              {t('💬 Partager')}
             </button>
           </div>
         </div>
@@ -416,12 +418,12 @@ export default function EveningLobbyPage() {
         {isOrganizer ? (
           <button onClick={launchEvening} disabled={launching || players.length === 0}
             style={{ width: '100%', padding: '14px', background: players.length === 0 ? '#c0a0a0' : eveningAccent, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: players.length === 0 ? 'default' : 'pointer' }}>
-            {launching ? 'Lancement...' : `Lancer la soirée (${players.length} joueur${players.length > 1 ? 's' : ''}) →`}
+            {launching ? t('Lancement...') : players.length > 1 ? t('Lancer la soirée ({n} joueurs) →', { n: players.length }) : t('Lancer la soirée ({n} joueur) →', { n: players.length })}
           </button>
         ) : (
           <div style={{ background: '#f0f4ff', border: '0.5px solid #c0ccee', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#3C3489', fontWeight: '500' }}>⏳ En attente de l'organisateur...</div>
-            <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '4px' }}>La soirée démarrera quand il lancera le jeu</div>
+            <div style={{ fontSize: '14px', color: '#3C3489', fontWeight: '500' }}>{t("⏳ En attente de l'organisateur...")}</div>
+            <div style={{ fontSize: '12px', color: '#534AB7', marginTop: '4px' }}>{t('La soirée démarrera quand il lancera le jeu')}</div>
           </div>
         )}
 

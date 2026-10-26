@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { CHARACTERS, avatarUrl, getCharacter } from '@/lib/gameCharacters'
+import { useT } from '@/lib/i18n'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ let corkSeq = 0
 
 export default function WineModeGame({ onClose }: { onClose: () => void }) {
   const supabase = createClient()
+  const t = useT()
   const [me, setMe]             = useState<GamePlayer | null>(null)
   const [players, setPlayers]   = useState<Map<string, GamePlayer>>(new Map())
   const [corks, setCorks]       = useState<FlyingCork[]>([])
@@ -302,8 +304,8 @@ export default function WineModeGame({ onClose }: { onClose: () => void }) {
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 9995, background: 'linear-gradient(135deg, #0d0020 0%, #2d0050 30%, #1a003a 100%)', fontFamily: 'system-ui, sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 1.5rem', overflowY: 'auto', justifyContent: 'center' }}>
         <div style={{ fontSize: '44px', marginBottom: '10px' }}>🍾</div>
-        <div style={{ fontSize: '22px', fontWeight: '700', color: '#FFBE0B', marginBottom: '6px' }}>Choisis ton personnage !</div>
-        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px', textAlign: 'center' }}>Il représente qui tu es dans le Wine Mode</div>
+        <div style={{ fontSize: '22px', fontWeight: '700', color: '#FFBE0B', marginBottom: '6px' }}>{t('Choisis ton personnage !')}</div>
+        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '24px', textAlign: 'center' }}>{t('Il représente qui tu es dans le Wine Mode')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', maxWidth: '340px', width: '100%' }}>
           {CHARACTERS.map(char => (
             <button key={char.seed} onClick={() => chooseAvatar(char.seed)}
@@ -316,7 +318,7 @@ export default function WineModeGame({ onClose }: { onClose: () => void }) {
             </button>
           ))}
         </div>
-        <button onClick={onClose} style={{ marginTop: '20px', background: 'rgba(255,255,255,0.07)', border: 'none', color: 'rgba(255,255,255,0.4)', borderRadius: '20px', padding: '8px 20px', fontSize: '13px', cursor: 'pointer' }}>Annuler</button>
+        <button onClick={onClose} style={{ marginTop: '20px', background: 'rgba(255,255,255,0.07)', border: 'none', color: 'rgba(255,255,255,0.4)', borderRadius: '20px', padding: '8px 20px', fontSize: '13px', cursor: 'pointer' }}>{t('Annuler')}</button>
       </div>
     )
   }
@@ -327,8 +329,8 @@ export default function WineModeGame({ onClose }: { onClose: () => void }) {
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(0,0,0,0.35)', zIndex: 10, flexShrink: 0 }}>
-        <div style={{ fontSize: '16px', fontWeight: '700', color: '#FFBE0B' }}>🍾 Lancer de Bouchons</div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '20px', padding: '5px 13px', fontSize: '12px', cursor: 'pointer' }}>✕ Fermer</button>
+        <div style={{ fontSize: '16px', fontWeight: '700', color: '#FFBE0B' }}>{t('🍾 Lancer de Bouchons')}</div>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '20px', padding: '5px 13px', fontSize: '12px', cursor: 'pointer' }}>{t('✕ Fermer')}</button>
       </div>
 
       {/* Scoreboard — me inclus avec score live */}
@@ -341,7 +343,7 @@ export default function WineModeGame({ onClose }: { onClose: () => void }) {
             <span style={{ fontSize: '15px', fontWeight: '700', color: '#FFBE0B' }}>{p.score}</span>
           </div>
         )) : (
-          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '8px 4px' }}>En attente des joueurs...</div>
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px', padding: '8px 4px' }}>{t('En attente des joueurs...')}</div>
         )}
       </div>
 
@@ -423,7 +425,7 @@ export default function WineModeGame({ onClose }: { onClose: () => void }) {
         {/* Hit/miss feedback */}
         {result && (
           <div style={{ position: 'absolute', left: '50%', top: '20%', transform: 'translateX(-50%)', fontSize: '18px', fontWeight: '800', whiteSpace: 'nowrap', color: result.type === 'hit' ? '#FFBE0B' : 'rgba(255,255,255,0.5)', textShadow: result.type === 'hit' ? '0 0 24px #FFBE0B, 0 0 50px rgba(255,190,11,0.3)' : 'none', animation: 'result-pop 1.3s ease forwards', zIndex: 8, pointerEvents: 'none' }}>
-            {result.type === 'hit' ? '🎯 Dans le verre !' : '💨 Raté !'}
+            {result.type === 'hit' ? t('🎯 Dans le verre !') : t('💨 Raté !')}
           </div>
         )}
 
@@ -431,7 +433,7 @@ export default function WineModeGame({ onClose }: { onClose: () => void }) {
         {!aim && !throwing && me && (
           <div style={{ position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center', pointerEvents: 'none', zIndex: 4 }}>
             <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginBottom: '10px', letterSpacing: '.04em' }}>
-              Vise le verre et glisse vers le haut !
+              {t('Vise le verre et glisse vers le haut !')}
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', animation: 'cork-idle 2.2s ease-in-out infinite' }}>
               <CorkShape rotate={-12} />

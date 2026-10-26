@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useT } from '@/lib/i18n'
 
 interface CatalogWine {
   id: string
@@ -94,6 +95,7 @@ function CavePepitesContent() {
   const searchParams = useSearchParams()
   const targetWineId = searchParams.get('wine')
   const supabase = createClient()
+  const t = useT()
 
   useEffect(() => {
     if (loading || !targetWineId) return
@@ -205,7 +207,7 @@ function CavePepitesContent() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
@@ -219,15 +221,15 @@ function CavePepitesContent() {
           <div style={{ display: 'flex', alignItems: 'center', height: '56px', gap: '12px' }}>
             <button onClick={() => router.push('/app/dashboard')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888', fontSize: '20px', padding: 0 }}>‹</button>
-            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>Ma cave</span>
+            <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a' }}>{t('Ma cave')}</span>
           </div>
           <div style={{ display: 'flex', borderTop: '0.5px solid #f0f0f0', marginBottom: '-1px' }}>
             <button onClick={() => router.push('/app/cave')}
               style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '400', color: '#888', background: 'none', border: 'none', borderBottom: '2px solid transparent', cursor: 'pointer' }}>
-              Mes dégustations
+              {t('Mes dégustations')}
             </button>
             <button style={{ flex: 1, padding: '10px 0', fontSize: '13px', fontWeight: '600', color: accent, background: 'none', border: 'none', borderBottom: `2px solid ${accent}`, cursor: 'default' }}>
-              Cave à pépites
+              {t('Cave à pépites')}
             </button>
           </div>
         </div>
@@ -239,7 +241,7 @@ function CavePepitesContent() {
           {([['all','Tous'], ['rated','✓ Notés'], ['unrated','Non notés']] as [FilterTab, string][]).map(([val, label]) => (
             <button key={val} onClick={() => setFilterTab(val)}
               style={{ padding: '5px 12px', borderRadius: '20px', border: filterTab === val ? 'none' : '0.5px solid #e0e0e0', background: filterTab === val ? accent : '#fff', color: filterTab === val ? '#fff' : '#666', fontSize: '12px', fontWeight: '500', cursor: 'pointer' }}>
-              {label}{val === 'all' ? ` (${entries.length})` : val === 'rated' ? ` (${ratedCount})` : ` (${entries.length - ratedCount})`}
+              {t(label)}{val === 'all' ? ` (${entries.length})` : val === 'rated' ? ` (${ratedCount})` : ` (${entries.length - ratedCount})`}
             </button>
           ))}
         </div>
@@ -247,15 +249,15 @@ function CavePepitesContent() {
         <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
           <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '16px', color: '#aaa' }}>🔍</span>
           <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Nom, producteur, cépage, région..."
+            placeholder={t('Nom, producteur, cépage, région...')}
             style={{ width: '100%', padding: '10px 12px 10px 36px', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }} />
         </div>
 
         {entries.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>💎</div>
-            <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>Le catalogue est vide</div>
-            <div style={{ fontSize: '13px', color: '#888' }}>L'admin ajoutera bientôt des vins ici</div>
+            <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: '6px' }}>{t('Le catalogue est vide')}</div>
+            <div style={{ fontSize: '13px', color: '#888' }}>{t("L'admin ajoutera bientôt des vins ici")}</div>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#888' }}>
@@ -290,16 +292,16 @@ function CavePepitesContent() {
                       <div style={{ fontSize: '12px', color: '#888', marginBottom: '2px' }}>
                         {wine.cave && <span style={{ fontWeight: '500' }}>{wine.cave}</span>}
                         {wine.cave && (wine.cepage || wine.region || wine.millesime) && ' · '}
-                        {[wine.cepage, wine.region, wine.millesime].filter(Boolean).join(' · ')}
+                        {[wine.cepage, wine.region && t(wine.region), wine.millesime].filter(Boolean).join(' · ')}
                       </div>
                       {playedInGame && (
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#eef3ff', color: '#3b5bdb', borderRadius: '8px', padding: '2px 8px', fontSize: '11px', fontWeight: '500', marginTop: '4px', width: 'fit-content' }}>
-                          🎮 Dégusté en jeu
+                          {t('🎮 Dégusté en jeu')}
                         </div>
                       )}
                       {myRating?.stars != null
                         ? <MiniStars score={myRating.stars} />
-                        : <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>Pas encore noté</span>
+                        : <span style={{ fontSize: '12px', color: '#bbb', fontStyle: 'italic' }}>{t('Pas encore noté')}</span>
                       }
                     </div>
                     <div style={{ fontSize: '16px', color: '#ccc', flexShrink: 0, marginTop: myRating?.stars != null ? '16px' : '0' }}>{isOpen ? '▲' : '▼'}</div>
@@ -311,8 +313,8 @@ function CavePepitesContent() {
                       <div style={{ background: '#f0f5ff', border: '0.5px solid #d0dcf5', borderRadius: '10px', padding: '10px 12px', marginBottom: '1rem', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                         <span style={{ fontSize: '16px', lineHeight: 1.4, flexShrink: 0 }}>✍️</span>
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#3b5bdb', marginBottom: '2px' }}>Donne ton avis au vigneron</div>
-                          <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.4 }}>Les avis sont anonymes. C'est aussi le meilleur moyen de retrouver les vins que tu aimes !</div>
+                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#3b5bdb', marginBottom: '2px' }}>{t('Donne ton avis au vigneron')}</div>
+                          <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.4 }}>{t("Les avis sont anonymes. C'est aussi le meilleur moyen de retrouver les vins que tu aimes !")}</div>
                         </div>
                       </div>
 
@@ -326,8 +328,8 @@ function CavePepitesContent() {
                         <a href={wine.pdf_url} target="_blank" rel="noreferrer"
                           style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '10px', fontSize: '13px', color: '#444', textDecoration: 'none', fontWeight: '500', marginBottom: '1rem' }}>
                           <span style={{ fontSize: '18px' }}>📄</span>
-                          <span>Voir la fiche du vin</span>
-                          <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#bbb' }}>PDF →</span>
+                          <span>{t('Voir la fiche du vin')}</span>
+                          <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#bbb' }}>{t('PDF →')}</span>
                         </a>
                       )}
 
@@ -348,7 +350,7 @@ function CavePepitesContent() {
                       </div>
 
                       <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Note *</label>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>{t('Note *')}</label>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                           <span style={{ fontSize: '40px', lineHeight: 1, flexShrink: 0 }}>
                             {formScore !== null ? SCORE_EMOJIS[formScore] : '🤔'}
@@ -356,8 +358,8 @@ function CavePepitesContent() {
                           <div>
                             <ScorePicker score={formScore} onRate={setFormScore} />
                             {formScore !== null
-                              ? <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>{formScore}/10 · {SCORE_LABELS[formScore]}</div>
-                              : <div style={{ fontSize: '11px', color: '#bbb', marginTop: '4px' }}>Tape sur les étoiles pour noter</div>
+                              ? <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>{formScore}/10 · {t(SCORE_LABELS[formScore])}</div>
+                              : <div style={{ fontSize: '11px', color: '#bbb', marginTop: '4px' }}>{t('Tape sur les étoiles pour noter')}</div>
                             }
                           </div>
                         </div>
@@ -372,25 +374,25 @@ function CavePepitesContent() {
                       </div>
 
                       <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Notes de dégustation</label>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{t('Notes de dégustation')}</label>
                         <textarea value={formNotesDeg} onChange={e => setFormNotesDeg(e.target.value)}
-                          placeholder="Robe, arôme, texture, longueur..."
+                          placeholder={t('Robe, arôme, texture, longueur...')}
                           style={{ width: '100%', padding: '8px 10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', fontSize: '13px', resize: 'none', minHeight: '72px', fontFamily: 'system-ui', outline: 'none', boxSizing: 'border-box', background: '#fff' }} />
                       </div>
 
                       <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>Design bouteille</label>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '4px' }}>{t('Design bouteille')}</label>
                         <div style={{ display: 'flex', gap: '2px', marginBottom: '3px' }}>
                           {[1, 2, 3, 4, 5].map(i => (
                             <button key={i} onClick={() => setFormDesign(i)}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', padding: '2px', lineHeight: 1, color: formDesign >= i ? '#f0a000' : '#ddd' }}>★</button>
                           ))}
                         </div>
-                        {formDesign > 0 && <div style={{ fontSize: '10px', color: '#888' }}>{['Moche','Pas très joli','Moyen','Joli','Magnifique'][formDesign - 1]}</div>}
+                        {formDesign > 0 && <div style={{ fontSize: '10px', color: '#888' }}>{t(['Moche','Pas très joli','Moyen','Joli','Magnifique'][formDesign - 1])}</div>}
                       </div>
 
                       <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>Prix</label>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '6px' }}>{t('Prix')}</label>
                         <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
                           {[1,2,3,4,5].map(i => {
                             const colors = ['#3B82F6','#6EBA70','#27500A','#f0a000','#e53e3e']
@@ -402,16 +404,16 @@ function CavePepitesContent() {
                           })}
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '10px', color: '#888' }}>Pas assez cher</span>
+                          <span style={{ fontSize: '10px', color: '#888' }}>{t('Pas assez cher')}</span>
                           <span style={{ fontSize: '10px', color: formValeur ? '#555' : '#bbb', fontWeight: formValeur ? '500' : '400' }}>
-                            {formValeur ? ['Bradé','Abordable','Juste prix','Cher','Trop cher'][formValeur - 1] : '—'}
+                            {formValeur ? t(['Bradé','Abordable','Juste prix','Cher','Trop cher'][formValeur - 1]) : '—'}
                           </span>
-                          <span style={{ fontSize: '10px', color: '#888' }}>Trop cher</span>
+                          <span style={{ fontSize: '10px', color: '#888' }}>{t('Trop cher')}</span>
                         </div>
                       </div>
 
                       <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>Tu le rachèterais ?</label>
+                        <label style={{ fontSize: '12px', fontWeight: '500', color: '#666', display: 'block', marginBottom: '8px' }}>{t('Tu le rachèterais ?')}</label>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           {[{ v: true, l: '✅ Oui' }, { v: false, l: '❌ Non' }].map(({ v, l }) => (
                             <button key={String(v)} onClick={() => setFormRachete(v)}
@@ -425,18 +427,18 @@ function CavePepitesContent() {
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button onClick={() => setExpanded(null)}
                           style={{ flex: 1, padding: '10px', border: '0.5px solid #e0e0e0', borderRadius: '8px', background: '#fff', color: '#888', fontSize: '13px', cursor: 'pointer' }}>
-                          Annuler
+                          {t('Annuler')}
                         </button>
                         <button onClick={() => saveRating(wine.id)} disabled={saving || formScore === null}
                           style={{ flex: 2, padding: '10px', border: 'none', borderRadius: '8px', background: saving || formScore === null ? '#c0a0a0' : accent, color: '#fff', fontSize: '13px', fontWeight: '500', cursor: saving || formScore === null ? 'default' : 'pointer' }}>
-                          {saving ? 'Sauvegarde...' : myRating ? 'Mettre à jour' : 'Enregistrer'}
+                          {saving ? t('Sauvegarde...') : myRating ? t('Mettre à jour') : t('Enregistrer')}
                         </button>
                       </div>
 
                       {wine.shopify_url && (
                         <a href={wine.shopify_url} target="_blank" rel="noreferrer"
                           style={{ display: 'block', textAlign: 'center', marginTop: '10px', fontSize: '13px', color: accent, textDecoration: 'none', fontWeight: '500' }}>
-                          Racheter ce vin →
+                          {t('Racheter ce vin →')}
                         </a>
                       )}
                     </div>

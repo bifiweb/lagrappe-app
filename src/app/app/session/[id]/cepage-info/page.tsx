@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { CEPAGE_INFO } from '@/lib/cepage-info'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import type { Profile, Session, SessionPlayer, Project } from '@/types'
+import { useT } from '@/lib/i18n'
 
 export default function CepageInfoPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -18,6 +19,7 @@ export default function CepageInfoPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -72,11 +74,11 @@ export default function CepageInfoPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Chargement...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Chargement...')}</div>
     </div>
   )
 
-  const cepageName = project?.cepage_name ?? 'Cépage'
+  const cepageName = project?.cepage_name ?? t('Cépage')
   const cepageInfoUrl = project?.cepage_info_url
   const info = CEPAGE_INFO[cepageName]
   const isChef = players.find(p => p.user_id === profile?.id)?.is_chef ?? false
@@ -90,7 +92,7 @@ export default function CepageInfoPage() {
             <span style={{ fontSize: '16px' }}>🍇</span>
           </div>
           <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>{cepageName}</span>
-          <span style={{ fontSize: '11px', background: '#f5ede8', color: '#8d323b', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>Dégustation à l'aveugle</span>
+          <span style={{ fontSize: '11px', background: '#f5ede8', color: '#8d323b', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>{t("Dégustation à l'aveugle")}</span>
         </div>
       </div>
 
@@ -101,34 +103,34 @@ export default function CepageInfoPage() {
           <div style={{ fontSize: '64px', marginBottom: '8px' }}>🍇</div>
           <div style={{ fontSize: '26px', fontWeight: '700', color: '#8d323b', marginBottom: '4px' }}>{cepageName}</div>
           {info && (
-            <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>{info.robe}</div>
+            <div style={{ fontSize: '13px', color: '#888', fontStyle: 'italic' }}>{t(info.robe)}</div>
           )}
         </div>
 
         {/* Description du cépage */}
         {info && (
           <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1.25rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>À quoi s'attendre ?</div>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '12px' }}>{t("À quoi s'attendre ?")}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '16px', flexShrink: 0 }}>👁️</span>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '2px' }}>Robe</div>
-                  <div style={{ fontSize: '13px', color: '#444', lineHeight: 1.5 }}>{info.robe}</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '2px' }}>{t('Robe')}</div>
+                  <div style={{ fontSize: '13px', color: '#444', lineHeight: 1.5 }}>{t(info.robe)}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '16px', flexShrink: 0 }}>👃</span>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '2px' }}>Nez</div>
-                  <div style={{ fontSize: '13px', color: '#444', lineHeight: 1.5 }}>{info.nez}</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '2px' }}>{t('Nez')}</div>
+                  <div style={{ fontSize: '13px', color: '#444', lineHeight: 1.5 }}>{t(info.nez)}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <span style={{ fontSize: '16px', flexShrink: 0 }}>👄</span>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '2px' }}>Bouche</div>
-                  <div style={{ fontSize: '13px', color: '#444', lineHeight: 1.5 }}>{info.bouche}</div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#666', marginBottom: '2px' }}>{t('Bouche')}</div>
+                  <div style={{ fontSize: '13px', color: '#444', lineHeight: 1.5 }}>{t(info.bouche)}</div>
                 </div>
               </div>
             </div>
@@ -138,10 +140,10 @@ export default function CepageInfoPage() {
         {/* Lien externe */}
         {cepageInfoUrl && (
           <div style={{ background: '#f5f5f5', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '1rem 1.25rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-            <div style={{ fontSize: '13px', color: '#666' }}>En savoir plus sur ce cépage</div>
+            <div style={{ fontSize: '13px', color: '#666' }}>{t('En savoir plus sur ce cépage')}</div>
             <a href={cepageInfoUrl} target="_blank" rel="noopener noreferrer"
               style={{ padding: '8px 16px', background: '#8d323b', color: '#fff', borderRadius: '8px', fontSize: '13px', fontWeight: '500', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              Ouvrir →
+              {t('Ouvrir →')}
             </a>
           </div>
         )}
@@ -149,13 +151,13 @@ export default function CepageInfoPage() {
         {/* Joueurs */}
         <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
           <div style={{ fontSize: '13px', fontWeight: '600', color: '#1a1a1a', marginBottom: '10px' }}>
-            {players.length} joueur{players.length > 1 ? 's' : ''} connecté{players.length > 1 ? 's' : ''}
+            {players.length > 1 ? t('{n} joueurs connectés', { n: players.length }) : t('{n} joueur connecté', { n: players.length })}
           </div>
           {players.map(p => (
             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0', borderBottom: '0.5px solid #f0f0f0' }}>
               <PlayerAvatar avatar={p.avatar} pseudo={p.pseudo} size={32} />
               <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{p.pseudo}</div>
-              {p.is_chef && <span style={{ fontSize: '11px', background: '#f5ede8', color: '#8d323b', padding: '2px 8px', borderRadius: '6px' }}>Organisateur</span>}
+              {p.is_chef && <span style={{ fontSize: '11px', background: '#f5ede8', color: '#8d323b', padding: '2px 8px', borderRadius: '6px' }}>{t('Organisateur')}</span>}
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3B6D11' }} />
             </div>
           ))}
@@ -165,12 +167,12 @@ export default function CepageInfoPage() {
         {isChef ? (
           <button onClick={launchTasting} disabled={launching}
             style={{ width: '100%', padding: '14px', background: launching ? '#c0a0a0' : '#8d323b', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: launching ? 'default' : 'pointer' }}>
-            {launching ? 'Démarrage...' : 'Commencer la dégustation →'}
+            {launching ? t('Démarrage...') : t('Commencer la dégustation →')}
           </button>
         ) : (
           <div style={{ background: '#f5f5f5', border: '0.5px solid #e0e0e0', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '14px', color: '#444', fontWeight: '500' }}>⏳ En attente de l'organisateur·ice...</div>
-            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>La dégustation démarrera dans quelques instants</div>
+            <div style={{ fontSize: '14px', color: '#444', fontWeight: '500' }}>{t("⏳ En attente de l'organisateur·ice...")}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>{t('La dégustation démarrera dans quelques instants')}</div>
           </div>
         )}
 

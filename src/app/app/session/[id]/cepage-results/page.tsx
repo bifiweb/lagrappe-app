@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import type { Profile, Session, SessionPlayer, Wine, Project, CepageRating } from '@/types'
+import { useT } from '@/lib/i18n'
 
 const MEDAL = ['🥇', '🥈', '🥉']
 const RANK_COLORS = ['#C9A227', '#9E9E9E', '#CD7F32']
@@ -56,6 +57,7 @@ export default function CepageResultsPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createClient()
+  const t = useT()
   const sessionId = params.id as string
 
   useEffect(() => {
@@ -90,11 +92,11 @@ export default function CepageResultsPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ color: '#888', fontSize: '14px' }}>Calcul des résultats...</div>
+      <div style={{ color: '#888', fontSize: '14px' }}>{t('Calcul des résultats...')}</div>
     </div>
   )
 
-  const cepageName = project?.cepage_name ?? 'Cépage'
+  const cepageName = project?.cepage_name ?? t('Cépage')
   const accent = '#8d323b'
 
   const bordaTotal = computeBordaRanks(allRatings, players, wines)
@@ -117,8 +119,8 @@ export default function CepageResultsPage() {
           <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#C9A227', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '16px' }}>🏆</span>
           </div>
-          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>Résultats — {cepageName}</span>
-          <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>Borda</span>
+          <span style={{ fontWeight: '500', fontSize: '16px', color: '#1a1a1a', flex: 1 }}>{t('Résultats — {cepage}', { cepage: cepageName })}</span>
+          <span style={{ fontSize: '11px', background: '#faeeda', color: '#633806', padding: '3px 10px', borderRadius: '10px', fontWeight: '500' }}>{t('Borda')}</span>
         </div>
       </div>
 
@@ -128,9 +130,9 @@ export default function CepageResultsPage() {
         {wineSortedByBorda.length >= 2 && (
           <div style={{ background: 'linear-gradient(135deg, #faeeda, #fdf8f5)', border: '0.5px solid #d0a090', borderRadius: '20px', padding: '1.5rem', marginBottom: '1.5rem' }}>
             <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-              <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>Classement final</div>
+              <div style={{ fontSize: '13px', color: '#888', marginBottom: '4px' }}>{t('Classement final')}</div>
               <div style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a' }}>
-                {MEDAL[0]} Bouteille {wineSortedByBorda[0]?.bottle_number} gagne !
+                {MEDAL[0]} {t('Bouteille {n} gagne !', { n: wineSortedByBorda[0]?.bottle_number ?? '' })}
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -149,12 +151,12 @@ export default function CepageResultsPage() {
                       {idx < 3 ? MEDAL[idx] : `${idx + 1}.`}
                     </span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>Bouteille {wine.bottle_number}</div>
-                      <div style={{ fontSize: '12px', color: '#888' }}>Moy. {avg}/100</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{t('Bouteille {n}', { n: wine.bottle_number })}</div>
+                      <div style={{ fontSize: '12px', color: '#888' }}>{t('Moy.')} {avg}/100</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: '18px', fontWeight: '700', color: accent }}>{borda}</div>
-                      <div style={{ fontSize: '10px', color: '#aaa' }}>pts Borda</div>
+                      <div style={{ fontSize: '10px', color: '#aaa' }}>{t('pts Borda')}</div>
                     </div>
                   </div>
                 )
@@ -168,7 +170,7 @@ export default function CepageResultsPage() {
           {(['final', 'players'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{ flex: 1, padding: '10px', background: activeTab === tab ? accent : 'transparent', color: activeTab === tab ? '#fff' : '#888', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: '500' }}>
-              {tab === 'final' ? '📊 Classement final' : '👤 Par joueur'}
+              {tab === 'final' ? t('📊 Classement final') : t('👤 Par joueur')}
             </button>
           ))}
         </div>
@@ -178,7 +180,7 @@ export default function CepageResultsPage() {
           <div>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <div style={{ fontSize: '12px', fontWeight: '600', color: '#888', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.05em' }}>
-                Méthode Borda — chaque joueur classe les vins du meilleur au moins bon
+                {t('Méthode Borda — chaque joueur classe les vins du meilleur au moins bon')}
               </div>
               {wineSortedByBorda.map((wine, idx) => {
                 const borda = bordaTotal[wine.id] ?? 0
@@ -189,9 +191,9 @@ export default function CepageResultsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '14px' }}>{idx < 3 ? MEDAL[idx] : `${idx + 1}.`}</span>
-                        <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>Bouteille {wine.bottle_number}</span>
+                        <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a' }}>{t('Bouteille {n}', { n: wine.bottle_number })}</span>
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: '600', color: accent }}>{borda} pts</span>
+                      <span style={{ fontSize: '13px', fontWeight: '600', color: accent }}>{borda} {t('pts')}</span>
                     </div>
                     <div style={{ background: '#f5f5f5', borderRadius: '4px', height: '6px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${barWidth}%`, background: idx === 0 ? '#C9A227' : accent, borderRadius: '4px', transition: 'width .6s' }} />
@@ -226,7 +228,7 @@ export default function CepageResultsPage() {
                     <PlayerAvatar avatar={player.avatar} pseudo={player.pseudo} size={36} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a' }}>{player.pseudo}</div>
-                      {isMe && <div style={{ fontSize: '11px', color: accent }}>Moi</div>}
+                      {isMe && <div style={{ fontSize: '11px', color: accent }}>{t('Moi')}</div>}
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -235,7 +237,7 @@ export default function CepageResultsPage() {
                         <span style={{ fontSize: '13px', color: idx < 3 ? RANK_COLORS[idx] : '#aaa', fontWeight: '600', width: '22px', flexShrink: 0 }}>
                           {idx + 1}.
                         </span>
-                        <span style={{ flex: 1, fontSize: '13px', color: '#444' }}>Bouteille {item.wine.bottle_number}</span>
+                        <span style={{ flex: 1, fontSize: '13px', color: '#444' }}>{t('Bouteille {n}', { n: item.wine.bottle_number })}</span>
                         <span style={{ fontSize: '15px', fontWeight: '700', color: accent }}>{item.score}<span style={{ fontSize: '11px', fontWeight: '400', color: '#aaa' }}>/100</span></span>
                       </div>
                     ))}
@@ -274,7 +276,7 @@ export default function CepageResultsPage() {
         <div style={{ marginTop: '2rem', textAlign: 'center' }}>
           <button onClick={() => router.push('/app/dashboard')}
             style={{ padding: '12px 28px', background: 'transparent', border: `0.5px solid ${accent}`, borderRadius: '10px', color: accent, fontSize: '14px', cursor: 'pointer', fontWeight: '500' }}>
-            ← Retour au dashboard
+            {t('← Retour au dashboard')}
           </button>
         </div>
 
