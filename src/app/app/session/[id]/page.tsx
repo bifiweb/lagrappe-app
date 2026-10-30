@@ -40,6 +40,7 @@ export default function SessionPage() {
   const [myVote, setMyVote] = useState<string | null>(null)
   const [votesIn, setVotesIn] = useState(0)
   const [hasVoted, setHasVoted] = useState(false)
+  const [voteClosed, setVoteClosed] = useState(false)
   const [chef, setChef] = useState<SessionPlayer | null>(null)
   const [countdown, setCountdown] = useState(10)
   const [loading, setLoading] = useState(true)
@@ -186,21 +187,13 @@ export default function SessionPage() {
 
       const { data: sess } = await supabase
         .from('sessions').select('*').eq('id', sessionId).single()
-      if (sess?.status === 'countdown') {
-        const chefPlayer = currentPlayers.find(p => p.is_chef)
-        if (chefPlayer) {
-          setChef(chefPlayer)
-          setPhase('countdown')
-          clearInterval(interval)
-          startCountdown()
-        }
-        return
-      }
+      const voteClosed = !!sess?.vote_closed_at
+      setVoteClosed(voteClosed)
 
-      if (newCount >= currentPlayers.length && currentPlayers.length > 0) {
+      if ((newCount >= currentPlayers.length || voteClosed) && newCount > 0 && currentPlayers.length > 0) {
         clearInterval(interval)
         setDeterminingChef(true)
-        await determineChef(currentPlayers)
+        await determineChef(currentPlayers, voteClosed)
       }
     }, 2000)
     return () => clearInterval(interval)
@@ -237,7 +230,6 @@ export default function SessionPage() {
         setTimeout(async () => {
           await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
           await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', winnerId)
-          await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
         }, 1500)
       }
       setTimeout(() => {
@@ -341,7 +333,6 @@ export default function SessionPage() {
       setChef(soloPlayer)
       await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
       await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', user.id)
-      await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
       setPhase('countdown')
       startCountdown()
       return
@@ -375,12 +366,22 @@ export default function SessionPage() {
     }
   }
 
-  async function determineChef(currentPlayers: SessionPlayer[]) {
-    const { data: votes } = await supabase.from('votes').select('voted_for').eq('session_id', sessionId)
+  async function closeVote() {
+    if (!confirm(t('Continuer sans attendre les joueurs qui n\'ont pas voté ?'))) return
+    await supabase.from('sessions').update({ vote_closed_at: new Date().toISOString() }).eq('id', sessionId)
+  }
+
+  async function determineChef(currentPlayers: SessionPlayer[], closed = false) {
+    const { data: votes } = await supabase.from('votes').select('voter_id, voted_for').eq('session_id', sessionId)
     if (!votes || votes.length === 0) return
 
+    // Vote clos : un joueur absent ne peut pas être élu, il ne lancerait jamais la révélation
+    const voters = votes.map(v => v.voter_id)
+    const present = votes.filter(v => voters.includes(v.voted_for)).map(v => v.voted_for)
+    const candidates = !closed ? votes.map(v => v.voted_for) : present.length > 0 ? present : voters
+
     const tally: Record<string, number> = {}
-    votes.forEach(v => { tally[v.voted_for] = (tally[v.voted_for] || 0) + 1 })
+    candidates.forEach(id => { tally[id] = (tally[id] || 0) + 1 })
 
     const maxVotes = Math.max(...Object.values(tally))
     // Tri : même ordre sur tous les téléphones (l'ordre des votes renvoyés par la DB n'est pas garanti)
@@ -432,7 +433,6 @@ export default function SessionPage() {
     setChef(chefPlayer ?? null)
     await supabase.from('session_players').update({ is_chef: false }).eq('session_id', sessionId)
     await supabase.from('session_players').update({ is_chef: true }).eq('session_id', sessionId).eq('user_id', chefId)
-    await supabase.from('sessions').update({ status: 'countdown' }).eq('id', sessionId)
     setPhase('countdown')
     startCountdown()
   }
@@ -721,6 +721,13 @@ export default function SessionPage() {
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1rem' }}>
               {votesIn} / {players.length} {t('votes')}
             </div>
+
+            {hasVoted && !voteClosed && votesIn < players.length && (
+              <button onClick={closeVote}
+                style={{ width: '100%', marginTop: '10px', padding: '12px', background: 'transparent', color: '#8d323b', border: '0.5px solid #d0a090', borderRadius: '12px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' }}>
+                {t('⚡ Continuer sans les absents')}
+              </button>
+            )}
           </>
         )}
 

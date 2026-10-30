@@ -801,4 +801,10 @@ export const DE: Record<string, string> = {
   "💨 Raté !": "💨 Daneben!",
   "Notifications La Grappe": "Benachrichtigungen von La Grappe",
   "Annonces, nouveaux jeux, suggestions…": "Neuigkeiten, neue Spiele, Tipps…",
+  "{n} / {total} dégustations soumises": "{n} / {total} Degustationen eingereicht",
+  "⚡ Forcer la révélation ({n}/{total} terminés)": "⚡ Enthüllung erzwingen ({n}/{total} fertig)",
+  "⚡ Continuer sans les absents": "⚡ Ohne die Abwesenden weiter",
+  "Continuer sans attendre les joueurs qui n'ont pas voté ?": "Weitermachen, ohne auf die Spieler:innen zu warten, die nicht abgestimmt haben?",
+  "🍾 Le vin a été révélé ! Envoie vite ta fiche pour marquer tes points.": "🍾 Der Wein wurde enthüllt! Schick schnell dein Blatt ab, um Punkte zu holen.",
+  "{noms} remportent la soirée à égalité avec {pts} pts": "{noms} gewinnen den Abend gemeinsam mit {pts} Pkt.",
 }

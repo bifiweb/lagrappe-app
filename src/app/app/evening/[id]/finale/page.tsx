@@ -111,7 +111,10 @@ export default function EveningFinalePage() {
   const podiumHeights = [100, 140, 80]
   const podiumColorsBg = ['#e8e4f8', '#f5c518', '#f0ede8']
   const podiumColorsText = ['#6B4FAE', '#8a6900', '#7a5a3a']
-  const podiumLabels = ['2ème', '1er', '3ème']
+  const rankLabels = ['1er', '2ème', '3ème']
+  // Même rang pour les ex æquo
+  const sharedRank = (points: number) => leaderboard.findIndex(e => e.total_points === points)
+  const winners = leaderboard.filter(e => e.total_points === leaderboard[0]?.total_points)
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif', overflow: 'hidden', position: 'relative' }}>
@@ -171,7 +174,9 @@ export default function EveningFinalePage() {
           <div style={{ fontSize: '48px', marginBottom: '8px' }}>🎉</div>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: '0 0 6px' }}>{t('Bravo à tous !')}</h1>
           <p style={{ fontSize: '14px', color: '#888', margin: 0 }}>
-            {t('{nom} remporte la soirée avec {pts} pts', { nom: leaderboard[0]?.pseudo ?? '', pts: leaderboard[0]?.total_points.toLocaleString() ?? '' })}
+            {winners.length > 1
+              ? t('{noms} remportent la soirée à égalité avec {pts} pts', { noms: winners.map(w => w.pseudo).join(t(' et ')), pts: winners[0].total_points.toLocaleString() })
+              : t('{nom} remporte la soirée avec {pts} pts', { nom: leaderboard[0]?.pseudo ?? '', pts: leaderboard[0]?.total_points.toLocaleString() ?? '' })}
           </p>
         </div>
 
@@ -180,11 +185,13 @@ export default function EveningFinalePage() {
           <div style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '8px', height: '280px' }}>
               {podiumOrder.map((entry, i) => {
-                const rank = top3.indexOf(entry)
-                const height = podiumHeights[i]
-                const bgColor = podiumColorsBg[i]
-                const textColor = podiumColorsText[i]
-                const label = podiumLabels[i]
+                const rank = sharedRank(entry.total_points)
+                // Seul sur le podium : il occupe la marche centrale du·de la gagnant·e
+                const slot = top3.length === 1 ? 1 : i
+                const height = podiumHeights[slot]
+                const bgColor = podiumColorsBg[slot]
+                const textColor = podiumColorsText[slot]
+                const label = rankLabels[rank]
                 const isMe = entry?.user_id === user?.id
                 return (
                   <div key={entry?.user_id ?? i} style={{
@@ -231,10 +238,10 @@ export default function EveningFinalePage() {
                 borderRadius: '12px', padding: '12px 14px', marginBottom: '6px',
                 display: 'flex', alignItems: 'center', gap: '12px',
               }}>
-                <div style={{ fontSize: '16px', fontWeight: '700', color: '#888', width: '24px', textAlign: 'center' }}>{i + 4}</div>
+                <div style={{ fontSize: '16px', fontWeight: '700', color: '#888', width: '24px', textAlign: 'center' }}>{sharedRank(entry.total_points) + 1}</div>
                 <PlayerAvatar avatar={entry.avatar} pseudo={entry.pseudo} size={32} />
                 <div style={{ flex: 1, fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>
-                  {entry.pseudo}{entry.user_id === user?.id ? ' (moi)' : ''}
+                  {entry.pseudo}{entry.user_id === user?.id ? t(' (moi)') : ''}
                 </div>
                 <div style={{ fontSize: '16px', fontWeight: '700', color: '#6B4FAE' }}>
                   {entry.total_points.toLocaleString()}
@@ -263,10 +270,10 @@ export default function EveningFinalePage() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((entry, rank) => (
+                {leaderboard.map(entry => (
                   <tr key={entry.user_id} style={{ borderTop: '0.5px solid #f5f5f5' }}>
                     <td style={{ padding: '6px 6px', fontWeight: '500', color: '#1a1a1a', whiteSpace: 'nowrap' }}>
-                      {rank < 3 && <span style={{ marginRight: '4px' }}>{['🥇', '🥈', '🥉'][rank]}</span>}
+                      {sharedRank(entry.total_points) < 3 && <span style={{ marginRight: '4px' }}>{['🥇', '🥈', '🥉'][sharedRank(entry.total_points)]}</span>}
                       {entry.pseudo}
                     </td>
                     {entry.per_bottle.map((pts, i) => (

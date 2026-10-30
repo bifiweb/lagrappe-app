@@ -101,6 +101,7 @@ export interface Session {
   status: SessionStatus
   started_at: string | null
   revealed_at: string | null
+  vote_closed_at: string | null
   created_at: string
   // Jointures
   wine?: Wine

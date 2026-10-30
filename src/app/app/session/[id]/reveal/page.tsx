@@ -65,6 +65,9 @@ export default function RevealPage() {
           .subscribe()
         eveningChannelRef.current = channel
 
+        // Avant le fallback : une fiche envoyée en retard doit être notée même si la bouteille suivante a démarré
+        await supabase.rpc('calculate_session_scores', { p_session_id: sessionId })
+
         // Fallback: organizer may have already launched next bottle
         // before we finished subscribing (broadcast is ephemeral)
         const { data: nextSess } = await supabase
@@ -82,9 +85,9 @@ export default function RevealPage() {
 
         const { data: ev } = await supabase.from('evenings').select('*').eq('id', eveningId).single()
         setEvening(ev)
+      } else {
+        await supabase.rpc('calculate_session_scores', { p_session_id: sessionId })
       }
-
-      await supabase.rpc('calculate_session_scores', { p_session_id: sessionId })
 
       if (sess) {
         const { data: w } = await supabase

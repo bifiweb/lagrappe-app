@@ -28,6 +28,7 @@ export default function EveningLobbyPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [evening, setEvening] = useState<Evening | null>(null)
   const [firstSession, setFirstSession] = useState<Session | null>(null)
+  const [lateSession, setLateSession] = useState<Session | null>(null)
   const [players, setPlayers] = useState<SessionPlayer[]>([])
   const [wines, setWines] = useState<Wine[]>([])
 
@@ -105,8 +106,18 @@ export default function EveningLobbyPage() {
         }
 
         if (sess.status !== 'lobby') {
-          router.push(`/app/session/${sess.id}`)
-          return
+          // Soirée déjà lancée : un joueur inscrit la reprend, un retardataire passe par le formulaire
+          const { data: mine } = u
+            ? await supabase.from('session_players').select('id').eq('evening_id', eveningId).eq('user_id', u.id).limit(1)
+            : { data: [] }
+          if (mine?.length) {
+            router.push(`/app/session/${sess.id}`)
+            return
+          }
+          const { data: latest } = await supabase
+            .from('sessions').select('*').eq('evening_id', eveningId)
+            .order('order_in_evening', { ascending: false }).limit(1).single()
+          setLateSession(latest)
         }
       }
 
@@ -173,7 +184,7 @@ export default function EveningLobbyPage() {
     }
 
     const { error } = await supabase.from('session_players').insert({
-      session_id: firstSession.id,
+      session_id: lateSession?.id ?? firstSession.id,
       user_id: userId,
       pseudo: pseudo.trim(),
       avatar: selectedAvatar ?? null,
@@ -181,6 +192,10 @@ export default function EveningLobbyPage() {
       evening_id: eveningId,
     })
 
+    if (!error && lateSession) {
+      router.push(`/app/session/${lateSession.id}`)
+      return
+    }
     if (!error) setJoined(true)
     setJoining(false)
   }

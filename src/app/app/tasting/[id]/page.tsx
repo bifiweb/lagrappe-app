@@ -133,6 +133,7 @@ export default function TastingPage() {
   const [eliminatedAromes, setEliminatedAromes] = useState<string[]>([])
   const [eliminatedCepages, setEliminatedCepages] = useState<string[]>([])
   const [eliminatedRegions, setEliminatedRegions] = useState<string[]>([])
+  const [revealedWhileTasting, setRevealedWhileTasting] = useState(false)
 
   const router = useRouter()
   const params = useParams()
@@ -165,6 +166,20 @@ export default function TastingPage() {
     }
     load()
   }, [])
+
+  // Révélation forcée pendant que ce joueur remplit encore sa fiche
+  useEffect(() => {
+    if (!sessionId) return
+    const interval = setInterval(async () => {
+      const { data: sess } = await supabase
+        .from('sessions').select('status').eq('id', sessionId).single()
+      if (sess?.status === 'revealed') {
+        clearInterval(interval)
+        setRevealedWhileTasting(true)
+      }
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [sessionId])
 
   function toggleArome(a: string) {
     haptic()
@@ -287,6 +302,12 @@ export default function TastingPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#fdf8f5', fontFamily: 'system-ui, sans-serif' }}>
+
+      {revealedWhileTasting && (
+        <div style={{ background: '#faeeda', borderBottom: '0.5px solid #e0c080', padding: '10px 1.5rem', textAlign: 'center', fontSize: '13px', color: '#633806' }}>
+          {t('🍾 Le vin a été révélé ! Envoie vite ta fiche pour marquer tes points.')}
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ background: '#fff', borderBottom: '0.5px solid #e0e0e0', padding: '0 1.5rem' }}>
@@ -839,7 +860,7 @@ export default function TastingPage() {
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '0.5px solid #e0e0e0', padding: '1rem 1.5rem' }}>
         {hintsUsed > 0 && (
           <div style={{ maxWidth: '500px', margin: '0 auto 8px', textAlign: 'center', fontSize: '11px', color: '#8a6000', background: '#fffbf0', borderRadius: '8px', padding: '4px 0' }}>
-            💡 {hintsUsed > 1 ? t('{n} aides utilisées', { n: hintsUsed }) : t('{n} aide utilisée', { n: hintsUsed })} — {t('malus : −{pts} pts', { pts: hintsUsed * 200 })}
+            💡 {hintsUsed > 1 ? t('{n} aides utilisées', { n: hintsUsed }) : t('{n} aide utilisée', { n: hintsUsed })} — {t('malus : −{pts} pts', { pts: hintsUsed * 300 })}
           </div>
         )}
         {stepMissing && (

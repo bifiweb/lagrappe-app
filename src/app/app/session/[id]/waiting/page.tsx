@@ -34,6 +34,9 @@ export default function WaitingPage() {
         .from('sessions').select('*').eq('id', sessionId).single()
       setSession(sess)
 
+      // Fiche envoyée après une révélation forcée : personne ne relancera le décompte
+      if (sess?.status === 'revealed') { router.push(`/app/session/${sessionId}/reveal`); return }
+
       const { data: pl } = await supabase
         .from('session_players').select('*').eq('session_id', sessionId)
       setPlayers(pl ?? [])
@@ -75,6 +78,25 @@ export default function WaitingPage() {
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
+  }, [sessionId])
+
+  // Polling de secours : le temps réel peut manquer un événement (téléphone en veille, abonnement tardif)
+  useEffect(() => {
+    if (!sessionId) return
+    const interval = setInterval(async () => {
+      if (isRevealingRef.current) return
+      const { data: sess } = await supabase
+        .from('sessions').select('status').eq('id', sessionId).single()
+      if (sess?.status === 'revealed') {
+        clearInterval(interval)
+        router.push(`/app/session/${sessionId}/reveal`)
+        return
+      }
+      const { data: pl } = await supabase
+        .from('session_players').select('*').eq('session_id', sessionId)
+      if (pl) setPlayers(pl)
+    }, 3000)
+    return () => clearInterval(interval)
   }, [sessionId])
 
   useSessionRealtime(sessionId, {
@@ -218,7 +240,7 @@ export default function WaitingPage() {
                 {allDone ? t('Tout le monde a terminé !') : t('En attente des joueurs...')}
               </div>
               <div style={{ fontSize: '13px', color: '#888' }}>
-                {doneCount} / {players.length} dégustations soumises
+                {t('{n} / {total} dégustations soumises', { n: doneCount, total: players.length })}
               </div>
             </div>
 
@@ -278,7 +300,7 @@ export default function WaitingPage() {
                       border: '0.5px solid #d0a090', borderRadius: '12px',
                       fontSize: '13px', fontWeight: '500', cursor: 'pointer',
                     }}>
-                    ⚡ Forcer la révélation ({doneCount}/{players.length} terminés)
+                    {t('⚡ Forcer la révélation ({n}/{total} terminés)', { n: doneCount, total: players.length })}
                   </button>
                 )}
               </>
