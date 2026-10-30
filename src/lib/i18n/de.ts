@@ -258,6 +258,8 @@ export const DE: Record<string, string> = {
   "⏳ En attente de l'organisateur·ice...": "⏳ Warten auf die Organisatorin / den Organisator...",
   "La dégustation démarrera dans quelques instants": "Die Degustation beginnt in wenigen Augenblicken",
   "Bouteille {n}/{total} — Même équipe !": "Flasche {n}/{total} — gleiches Team!",
+  "Bouteille {n}/{total} — Prêts à démarrer ?": "Flasche {n}/{total} — bereit zum Start?",
+  "Tout le monde est en place. L'organisateur·ice peut lancer la première dégustation.": "Alle sind bereit. Die Organisatorin oder der Organisator kann die erste Degustation starten.",
   "Tout le monde est en place. L'organisateur·ice peut lancer la prochaine dégustation.": "Alle sind bereit. Die Organisatorin oder der Organisator kann die nächste Degustation starten.",
   "Lancer la dégustation →": "Degustation starten →",
   "Attends que tout le monde soit là !": "Warte, bis alle da sind!",

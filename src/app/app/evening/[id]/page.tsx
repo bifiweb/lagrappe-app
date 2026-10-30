@@ -12,6 +12,17 @@ import { useT } from '@/lib/i18n'
 const accent = '#8d323b'
 const eveningAccent = '#6B4FAE'
 
+function WhiteWineGlass() {
+  return (
+    <svg width="13" height="18" viewBox="0 0 48 67" fill="none" aria-hidden="true" style={{ display: 'block' }}>
+      <path d="M8 4 C8 4 4 20 4 28 C4 38 13 46 24 46 C35 46 44 38 44 28 C44 20 40 4 40 4 Z" fill="#fff" stroke="#b8a860" strokeWidth="3"/>
+      <path d="M5 24 C4.3 26 4 27 4 28 C4 38 13 46 24 46 C35 46 44 38 44 28 C44 27 43.7 26 43 24 Z" fill="#E8D27A"/>
+      <line x1="24" y1="46" x2="24" y2="60" stroke="#b8a860" strokeWidth="4"/>
+      <line x1="14" y1="60" x2="34" y2="60" stroke="#b8a860" strokeWidth="4" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 export default function EveningLobbyPage() {
   const [user, setUser] = useState<{ id: string } | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -222,7 +233,7 @@ export default function EveningLobbyPage() {
 
   const wineTypeLabel = (type: string) => {
     if (type === 'rouge') return '🍷'
-    if (type === 'blanc') return '🥂'
+    if (type === 'blanc') return <WhiteWineGlass />
     if (type === 'rose') return '🌸'
     return '🍾'
   }

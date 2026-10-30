@@ -628,10 +628,14 @@ export default function SessionPage() {
                   <span style={{ fontSize: '18px', flexShrink: 0 }}>🎉</span>
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: '600', color: '#5B3D9E', marginBottom: '2px' }}>
-                      {t('Bouteille {n}/{total} — Même équipe !', { n: session?.order_in_evening ?? '', total: totalBottles })}
+                      {session?.order_in_evening === 1
+                        ? t('Bouteille {n}/{total} — Prêts à démarrer ?', { n: 1, total: totalBottles })
+                        : t('Bouteille {n}/{total} — Même équipe !', { n: session?.order_in_evening ?? '', total: totalBottles })}
                     </div>
                     <div style={{ fontSize: '12px', color: '#6B4FAE', lineHeight: 1.5 }}>
-                      {t("Tout le monde est en place. L'organisateur·ice peut lancer la prochaine dégustation.")}
+                      {session?.order_in_evening === 1
+                        ? t("Tout le monde est en place. L'organisateur·ice peut lancer la première dégustation.")
+                        : t("Tout le monde est en place. L'organisateur·ice peut lancer la prochaine dégustation.")}
                     </div>
                   </div>
                 </div>
