@@ -613,6 +613,10 @@ export const DE: Record<string, string> = {
   "Gras, ample, puissant, acidité discrète": "Füllig, voll, kräftig, dezente Säure",
   "Jaune or": "Goldgelb",
   "Coing, agrumes, herbes, miel": "Quitte, Zitrusfrüchte, Kräuter, Honig",
+  "Merlot blanc": "Weisser Merlot",
+  "Jaune pâle, translucide": "Blassgelb, durchscheinend",
+  "Poire, pomme, citron, notes beurrées": "Birne, Apfel, Zitrone, buttrige Noten",
+  "Gras, séveux, belle fraîcheur": "Füllig, saftig, schöne Frische",
   "Acidité vive, structuré, grand potentiel de garde": "Lebhafte Säure, strukturiert, grosses Lagerpotenzial",
 
   // ---- Révélation

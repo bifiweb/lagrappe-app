@@ -145,6 +145,11 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
     nez: 'Coing, agrumes, herbes, miel',
     bouche: 'Acidité vive, structuré, grand potentiel de garde',
   },
+  'Merlot blanc': {
+    robe: 'Jaune pâle, translucide',
+    nez: 'Poire, pomme, citron, notes beurrées',
+    bouche: 'Gras, séveux, belle fraîcheur',
+  },
 }
 
 // ---- Profils pour classer les cépages dans la devinette ----
@@ -188,6 +193,7 @@ export const CEPAGE_PROFILS: Record<string, CepageProfil> = {
   'Humagne Blanche': { robes: ['Jaune pâle'], aromes: ['Herbes aromatiques', 'Tilleul', 'Fleurs blanches', 'Minéralité', 'Citron', 'Épices'], bouche: [1, 3] },
   'Ermitage':        { robes: ['Or / Paille'], aromes: ['Coing', 'Amande', 'Miel', 'Abricot', 'Pêche', 'Épices'], bouche: [3, 4] },
   'Completer':       { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Coing', 'Mandarine', 'Citron', 'Herbes aromatiques', 'Pomme', 'Miel', 'Épices'], bouche: [0, 2] },
+  'Merlot blanc':    { robes: ['Jaune pâle'], aromes: ['Poire', 'Pomme', 'Citron', 'Beurre', 'Pêche'], bouche: [2, 3] },
 }
 
 // Classe les cépages du plus proche au plus éloigné de ce que le joueur a noté.

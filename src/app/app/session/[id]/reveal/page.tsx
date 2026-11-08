@@ -666,14 +666,16 @@ export default function RevealPage() {
         {activeTab === 'vin' && notes && (
           <>
             <div style={{ background: '#fff', border: '0.5px solid #e0e0e0', borderRadius: '16px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Note des grappistes')}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '.75rem' }}>
-                <div style={{ fontSize: '32px', fontWeight: '500', color: accent }}>{notes.note}</div>
-                <div style={{ flex: 1, height: '6px', background: '#f0f0f0', borderRadius: '3px' }}>
-                  <div style={{ height: '6px', borderRadius: '3px', background: accent, width: `${notes.note * 10}%` }} />
+              {notes.note != null && (<>
+                <div style={{ fontSize: '11px', fontWeight: '500', color: '#888', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '.75rem' }}>{t('Note des grappistes')}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '.75rem' }}>
+                  <div style={{ fontSize: '32px', fontWeight: '500', color: accent }}>{notes.note}</div>
+                  <div style={{ flex: 1, height: '6px', background: '#f0f0f0', borderRadius: '3px' }}>
+                    <div style={{ height: '6px', borderRadius: '3px', background: accent, width: `${notes.note * 10}%` }} />
+                  </div>
+                  <div style={{ fontSize: '13px', color: '#888' }}>/ 10</div>
                 </div>
-                <div style={{ fontSize: '13px', color: '#888' }}>/ 10</div>
-              </div>
+              </>)}
               <p style={{ fontSize: '13px', color: '#444', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
                 "{notes.description}"
               </p>
