@@ -811,4 +811,10 @@ export const DE: Record<string, string> = {
   "Continuer sans attendre les joueurs qui n'ont pas voté ?": "Weitermachen, ohne auf die Spieler:innen zu warten, die nicht abgestimmt haben?",
   "🍾 Le vin a été révélé ! Envoie vite ta fiche pour marquer tes points.": "🍾 Der Wein wurde enthüllt! Schick schnell dein Blatt ab, um Punkte zu holen.",
   "{noms} remportent la soirée à égalité avec {pts} pts": "{noms} gewinnen den Abend gemeinsam mit {pts} Pkt.",
+
+  // ---- Encart promo Noël 2026 (PromoValais)
+  "🎄 Nouveau pour Noël": "🎄 Neu für Weihnachten",
+  "Le Valais à l'aveugle": "Das Wallis blind",
+  "Des vins valaisans à deviner, tous les joueurs ensemble dans La grAPP. En solo, en duo ou en coffret de 6.": "Walliser Weine zum Erraten, alle Spieler:innen gemeinsam in der grAPP. Solo, im Duo oder als 6er-Box.",
+  "Découvrir le jeu →": "Spiel entdecken →",
 }

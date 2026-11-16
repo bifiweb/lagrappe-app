@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { Profile, Project } from '@/types'
 import { avatarUrl } from '@/lib/gameCharacters'
 import PushBanner from '@/components/PushBanner'
+import PromoValais from '@/components/PromoValais'
 import { useT, LangSwitch } from '@/lib/i18n'
 
 export default function DashboardPage() {
@@ -92,6 +93,8 @@ export default function DashboardPage() {
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 1.5rem' }}>
 
         <PushBanner />
+
+        <PromoValais source="dashboard" />
 
         {/* Salutation */}
         <div style={{ marginBottom: '2rem' }}>

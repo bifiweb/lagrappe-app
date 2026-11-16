@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import type { Evening, Session, SessionPlayer, Wine } from '@/types'
 import { useT } from '@/lib/i18n'
+import PromoValais from '@/components/PromoValais'
 
 type FinalEntry = {
   user_id: string
@@ -294,6 +295,8 @@ export default function EveningFinalePage() {
             </table>
           </div>
         )}
+
+        <PromoValais source="finale-soiree" />
 
         <button onClick={() => router.push('/app/dashboard')}
           style={{ width: '100%', padding: '14px', background: '#6B4FAE', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: '500', cursor: 'pointer', marginBottom: '8px' }}>

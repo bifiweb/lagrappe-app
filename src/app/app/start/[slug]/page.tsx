@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import type { Project } from '@/types'
 import { useT } from '@/lib/i18n'
+import PromoValais from '@/components/PromoValais'
 
 export default function StartProjectPage() {
   const [project, setProject] = useState<Project | null>(null)
@@ -115,6 +116,10 @@ export default function StartProjectPage() {
             style={{ width: '100%', padding: '14px', background: '#8d323b', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: '500', cursor: 'pointer' }}>
             {t('Rejoindre la dégustation →')}
           </button>
+        </div>
+
+        <div style={{ marginTop: '1.5rem' }}>
+          <PromoValais source={`start-${slug}`} hide={(project as any)?.template === 'valais_wine'} />
         </div>
 
         <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '1.5rem' }}>

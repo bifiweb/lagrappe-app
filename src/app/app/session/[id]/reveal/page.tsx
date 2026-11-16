@@ -7,6 +7,7 @@ import { SCORING } from '@/types'
 import type { Session, Wine, GrappisteNotes, Tasting, SessionPlayer, Evening } from '@/types'
 import { PlayerAvatar } from '@/components/PlayerAvatar'
 import { useT } from '@/lib/i18n'
+import PromoValais from '@/components/PromoValais'
 
 export default function RevealPage() {
   const [session, setSession] = useState<Session | null>(null)
@@ -722,6 +723,12 @@ export default function RevealPage() {
             style={{ width: '100%', padding: '13px', border: '0.5px solid #e0e0e0', borderRadius: '12px', background: '#fff', color: '#888', fontSize: '14px', cursor: 'pointer', marginTop: '1rem' }}>
             {t('Retour au dashboard')}
           </button>
+        )}
+
+        {!session?.evening_id && (
+          <div style={{ marginTop: '1.5rem' }}>
+            <PromoValais source="revelation" />
+          </div>
         )}
 
       </div>

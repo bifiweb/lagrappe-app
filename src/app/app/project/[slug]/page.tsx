@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import type { Profile, Project, Wine, SessionPlayer } from '@/types'
 import { useT } from '@/lib/i18n'
+import PromoValais from '@/components/PromoValais'
 
 export default function ProjectPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -301,6 +302,10 @@ export default function ProjectPage() {
             </div>
           </>
         )}
+
+        <div style={{ marginTop: '2rem' }}>
+          <PromoValais source={`projet-${params.slug}`} hide={(project as any)?.template === 'valais_wine'} />
+        </div>
 
       </div>
     </div>
