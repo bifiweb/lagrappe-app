@@ -64,6 +64,7 @@ const AROME_RULES: [RegExp, string[]][] = [
   [/\b(gibier|animal|sauvage)/, ['Notes sauvages']],
   [/\b(champignon|truffe)/, ['Champignons']],
   [/\b(grille|toaste|brioche)/, ['Pain grillé', 'Brioche']],
+  [/\b(hydrocarbure|petrol|kerosene)/, ['Hydrocarbure']],
   [/\bpomme/, ['Pomme']],
   [/\bpoire/, ['Poire']],
   [/\bpeche/, ['Pêche']],

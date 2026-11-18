@@ -459,6 +459,7 @@ export const DE: Record<string, string> = {
   "Notes sauvages": "Wildnoten",
   "Champignons": "Pilze",
   "Pain grillé": "Röstbrot",
+  "Hydrocarbure": "Petrol",
   "Pomme": "Apfel",
   "Poire": "Birne",
   "Pêche": "Pfirsich",

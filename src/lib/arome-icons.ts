@@ -52,6 +52,7 @@ export function getAromeIcon(arome: string): string | null {
     'Réglisse':           '/aromes/réglisse.png',
     'Tabac':              '/aromes/smoking-pipe.png',
     'Pain grillé':        '/aromes/toast.png',
+    'Hydrocarbure':       '/aromes/hydrocarbure.png',
     'Brioche':            '/aromes/toast.png',
     'Levure':             '/aromes/toast.png',
     'Amande':             '/aromes/amande.png',

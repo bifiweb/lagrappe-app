@@ -220,7 +220,7 @@ export const WINE_CONTENT: Record<WineType, WineContent> = {
       'Pomme', 'Poire', 'Pêche', 'Abricot', 'Coing', 'Raisin frais', 'Rhubarbe',
       'Citron', 'Mandarine', 'Pamplemousse', 'Ananas', 'Litchi', 'Fruit de la passion',
       'Fleurs blanches', 'Tilleul', 'Rose', 'Herbes aromatiques', 'Herbe coupée', 'Minéralité',
-      'Épices', 'Vanille', 'Miel', 'Amande', 'Beurre', 'Champignons',
+      'Épices', 'Vanille', 'Miel', 'Amande', 'Beurre', 'Champignons', 'Pain grillé', 'Hydrocarbure',
     ],
     bouche: ['Acidité vive', 'Acidité', 'Équilibre', 'Gras', 'Très gras, onctueux'],
     accords: ['Salade', 'Plateau de fromages', 'Charcuterie', 'Plat asiatique', 'Raclette/Fondue', 'Filets de perche', 'Steak frites', 'Tarte aux pommes'],

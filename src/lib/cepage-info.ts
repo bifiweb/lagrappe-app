@@ -180,7 +180,7 @@ export const CEPAGE_PROFILS: Record<string, CepageProfil> = {
   'Chasselas':       { robes: ['Jaune pâle'], aromes: ['Tilleul', 'Fleurs blanches', 'Minéralité', 'Citron', 'Pomme', 'Poire', 'Amande'], bouche: [1, 2] },
   'Chardonnay':      { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Beurre', 'Vanille', 'Pomme', 'Pêche', 'Ananas', 'Miel'], bouche: [2, 4] },
   'Pinot Gris':      { robes: ['Or / Paille'], aromes: ['Poire', 'Coing', 'Pêche', 'Abricot', 'Miel', 'Épices'], bouche: [3, 4] },
-  'Riesling':        { robes: ['Jaune pâle'], aromes: ['Citron', 'Minéralité', 'Pamplemousse', 'Pomme', 'Pêche', 'Fleurs blanches'], bouche: [0, 1] },
+  'Riesling':        { robes: ['Jaune pâle'], aromes: ['Citron', 'Minéralité', 'Pamplemousse', 'Pomme', 'Pêche', 'Fleurs blanches', 'Hydrocarbure'], bouche: [0, 1] },
   'Sauvignon':       { robes: ['Jaune pâle'], aromes: ['Pamplemousse', 'Herbe coupée', 'Fruit de la passion', 'Herbes aromatiques', 'Citron', 'Rhubarbe', 'Minéralité'], bouche: [0, 1] },
   'Gewurztraminer':  { robes: ['Jaune pâle', 'Or / Paille'], aromes: ['Litchi', 'Rose', 'Épices', 'Fruit de la passion', 'Miel'], bouche: [3, 4] },
   'Viognier':        { robes: ['Or / Paille'], aromes: ['Abricot', 'Pêche', 'Fleurs blanches', 'Miel', 'Épices'], bouche: [3, 4] },
