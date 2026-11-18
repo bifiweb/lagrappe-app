@@ -82,7 +82,7 @@ export const CEPAGE_INFO: Record<string, CepageInfo> = {
   },
   'Riesling': {
     robe: 'Jaune pâle à or',
-    nez: 'Citron, pamplemousse, pêche, floral, notes pétrolées (vieux)',
+    nez: 'Citron, pamplemousse, pêche, floral, notes pétrolées / hydrocarbure',
     bouche: 'Vif, acidité tranchante, minéral, très long',
   },
   'Sauvignon': {

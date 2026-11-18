@@ -582,7 +582,7 @@ export const DE: Record<string, string> = {
   "Pêche, abricot, miel, épices douces, légèrement fumé": "Pfirsich, Aprikose, Honig, milde Gewürze, leicht rauchig",
   "Gras, onctueux, finale épicée et longue": "Füllig, cremig, würziger und langer Abgang",
   "Jaune pâle à or": "Blassgelb bis golden",
-  "Citron, pamplemousse, pêche, floral, notes pétrolées (vieux)": "Zitrone, Grapefruit, Pfirsich, blumig, Petrolnoten (gereift)",
+  "Citron, pamplemousse, pêche, floral, notes pétrolées / hydrocarbure": "Zitrone, Grapefruit, Pfirsich, blumig, Petrolnoten / Kohlenwasserstoff",
   "Vif, acidité tranchante, minéral, très long": "Lebhaft, prägnante Säure, mineralisch, sehr lang",
   "Jaune pâle à reflets verts": "Blassgelb mit grünen Reflexen",
   "Buis, herbe coupée, pamplemousse, groseille à maquereau": "Buchs, frisch gemähtes Gras, Grapefruit, Stachelbeere",
