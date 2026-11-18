@@ -261,8 +261,36 @@ export default function SessionPage() {
     channel.subscribe()
     chifoumiChannelRef.current = channel
 
-    return () => { supabase.removeChannel(channel) }
+    // Le broadcast n'est ni stocké ni rejoué : un téléphone qui (ré)ouvre le canal après un coup
+    // ne le reçoit jamais (fréquent juste après une manche nulle). On renvoie donc son coup
+    // tant que la manche n'est pas tranchée ; les doublons sont sans effet.
+    const resend = setInterval(() => {
+      const mine = chifoumiMovesRef.current[profile.id]
+      if (!mine || chifoumiResolvedRef.current) return
+      channel.send({
+        type: 'broadcast',
+        event: 'move',
+        payload: { userId: profile.id, move: mine, round: chifoumiRoundRef.current },
+      })
+    }, 1500)
+
+    return () => { clearInterval(resend); supabase.removeChannel(channel) }
   }, [phase, chifoumiRound, profile])
+
+  // Filet de sécurité : si ce téléphone a raté la fin du vote, du duel ou de la roue,
+  // il rejoint la dégustation dès qu'un autre joueur l'a lancée.
+  useEffect(() => {
+    if (!sessionId || phase === 'lobby') return
+    const interval = setInterval(async () => {
+      const { data: sess } = await supabase
+        .from('sessions').select('status').eq('id', sessionId).single()
+      if (sess?.status === 'tasting') {
+        clearInterval(interval)
+        router.push(`/app/tasting/${sessionId}`)
+      }
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [sessionId, phase])
 
   // Animation roue tirage
   useEffect(() => {
